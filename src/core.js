@@ -959,9 +959,9 @@ async function harvardFetch(plan, f, ctx) {
   }));
 }
 
-/* Las API de Wikimedia (Commons, Wikipedia) responden 429 si se les pide demasiado de golpe: cola de 3 y reintento. */
+/* Las API de Wikimedia (Commons, Wikipedia) responden 429 si se les pide demasiado de golpe: cola de 2 y reintento. */
 let wmActive = 0; const wmQueue = [];
-const wmSlot = () => new Promise(res => { if (wmActive < 3) { wmActive++; res(); } else wmQueue.push(res); });
+const wmSlot = () => new Promise(res => { if (wmActive < 2) { wmActive++; res(); } else wmQueue.push(res); });
 const wmDone = () => { const n = wmQueue.shift(); if (n) n(); else wmActive--; };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function wmJSON(url) {
@@ -969,7 +969,7 @@ async function wmJSON(url) {
   try {
     for (let i = 0; ; i++) {
       try { return await getJSON(url, {}, 20000); }
-      catch (e) { if (!(e && e.status === 429) || i >= 2) throw e; await sleep(1800 * (i + 1)); }
+      catch (e) { if (!(e && e.status === 429) || i >= 3) throw e; await sleep(2500 * (i + 1)); }
     }
   } finally { wmDone(); }
 }

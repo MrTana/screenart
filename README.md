@@ -22,13 +22,13 @@ Si una fuente de un museo falla, las demás siguen. El punto de color y la líne
 
 - **MoMA** (`tools/moma-shards.py`): unas 68 000 obras con imagen de moma.org a 1024 px.
 - **National Gallery of Art, Washington** (`tools/nga-shards.py`): unas 62 000 obras de acceso abierto; imágenes IIIF de hasta 1600 px (3000 px con «alta calidad»).
-- **Tate** (`tools/tate-shards.py`): unas 31 000 obras (se dejan fuera los cuadernos de bocetos de Turner). Las imágenes se piden en tamaño grande y, si no existe, en el pequeño.
+- **Tate** (`tools/tate-shards.py`): unas 31 000 obras (se dejan fuera los cuadernos de bocetos de Turner). Las imágenes salen de media.tate.org.uk, en el tamaño más grande disponible.
 
 **Otras fuentes**
 
 - **WikiArt**: además del catálogo por estilo, ahora se consulta la página de cada artista.
-- **Wikimedia Commons**: categorías «Paintings by …» por artista, **Google Art Project** e **imágenes destacadas**.
-- **Biblioteca Digital de Princeton (DPUL)**: adaptador experimental, sin comprobar en un navegador real.
+- **Wikimedia Commons**: búsqueda por categorías con subcategorías («Paintings by …», estilos, museos), **Google Art Project** e **imágenes destacadas**.
+- **Intermediario `/api/p`** (`functions/api/p.js`, una función de Cloudflare Pages): WikiArt y la búsqueda del Art Institute of Chicago no envían cabeceras CORS y el navegador no las deja leer. Si la petición directa falla, la app la repite por este intermediario, que solo acepta esas direcciones y solo desde la propia página.
 - **Museos de un solo artista** (Picasso, Miró, Munch, Matisse, Chagall, Rodin, Botero, Sorolla, Klimt…), con colección rápida propia.
 
 **Artistas y estilos**
@@ -38,6 +38,7 @@ Si una fuente de un museo falla, las demás siguen. El punto de color y la líne
 
 **No integrados**
 
+- **Biblioteca Digital de Princeton (DPUL)**: su JSON no incluye las imágenes y los manifiestos IIIF piden una verificación anti-bots que no se salta.
 - **Public Domain Image Archive** y **Artvee**: sin API y sin permiso claro para el acceso automatizado.
 - **SFMOMA, Museo Thyssen, Newfields, MFAH**: no se encontró API ni datos abiertos utilizables. Siguen en la lista de museos y se consultan por Wikidata, Commons y Wikipedia.
 - **Galería Wendi Norris** (galería comercial con artistas vivos) y **remediosvaro.art** (no se pudo consultar su estructura): para Remedios Varo se usan WikiArt, Commons, Wikidata y los museos.
