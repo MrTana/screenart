@@ -380,7 +380,7 @@ function toggleAcc(id) {
 /* Colecciones rápidas: una por país con museos («Museos de México», «Museos de España»…), generadas a partir de los museos que
    hay (incluidos los que se añaden desde el menú), más «Museos de París». */
 function presetList() {
-  const out = C.countryCollections().map(c => ({ key: 'pais:' + c.country, es: c.es + ' (' + c.ids.length + ')', only: c.ids, patch: {} }));
+  const out = [{ key: 'todo', es: 'Todo el arte', all: true, patch: {} }].concat(C.countryCollections().map(c => ({ key: 'pais:' + c.country, es: c.es + ' (' + c.ids.length + ')', only: c.ids, patch: {} })));
   const paris = C.SOURCE_LIST.filter(s => s.museum && s.museum.city === 'París').map(s => s.id);
   if (paris.length) out.push({ key: 'ciudad:París', es: 'Museos de París (' + paris.length + ')', only: paris, patch: {} });
   return out;
@@ -521,7 +521,8 @@ function onAct(act, id) {
     }
     case 'preset': {
       const p = presetList().find(x => x.key === id || x.es === id); if (!p) break;
-      const keep = { sources: f.sources, orientation: f.orientation, soloPD: f.soloPD, exclude: f.exclude, noWords: f.noWords };
+      const keep = p.all ? { sources: {} } : { sources: f.sources, orientation: f.orientation, soloPD: f.soloPD, exclude: f.exclude, noWords: f.noWords };
+      if (p.all) C.SOURCE_LIST.forEach(s => { const nk = s.museum && s.museum.needsKey; keep.sources[s.id] = !(nk && !S.keys[nk]); }); // todos los museos y fuentes abiertas (salvo los que piden una clave que no hay)
       if (p.only) { keep.sources = {}; Object.keys(f.sources).forEach(k => { keep.sources[k] = p.only.includes(k); }); }
       S.f = Object.assign(C.defaultFilters(), keep, JSON.parse(JSON.stringify(p.patch)));
       renderAll(); applyChange(); break;

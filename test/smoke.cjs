@@ -94,8 +94,12 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   console.log('museo añadido:', d.getElementById('museumMsg').textContent, '| guardado:', S.custom.length, '| activo:', !!S.f.sources['m:cQ4242'], '| en lista:', /Museo de Prueba/.test(d.getElementById('c-msrcs').textContent));
   { const opts = Array.from(d.querySelectorAll('#c-presets option')).map(o => o.textContent);
     for (const n of ['Museos de España (12)', 'Museos de México (18)', 'Museos del Reino Unido (8)', 'Museos de los Países Bajos (5)', 'Museos de Chile (1)', 'Museos de París (13)']) assert.ok(opts.includes(n), 'falta la colección ' + n + ' en ' + opts.join(' | '));
-    for (const old of ['Todo el arte', 'Impresionismo', 'Retratos', 'Mujeres artistas', 'Surrealismo en museos', 'Museos de un solo artista']) assert.ok(!opts.some(o => o.startsWith(old)), 'se quitaron las colecciones antiguas: ' + old);
-    assert.ok(opts.slice(1).every(o => /^Museos de/.test(o)), 'todas son «Museos de …»'); }
+    for (const old of ['Impresionismo', 'Retratos', 'Mujeres artistas', 'Surrealismo en museos', 'Museos de un solo artista']) assert.ok(!opts.some(o => o.startsWith(old)), 'se quitaron las colecciones antiguas: ' + old);
+    assert.strictEqual(opts[1], 'Todo el arte'); assert.ok(opts.slice(2).every(o => /^Museos de/.test(o)), 'las demás son «Museos de …»'); }
+  { A.onAct('era', 'mod'); S.f.orientation = 'landscape'; S.f.soloPD = true; S.f.artists = ['Monet']; pick('Todo el arte');
+    const f = S.f, off = Object.keys(f.sources).filter(k => !f.sources[k]);
+    assert.ok(!f.eras.length && !f.styles.length && !f.artists.length && !f.keywords.length && !f.exclude.length && !f.noWords.length && f.orientation === 'any' && !f.soloPD, 'Todo el arte: sin ningún filtro');
+    assert.deepStrictEqual(off, ['m:harvard'], 'Todo el arte: todos los museos salvo los que piden clave y no hay: ' + off); }
   for (const [name, n] of [['Museos de México', 18], ['Museos de Bélgica', 28], ['Museos de España', 12], ['Museos de Chile', 1]]) {
     pick(name);
     const act = Object.keys(S.f.sources).filter(k => S.f.sources[k]).length;
