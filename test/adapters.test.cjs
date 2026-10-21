@@ -81,6 +81,12 @@ globalThis.fetch = async (url, init) => {
 
 (async () => {
   // utilidades
+  assert.strictEqual(C.cleanTitle('French: Rochers dans le bois Rocks in the Wood title QS:P1476,fr:"Rochers dans le bois " label QS:Lfr,"Rochers dans le bois " label QS:Len,"Rocks in the Wood" label QS:Lde,"Wald mit Felsblöcken"'), 'Rocks in the Wood');
+  assert.strictEqual(C.cleanTitle('Rochers dans le bois title QS:P1476,fr:"Rochers dans le bois"'), 'Rochers dans le bois');
+  assert.strictEqual(C.cleanTitle('German: Wald mit Felsblöcken'), 'Wald mit Felsblöcken');
+  assert.strictEqual(C.cleanTitle('English: Rocks in the Wood French: Rochers dans le bois'), 'Rocks in the Wood');
+  assert.strictEqual(C.cleanTitle('<b>La Gioconda</b>'), 'La Gioconda');
+  assert.strictEqual(C.cleanTitle('Water Lilies: Morning'), 'Water Lilies: Morning');
   assert.strictEqual(C.parseYear('c. 1895'), 1895);
   assert.strictEqual(C.parseYear('400 B.C.'), -400);
   assert.strictEqual(C.parseYear('1600–1650'), 1600);
