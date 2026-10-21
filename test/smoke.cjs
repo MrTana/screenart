@@ -26,7 +26,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   console.log('estado fuentes:', JSON.stringify(Object.fromEntries(Object.entries(S.status).map(([k, v]) => [k, v.state]))));
   A.openMenu();
   const d = w.document; function d0(){return d;}
-  console.log('chips museos:', d0().querySelectorAll('#c-museums .chip').length, '| activos:', d0().querySelectorAll('#c-museums .chip[aria-pressed=true]').length);
+  console.log('filas de museos:', d0().querySelectorAll('#c-msrcs .src').length, '| activas:', d0().querySelectorAll('#c-msrcs .src[aria-pressed=true]').length);
   console.log('menu abierto:', !d.getElementById('drawer').hidden, '| chips estilos:', d.querySelectorAll('#c-styles .chip').length, '| museos:', d.querySelectorAll('#c-srcs .src').length);
   // clic en estilo Impresionismo y en una fuente
   d.querySelector('#c-styles [data-id=impressionism]').click();
@@ -38,12 +38,12 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   console.log('temas:', JSON.stringify(S.f.keywords));
   A.onAct('interval', '10'); A.onAct('mode', 'frame'); A.onAct('opt', 'kb'); A.onAct('fav', '');
   console.log('modo:', d.getElementById('stage').className, '| favoritas:', S.favs.length);
-  d.querySelector('#c-museums [data-id=louvre]').click();
-  console.log('Louvre desmarcado:', !S.f.museums.includes('louvre'));
-  d.querySelector('[data-act=mus-none]').click(); console.log('ninguno:', S.f.museums.length);
-  d.querySelector('[data-act=mus-all]').click(); console.log('todos:', S.f.museums.length);
+  const on = () => Object.keys(S.f.sources).filter(k => k.startsWith('m:') && S.f.sources[k]).length;
+  d.querySelector('#c-msrcs [data-id="m:louvre"]').click(); console.log('Louvre desmarcado:', !S.f.sources['m:louvre'], '| museos activos:', on());
+  d.querySelector('[data-act=mus-none]').click(); console.log('ninguno:', on());
+  d.querySelector('[data-act=mus-all]').click(); console.log('todos:', on());
   const pi = Array.from(d.querySelectorAll('#c-presets .chip')).findIndex(c => c.textContent === 'Museos de París'); d.querySelectorAll('#c-presets .chip')[pi].click();
-  console.log('preset Museos de París -> fuentes activas:', Object.keys(S.f.sources).filter(k => S.f.sources[k]).join(','), '| museos:', S.f.museums.join(','));
+  console.log('preset Museos de París -> fuentes activas:', Object.keys(S.f.sources).filter(k => S.f.sources[k]).join(','), );
   A.closeMenu();
   await wait(1500);
   console.log('tras filtros -> mostradas:', S.shown, '| estados:', JSON.stringify(Object.fromEntries(Object.entries(S.status).map(([k, v]) => [k, v.state + (v.msg ? ':' + v.msg : '')]))));

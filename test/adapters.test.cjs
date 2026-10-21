@@ -1,12 +1,12 @@
 const C = require('../src/core.js');
 const assert = require('assert');
-const calls = []; const sparqlLog = [];
+const calls = []; const sparqlLog = []; let aicBodies = []; let sparqlActive = 0, sparqlMax = 0;
 const J = o => ({ ok: true, status: 200, json: async () => o });
 
 // Fixtures con la forma de las respuestas reales observadas
 const fx = {
   metSearch: { total: 3, objectIDs: [436535, 1, 2] },
-  metObj: id => id === 436535 ? { objectID: 436535, isPublicDomain: true, primaryImage: 'http://images.metmuseum.org/a.jpg', primaryImageSmall: 'https://images.metmuseum.org/a_s.jpg', title: 'Wheat Field with Cypresses', artistDisplayName: 'Vincent van Gogh', objectDate: '1889', objectBeginDate: 1889, objectEndDate: 1889, classification: 'Paintings', objectName: 'Painting', medium: 'Oil on canvas', objectURL: 'https://www.metmuseum.org/art/collection/search/436535' } : { objectID: id, isPublicDomain: false, primaryImage: '' },
+  metObj: id => id === 436535 ? { objectID: 436535, isPublicDomain: true, primaryImage: 'http://images.metmuseum.org/a.jpg', primaryImageSmall: 'https://images.metmuseum.org/a_s.jpg', title: 'Wheat Field with Cypresses', artistDisplayName: 'Vincent van Gogh', objectDate: '1889', objectBeginDate: 1889, objectEndDate: 1889, classification: 'Paintings', objectName: 'Painting', medium: 'Oil on canvas', objectURL: 'https://www.metmuseum.org/art/collection/search/436535' } : id === 2 ? { objectID: 2, isPublicDomain: false, primaryImage: '', primaryImageSmall: 'https://i/protegida.jpg', title: 'Obra protegida', artistDisplayName: 'Alguien', objectDate: '1960', objectBeginDate: 1960, objectEndDate: 1960, classification: 'Paintings', objectURL: 'https://m/2' } : { objectID: id, isPublicDomain: false, primaryImage: '' },
   aicCount: { pagination: { total: 62119 }, data: [{ id: 1 }] },
   aicData: { pagination: { total: 62119 }, data: [{ id: 27992, title: 'A Sunday on La Grande Jatte — 1884', artist_title: 'Georges Seurat', date_display: '1884–86', date_start: 1884, date_end: 1886, image_id: 'abc-123', thumbnail: { width: 9310, height: 6237 }, artwork_type_title: 'Painting', classification_title: 'oil on canvas', is_public_domain: true }], config: { iiif_url: 'https://www.artic.edu/iiif/2' } },
   cma: { info: { total: 47 }, data: [{ id: 320778, title: 'Banks of the Oise at Dawn', creation_date: '1888', creation_date_earliest: 1887, creation_date_latest: 1888, type: 'Painting', technique: 'Oil on canvas', share_license_status: 'CC0', url: 'https://clevelandart.org/art/2019.18', creators: [{ description: 'Louis Hayet (French, 1864–1940)' }], images: { web: { url: 'https://openaccess-cdn.clevelandart.org/2019.18/2019.18_web.jpg', width: '900', height: '643' }, print: { url: 'https://openaccess-cdn.clevelandart.org/2019.18/2019.18_print.jpg', width: '3400', height: '2430' } } }] },
@@ -18,13 +18,20 @@ const fx = {
   rijksObj: { id: 'https://id.rijksmuseum.nl/200100988', identified_by: [{ type: 'Name', content: 'Misty Sea', language: [{ id: 'http://vocab.getty.edu/aat/300388277' }] }], produced_by: { timespan: { identified_by: [{ content: '1899' }], begin_of_the_begin: '1899-01-01T00:00:00Z' }, part: [{ carried_out_by: [{ notation: [{ '@language': 'en', '@value': 'Jan Toorop' }] }] }] }, shows: [{ id: 'https://id.rijksmuseum.nl/202100988' }], classified_as: [{ notation: [{ '@language': 'en', '@value': 'painting' }] }] },
   rijksVis: { digitally_shown_by: [{ id: 'https://id.rijksmuseum.nl/5008910398567010810098' }] },
   rijksDig: { access_point: [{ id: 'https://iiif.micr.io/RFwqO' }] },
+  wdRows: [
+    { item: { value: 'http://www.wikidata.org/entity/Q1' }, itemLabel: { value: 'La Gioconda' }, creatorLabel: { value: 'Leonardo da Vinci' }, clsLabel: { value: 'pintura' }, image: { value: 'http://commons.wikimedia.org/wiki/Special:FilePath/Mona%20Lisa.jpg' }, inc: { value: '1503-01-01T00:00:00Z' } },
+    { item: { value: 'http://www.wikidata.org/entity/Q2' }, itemLabel: { value: 'Venus de Milo' }, clsLabel: { value: 'escultura' }, image: { value: 'http://commons.wikimedia.org/wiki/Special:FilePath/Venus.JPG' }, inc: { value: '-0150-01-01T00:00:00Z' } },
+    { item: { value: 'http://www.wikidata.org/entity/Q3' }, itemLabel: { value: 'Obra moderna' }, creatorLabel: { value: 'Pintor Vivo' }, clsLabel: { value: 'pintura' }, image: { value: 'https://museo.example/img/obra.jpg' }, inc: { value: '1985-01-01T00:00:00Z' } },
+    { item: { value: 'http://www.wikidata.org/entity/Q4' }, itemLabel: { value: 'Escaneo' }, image: { value: 'http://commons.wikimedia.org/wiki/Special:FilePath/Scan.tif' } },
+    { item: { value: 'http://www.wikidata.org/entity/Q5' }, itemLabel: { value: 'Vídeo' }, image: { value: 'http://commons.wikimedia.org/wiki/Special:FilePath/Clip.webm' } }
+  ],
   wd: { results: { bindings: Array.from({ length: 10 }, (_, i) => ({ item: { value: 'http://www.wikidata.org/entity/Q' + (100 + i) }, itemLabel: { value: 'Impression ' + i }, creatorLabel: { value: 'Claude Monet' }, image: { value: 'http://commons.wikimedia.org/wiki/Special:FilePath/Monet%20' + i + '.jpg' }, inc: { value: '1872-01-01T00:00:00Z' }, collLabel: { value: 'Musée Marmottan Monet' } })) } }
 };
 globalThis.fetch = async (url, init) => {
   url = String(url); calls.push(url);
   if (url.includes('metmuseum.org') && url.includes('/search')) return J(fx.metSearch);
   if (url.includes('metmuseum.org') && url.includes('/objects/')) return J(fx.metObj(+url.split('/').pop()));
-  if (url.includes('api.artic.edu')) { const b = init && init.body ? JSON.parse(init.body) : null; return J(b && b.limit === 1 ? fx.aicCount : fx.aicData); }
+  if (url.includes('api.artic.edu')) { const b = init && init.body ? JSON.parse(init.body) : null; if (b) aicBodies.push(b); return J(b && b.limit === 1 ? fx.aicCount : fx.aicData); }
   if (url.includes('clevelandart')) return J(fx.cma);
   if (url.includes('smk.dk')) return J(fx.smk);
   if (url.includes('vam.ac.uk')) return J(fx.vam);
@@ -34,7 +41,11 @@ globalThis.fetch = async (url, init) => {
   if (url.includes('data.rijksmuseum.nl/200100988')) return J(fx.rijksObj);
   if (url.includes('data.rijksmuseum.nl/202100988')) return J(fx.rijksVis);
   if (url.includes('data.rijksmuseum.nl/5008910398567010810098')) return J(fx.rijksDig);
-  if (url.includes('wikidata')) { const q = decodeURIComponent(url.split('query=')[1]); sparqlLog.push(q); return J(/COUNT\(/.test(q) ? { results: { bindings: [{ n: { value: '4200' } }] } } : fx.wd); }
+  if (url.includes('wikidata')) {
+    const q = decodeURIComponent(url.split('query=')[1]); sparqlLog.push(q);
+    sparqlActive++; sparqlMax = Math.max(sparqlMax, sparqlActive); await new Promise(r => setTimeout(r, 15)); sparqlActive--;
+    return J(/COUNT\(/.test(q) ? { results: { bindings: [{ n: { value: '4200' } }] } } : { results: { bindings: fx.wdRows } });
+  }
   throw new Error('URL no simulada: ' + url);
 };
 
@@ -81,22 +92,57 @@ globalThis.fetch = async (url, init) => {
     assert.ok(w.title && w.museum, s.id + ' ficha');
     console.log(s.id.padEnd(9), '|', w.title.slice(0, 32).padEnd(32), '|', (w.artist || '-').padEnd(16), '|', w.year, '|', w.type, '|', w.imgs[0].slice(0, 70));
   }
-  // museos famosos
-  const ff = C.defaultFilters(); ff.museums = ['louvre', 'orsay'];
-  const fam = await C.runSource(C.SOURCE_LIST.find(x => x.id === 'famous'), ff, ctx);
-  assert.ok(fam.length >= 1, 'famous vacío');
-  const museos = new Set(fam.map(x => x.museum)); console.log('famous  |', [...museos].join(' + '), '|', fam.length, 'obras');
-  assert.ok([...museos].every(m => /Louvre|Orsay/.test(m)));
+  // derechos: sin anyRights solo dominio público, con anyRights entra todo
+  const anyCtx = Object.assign({}, ctx, { anyRights: true });
+  const pdOnly = await C.adapters.metFetch(plan, C.defaultFilters(), ctx);
+  const allMet = await C.adapters.metFetch(plan, C.defaultFilters(), anyCtx);
+  assert.ok(!pdOnly.some(w => w.title === 'Obra protegida'), 'Met: la protegida no debe entrar');
+  const prot = allMet.find(w => w.title === 'Obra protegida'); assert.ok(prot && prot.pd === false && /derechos/.test(prot.license), 'Met: debe entrar con anyRights');
+  aicBodies = []; await C.adapters.aicFetch(plan, C.defaultFilters(), ctx); const aicPD = JSON.stringify(aicBodies.pop());
+  await C.adapters.aicFetch(plan, C.defaultFilters(), anyCtx); const aicAll = JSON.stringify(aicBodies.pop());
+  assert.ok(/is_public_domain/.test(aicPD) && !/is_public_domain":true/.test(aicAll.replace(/"fields":\[[^\]]*\]/, '')), 'AIC: filtro de dominio público');
+  const urlsBefore = calls.length;
+  await C.adapters.cmaFetch(plan, C.defaultFilters(), ctx); await C.adapters.cmaFetch(plan, C.defaultFilters(), anyCtx);
+  const cmaCalls = calls.slice(urlsBefore).filter(u => u.includes('clevelandart')); assert.ok(cmaCalls.some(u => u.includes('cc0=1')) && cmaCalls.some(u => !u.includes('cc0=1')), 'CMA: cc0');
+  const m0 = calls.length; await C.adapters.smkFetch(plan, C.defaultFilters(), anyCtx); assert.ok(!decodeURIComponent(calls.slice(m0).join(' ')).includes('public_domain:true'), 'SMK: sin filtro');
+  const m1 = calls.length; await C.adapters.europeanaFetch(plan, C.defaultFilters(), Object.assign({}, anyCtx, { keys: { europeana: 'k' } })); assert.ok(!calls.slice(m1).join(' ').includes('reusability'), 'Europeana: sin reusability');
+  const mia = await C.adapters.miaFetch(plan, C.defaultFilters(), anyCtx); assert.ok(mia.some(w => w.pd === false), 'MIA: incluye obras con derechos');
+  console.log('derechos | OK en Met, AIC, Cleveland, SMK, Europeana y MIA');
+
+  // un Wikidata por museo
+  const museumSrcs = C.SOURCE_LIST.filter(x => x.group === 'museum');
+  assert.strictEqual(museumSrcs.length, C.MUSEUMS.length, 'una fuente por museo');
+  assert.ok(C.MUSEUMS.every(m => !!C.SOURCE_DEFAULTS['m:' + m.id] === C.DEFAULT_MUSEUMS.includes(m.id)));
+  const louvre = museumSrcs.find(x => x.id === 'm:louvre');
+  const f1 = C.defaultFilters();
+  sparqlLog.length = 0;
+  const ws = await C.runSource(louvre, f1, anyCtx);
   const sel = sparqlLog.filter(q => !/COUNT\(/.test(q)).pop();
-  assert.ok(/VALUES \?lbl \{[^}]*"Musée du Louvre"@fr|VALUES \?lbl \{[^}]*"Musée d'Orsay"@fr/.test(sel), 'falta unión por etiqueta del museo');
-  assert.ok(/OFFSET (\d+)/.test(sel) && +sel.match(/OFFSET (\d+)/)[1] <= 4141, 'offset fuera de rango');
-  console.log('SPARQL museo:', sel.slice(0, 260).replace(/\s+/g, ' '), '…');
-  const none = C.defaultFilters(); none.museums = [];
-  assert.deepStrictEqual(await C.runSource(C.SOURCE_LIST.find(x => x.id === 'famous'), none, ctx), []);
-  // con estilo y época
-  const fe = C.defaultFilters(); fe.museums = ['orsay']; fe.styles = ['impressionism']; fe.eras = ['s19b'];
-  await C.runSource(C.SOURCE_LIST.find(x => x.id === 'famous'), fe, ctx);
-  const q2 = sparqlLog[sparqlLog.length - 1]; assert.ok(/P135/.test(q2) && /YEAR\(\?inc\) >= 18[67]/.test(q2), 'filtros de estilo/época no llegan');
+  assert.ok(/wd:Q19675/.test(sel) && /"Musée du Louvre"@fr/.test(sel), 'Louvre: código y nombre');
+  assert.ok(/UNION/.test(sel) && /P6500/.test(sel), 'incluye imágenes de obras con derechos');
+  assert.ok(!/wdt:P31 wd:/.test(sel) && /OPTIONAL \{ \?item wdt:P31 \?cls/.test(sel), 'sin restringir el tipo de obra');
+  assert.ok(!/YEAR\(\?inc\) <= 1930/.test(sel), 'sin filtro de dominio público');
+  assert.strictEqual(ws.length, 3, 'filas: se descartan tif y webm -> ' + ws.length);
+  const gio = ws.find(w => w.title === 'La Gioconda'); assert.strictEqual(gio.type, 'painting'); assert.ok(gio.museum === 'Louvre (París)');
+  assert.ok(gio.imgs[0].startsWith('https://commons.wikimedia.org/wiki/Special:FilePath/Mona%20Lisa.jpg?width='), gio.imgs[0]);
+  assert.strictEqual(ws.find(w => w.title === 'Venus de Milo').type, 'sculpture');
+  const ext = ws.find(w => w.title === 'Obra moderna'); assert.deepStrictEqual(ext.imgs, ['https://museo.example/img/obra.jpg']); assert.ok(/derechos/.test(ext.license));
+  assert.ok(C.accept(ext, f1) && C.accept(gio, f1), 'accept: pasan con derechos');
+  const f2 = C.defaultFilters(); f2.soloPD = true;
+  assert.ok(!C.accept(ext, f2), 'solo PD descarta pd null');
+  sparqlLog.length = 0; await C.runSource(louvre, f2, ctx);
+  const sel2 = sparqlLog.filter(q => !/COUNT\(/.test(q)).pop();
+  assert.ok(/YEAR\(\?inc\) <= 1930/.test(sel2) && !/P6500/.test(sel2), 'con solo PD vuelve el filtro');
+  const f3 = C.defaultFilters(); f3.types = ['painting']; sparqlLog.length = 0; await C.runSource(louvre, f3, anyCtx);
+  assert.ok(/wdt:P31 wd:Q3305213/.test(sparqlLog.filter(q => !/COUNT\(/.test(q)).pop()), 'con tipo elegido se restringe');
+  const f4 = C.defaultFilters(); f4.styles = ['impressionism']; f4.eras = ['s19b']; sparqlLog.length = 0;
+  await C.runSource(museumSrcs.find(x => x.id === 'm:orsay'), f4, anyCtx);
+  const q4 = sparqlLog.filter(q => !/COUNT\(/.test(q)).pop(); assert.ok(/P135/.test(q4) && /YEAR\(\?inc\) >= 18[67]/.test(q4) && /wd:Q23402/.test(q4), 'estilo, época y museo juntos');
+  const noQ = museumSrcs.find(x => x.id === 'm:orangerie'); sparqlLog.length = 0; await C.runSource(noQ, f1, anyCtx);
+  assert.ok(/VALUES \?lbl/.test(sparqlLog.pop()) && !/VALUES \?coll/.test(sparqlLog[0] || ''), 'museo sin código: solo por nombre');
+  sparqlMax = 0; await Promise.all(museumSrcs.slice(0, 8).map(x => C.runSource(x, f1, anyCtx)));
+  assert.ok(sparqlMax <= 2, 'concurrencia SPARQL: ' + sparqlMax);
+  console.log('museos   |', museumSrcs.length, 'fuentes, Louvre ->', ws.map(w => w.title).join(', '), '| máx. consultas simultáneas:', sparqlMax);
   // runSource con relajación
   const r = await C.runSource(C.SOURCE_LIST[0], C.defaultFilters(), ctx);
   assert.ok(r.length);

@@ -13,7 +13,7 @@ function loadFilters() {
   const d = C.defaultFilters(), s = lsGet('f', {});
   const f = Object.assign(d, s);
   f.sources = Object.assign({}, d.sources, s.sources || {});
-  ['eras', 'styles', 'types', 'artists', 'keywords', 'museums'].forEach(k => { if (!Array.isArray(f[k])) f[k] = []; });
+  ['eras', 'styles', 'types', 'artists', 'keywords'].forEach(k => { if (!Array.isArray(f[k])) f[k] = []; });
   return f;
 }
 const S = {
@@ -49,7 +49,7 @@ function errText(e) {
 }
 
 /* ───────── fuentes y cola de obras ───────── */
-function ctx() { return { hq: S.st.quality === 'high', keys: S.keys }; }
+function ctx() { return { hq: S.st.quality === 'high', keys: S.keys, anyRights: !S.f.soloPD }; }
 function wake() { S.waiters.splice(0).forEach(r => r()); }
 function waitPool(ms) { return new Promise(res => { let d = false; const fin = () => { if (!d) { d = true; res(); } }; S.waiters.push(fin); setTimeout(fin, ms); }); }
 function insertRandom(list) { list.forEach(w => S.pool.splice(C.rand(S.pool.length + 1), 0, w)); wake(); }
@@ -70,7 +70,9 @@ async function refill() {
     insertRandom(C.shuffle(list.slice()).filter(w => !S.pool.some(x => x.uid === w.uid)));
     return;
   }
-  const srcs = C.SOURCE_LIST.filter(s => f.sources[s.id]);
+  const on = C.SOURCE_LIST.filter(s => f.sources[s.id]);
+  // Wikidata aguanta pocas consultas a la vez: en cada ronda se consultan 4 museos al azar de los marcados.
+  const srcs = on.filter(s => s.group !== 'museum').concat(C.sampleN(on.filter(s => s.group === 'museum'), 4));
   if (!srcs.length) { toast('Activa al menos un museo'); S.emptyRuns = 3; wake(); return; }
   S.refilling++; busy();
   let added = 0;
@@ -243,8 +245,8 @@ const PRESETS = [
   { es: 'Paisajes', patch: { keywords: ['landscape'], types: ['painting'] } },
   { es: 'Retratos', patch: { keywords: ['portrait'], types: ['painting'] } },
   { es: 'París', patch: { keywords: ['Paris'] } },
-  { es: 'Museos de París', only: ['famous'], patch: { museums: ['louvre', 'orsay', 'orangerie', 'versailles', 'marmottan', 'petitpalais', 'carnavalet'] } },
-  { es: 'Grandes museos de Europa', only: ['famous'], patch: { museums: ['louvre', 'orsay', 'prado', 'uffizi', 'hermitage', 'nationalgallery', 'vangogh', 'mauritshuis', 'kunsthistorisches', 'versailles'] } }
+  { es: 'Museos de París', only: ['m:louvre', 'm:orsay', 'm:orangerie', 'm:versailles', 'm:marmottan', 'm:petitpalais', 'm:carnavalet'], patch: {} },
+  { es: 'Grandes museos de Europa', only: ['m:louvre', 'm:orsay', 'm:prado', 'm:uffizi', 'm:hermitage', 'm:nationalgallery', 'm:vangogh', 'm:mauritshuis', 'm:kunsthistorisches', 'm:versailles'], patch: {} }
 ];
 const ORIENT = [['any', 'Cualquiera'], ['landscape', 'Horizontal'], ['portrait', 'Vertical'], ['square', 'Cuadrada']];
 const MODES = [['gallery', 'Galería con fondo difuminado'], ['frame', 'Marco y paspartú'], ['fill', 'Llenar la pantalla (recorta)']];
@@ -255,7 +257,6 @@ const chip = (act, id, label, on, cls) => '<button class="chip' + (cls ? ' ' + c
 const R = {
   presets: () => PRESETS.map((p, i) => chip('preset', i, p.es, false)).join(''),
   eras: () => C.ERAS.map(e => chip('era', e.id, e.es, S.f.eras.includes(e.id))).join(''),
-  museums: () => C.MUSEUMS.map(m => chip('museum', m.id, m.es + ' · ' + m.city, S.f.museums.includes(m.id))).join(''),
   styles: () => C.STYLES.map(s => chip('style', s.id, s.es, S.f.styles.includes(s.id))).join(''),
   types: () => C.TYPES.map(t => chip('type', t.id, t.es, S.f.types.includes(t.id))).join(''),
   artists: () => S.f.artists.map(a => chip('rm-artist', a, a, true, 'rm')).join('') || '<span class="hint" style="font-size:14px;color:var(--muted)">Ninguno. Se muestran todos los artistas.</span>',
@@ -269,7 +270,7 @@ const R = {
   opts: () => chip('opt', 'kb', 'Zoom lento', S.st.kenburns) + chip('opt', 'hq', 'Imágenes en alta calidad', S.st.quality === 'high') +
     chip('opt', 'pd', 'Solo dominio público', S.f.soloPD) + chip('opt', 'favs', 'Solo mis favoritas (' + S.favs.length + ')', S.f.onlyFavs)
 };
-const BOX = { presets: 'c-presets', museums: 'c-museums', eras: 'c-eras', styles: 'c-styles', types: 'c-types', artists: 'c-artists', artistsug: 'c-artist-sug', kws: 'c-kws', orient: 'c-orient', mode: 'c-mode', interval: 'c-interval', caption: 'c-caption', opts: 'c-opts' };
+const BOX = { presets: 'c-presets', eras: 'c-eras', styles: 'c-styles', types: 'c-types', artists: 'c-artists', artistsug: 'c-artist-sug', kws: 'c-kws', orient: 'c-orient', mode: 'c-mode', interval: 'c-interval', caption: 'c-caption', opts: 'c-opts' };
 
 function srcNote(s) {
   const st = S.status[s.id], base = s.place + ' · ' + s.note;
@@ -281,8 +282,12 @@ function srcNote(s) {
   if (st.state === 'empty') return s.place + ' · sin resultados con estos filtros';
   return base;
 }
+function srcRow(s) {
+  return '<button class="src" data-act="src" data-id="' + esc(s.id) + '" aria-pressed="' + !!S.f.sources[s.id] + '"><span class="box"></span><span class="nm"><b>' + esc(s.name) + '</b><span data-sn="' + esc(s.id) + '">' + esc(srcNote(s)) + '</span></span><span class="dot ' + ((S.status[s.id] && S.status[s.id].state) || '') + '" data-dot="' + esc(s.id) + '"></span></button>';
+}
 function renderSrcs() {
-  $('#c-srcs').innerHTML = C.SOURCE_LIST.map(s => '<button class="src" data-act="src" data-id="' + s.id + '" aria-pressed="' + !!S.f.sources[s.id] + '"><span class="box"></span><span class="nm"><b>' + esc(s.name) + '</b><span data-sn="' + s.id + '">' + esc(srcNote(s)) + '</span></span><span class="dot ' + ((S.status[s.id] && S.status[s.id].state) || '') + '" data-dot="' + s.id + '"></span></button>').join('');
+  $('#c-srcs').innerHTML = C.SOURCE_LIST.filter(s => s.group !== 'museum').map(srcRow).join('');
+  $('#c-msrcs').innerHTML = C.SOURCE_LIST.filter(s => s.group === 'museum').map(srcRow).join('');
 }
 function updateSrc(id) {
   const s = C.SOURCE_LIST.find(x => x.id === id), dot = document.querySelector('[data-dot="' + id + '"]'), sn = document.querySelector('[data-sn="' + id + '"]');
@@ -325,14 +330,11 @@ function onAct(act, id) {
     case 'preset': {
       const p = PRESETS[+id]; const keep = { sources: f.sources, orientation: f.orientation, soloPD: f.soloPD };
       if (p.only) { keep.sources = {}; Object.keys(f.sources).forEach(k => { keep.sources[k] = p.only.includes(k); }); }
-      else if (!f.sources.famous && !Object.keys(f.sources).some(k => f.sources[k])) keep.sources = Object.assign({}, C.SOURCE_DEFAULTS);
       S.f = Object.assign(C.defaultFilters(), keep, JSON.parse(JSON.stringify(p.patch)));
       renderAll(); applyChange(); break;
     }
     case 'src': f.sources[id] = !f.sources[id]; render('srcs'); applyChange(); break;
-    case 'museum': toggleArr(f.museums, id); render('museums'); if (!f.sources.famous) { f.sources.famous = true; render('srcs'); toast('Fuente de museos famosos activada'); } applyChange(); break;
-    case 'mus-all': f.museums = C.MUSEUMS.map(m => m.id); f.sources.famous = true; render('museums'); render('srcs'); applyChange(); break;
-    case 'mus-none': f.museums = []; render('museums'); applyChange(); break;
+    case 'mus-all': case 'mus-none': C.SOURCE_LIST.filter(x => x.group === 'museum').forEach(x => { f.sources[x.id] = act === 'mus-all'; }); render('srcs'); applyChange(); break;
     case 'era': toggleArr(f.eras, id); f.yearFrom = f.yearTo = ''; $('#yFrom').value = $('#yTo').value = ''; render('eras'); applyChange(); break;
     case 'style': toggleArr(f.styles, id); render('styles'); applyChange(); break;
     case 'type': toggleArr(f.types, id); render('types'); applyChange(); break;

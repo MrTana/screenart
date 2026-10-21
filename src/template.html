@@ -132,9 +132,9 @@ details.adv label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut
 
   <section class="sec"><h2>Colecciones rápidas</h2><div class="chips" id="c-presets"></div></section>
   <section class="sec"><h2>Museos y fuentes</h2><div class="srcs" id="c-srcs"></div></section>
-  <section class="sec"><h2>Museos famosos</h2><div class="chips" id="c-museums"></div>
+  <section class="sec"><h2>Museos famosos</h2><div class="srcs" id="c-msrcs"></div>
     <div class="row" style="margin-top:10px"><button class="btn" data-act="mus-all">Marcar todos</button><button class="btn" data-act="mus-none">Quitar todos</button></div>
-    <p class="hint">Se usan cuando «Louvre, Orsay, Versalles y más» está activo arriba. Solo salen obras de dominio público con foto en Wikimedia Commons.</p></section>
+    <p class="hint">Cada museo tiene su propia consulta a Wikidata y entran todas sus obras con imagen: pinturas, dibujos, esculturas y objetos. En cada ronda se consultan 4 de los marcados.</p></section>
   <section class="sec"><h2>Época</h2><div class="chips" id="c-eras"></div>
     <div class="row" style="margin-top:10px"><input type="number" id="yFrom" placeholder="Desde (año)" inputmode="numeric"><input type="number" id="yTo" placeholder="Hasta (año)" inputmode="numeric"></div></section>
   <section class="sec"><h2>Estilo o movimiento</h2><div class="chips" id="c-styles"></div></section>
@@ -148,13 +148,13 @@ details.adv label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut
   <section class="sec"><h2>Presentación</h2><div class="chips" id="c-mode"></div></section>
   <section class="sec"><h2>Tiempo por obra</h2><div class="chips" id="c-interval"></div></section>
   <section class="sec"><h2>Ficha de la obra</h2><div class="chips" id="c-caption"></div></section>
-  <section class="sec"><h2>Opciones</h2><div class="chips" id="c-opts"></div></section>
+  <section class="sec"><h2>Opciones</h2><div class="chips" id="c-opts"></div><p class="hint">Con «Solo dominio público» apagado se usan todas las imágenes que cada museo entrega, con o sin derechos de autor. Si un museo no sirve la imagen de una obra protegida, la app la salta.</p></section>
   <details class="adv"><summary>Claves de API (opcional)</summary>
     <label for="k-europeana">Europeana (clave gratuita)</label><input type="password" id="k-europeana" autocomplete="off">
     <label for="k-si">Smithsonian (clave de api.data.gov)</label><input type="password" id="k-si" autocomplete="off">
     <label for="k-harvard">Harvard Art Museums</label><input type="password" id="k-harvard" autocomplete="off">
     <p class="hint" style="font-size:13.5px;color:var(--muted)">Se guardan solo en este navegador. Con una clave puedes activar esas fuentes arriba.</p></details>
-  <div class="foot">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br>Imágenes y datos de los museos citados, en acceso abierto cuando la fuente lo indica. Cada obra enlaza a su ficha original.<br><button class="btn" data-act="reset" style="margin-top:10px">Restablecer filtros</button></div>
+  <div class="foot">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><button class="btn" data-act="reset" style="margin-top:10px">Restablecer filtros</button></div>
 </aside>
 <script>
 /*__CORE__*/
