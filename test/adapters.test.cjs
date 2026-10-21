@@ -218,7 +218,7 @@ globalThis.fetch = async (url, init) => {
   // colecciones abiertas
   const op = museumSrcs.find(x => x.id === 'm:open'); const rpo = {}; const fsx = C.defaultFilters(); fsx.styles = ['surrealism'];
   await C.runSource(op, fsx, Object.assign({}, anyCtx, { keys: { europeana: 'k' }, report: (n, c, e) => { rpo[n] = e ? 'x' : c; } }));
-  assert.deepStrictEqual(Object.keys(rpo).sort(), ['Commons', 'Europeana', 'WikiArt', 'Wikidata'], JSON.stringify(rpo));
+  assert.deepStrictEqual(Object.keys(rpo).sort(), ['Commons', 'Commons destacadas', 'Europeana', 'Google Art Project', 'Princeton', 'WikiArt', 'Wikidata'], JSON.stringify(rpo));
   // museos añadidos por nombre
   const rm = await C.resolveMuseum('Museo de Ejemplo'); assert.strictEqual(rm.ids[0], 'Q999'); assert.strictEqual(rm.id, 'cQ999');
   const cs = C.addMuseum(rm); assert.ok(C.SOURCE_LIST.includes(cs) && cs.id === 'm:cQ999'); assert.strictEqual(C.addMuseum(rm), cs, 'no se duplica');

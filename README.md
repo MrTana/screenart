@@ -16,6 +16,13 @@ Si una fuente de un museo falla, las demás siguen. El punto de color y la líne
 
 **Colecciones abiertas** es una fila aparte con WikiArt (catálogo grande por estilo), Commons por estilo, Wikidata por movimiento y Europeana. Estas fuentes no distinguen museos, así que se mezclan con cualquier museo; desmárcala si solo quieres los museos elegidos. Las claves gratuitas (Europeana, Smithsonian, Harvard) se escriben en «Claves de API» y se guardan solo en el navegador.
 
+## Repositorios y colecciones añadidos
+
+- **MoMA**: no tiene API, pero publica sus datos abiertos (github.com/MuseumofModernArt/collection). `tools/moma-shards.py` los convierte en trozos pequeños en `data/moma/` (unas 68 000 obras con imagen, por tipo y año, 6 MB). La app descarga solo el trozo que necesita y reconstruye la imagen de moma.org a 1024 px. Para actualizar los datos, vuelve a ejecutar el script.
+- **Wikimedia Commons**: además de las búsquedas por museo, la fila de «colecciones abiertas» consulta el proyecto **Google Art Project** y las **imágenes destacadas** de pinturas.
+- **Biblioteca Digital de Princeton (DPUL)**: adaptador experimental (catálogo JSON + imágenes IIIF). No se ha podido probar desde un navegador real; si el servidor no lo permite, aparecerá como error en «Probar fuentes».
+- **Public Domain Image Archive** (pdimagearchive.org): no se integra. No ofrece API y sus condiciones de uso prohíben el acceso automatizado. Casi todo su contenido procede de museos y bibliotecas que ya se consultan aquí.
+
 ## Derechos de autor
 
 Es un proyecto de uso personal, así que por defecto se usan todas las imágenes que cada fuente entrega, con o sin derechos de autor. En Wikidata se añaden también las imágenes externas de obras protegidas (propiedad P6500). La app no guarda ni redistribuye nada: carga cada imagen desde el servidor del museo. Si un museo no sirve la imagen de una obra protegida, la app la salta sola. Al activar «Solo dominio público» en el menú vuelven los filtros de dominio público en todas las fuentes. La ficha indica la licencia de cada obra.

@@ -234,7 +234,7 @@ details.adv label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut
       <p class="hint">Se guardan solo en este navegador. Con una clave puedes activar esas fuentes.</p>
     </div>
   </section>
-  <div class="foot">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 1ea5b8c9f4 · 2026-10-21 15:25 UTC</span><br><button class="btn" data-act="update" style="margin-top:10px">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" style="margin-top:10px" hidden>Instalar la app</button> <button class="btn" data-act="diag" style="margin-top:10px">Probar fuentes</button> <button class="btn" data-act="reset" style="margin-top:10px">Restablecer filtros</button></div>
+  <div class="foot">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión e9ba14abe7 · 2026-10-21 15:54 UTC</span><br><button class="btn" data-act="update" style="margin-top:10px">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" style="margin-top:10px" hidden>Instalar la app</button> <button class="btn" data-act="diag" style="margin-top:10px">Probar fuentes</button> <button class="btn" data-act="reset" style="margin-top:10px">Restablecer filtros</button></div>
 </aside>
 <script>
 /* Núcleo: catálogos de filtros, utilidades y adaptadores de museos.
@@ -771,7 +771,7 @@ const MUSEUMS = [
   { id: 'mia', es: 'Minneapolis Institute of Art', city: 'Minneapolis', ids: [], direct: 'mia', labels: [['Minneapolis Institute of Art', 'en']] },
   { id: 'si', es: 'Smithsonian (SAAM, Freer, Hirshhorn, NPG)', city: 'Washington', ids: [], direct: 'si', labels: [['Smithsonian American Art Museum', 'en'], ['Freer Gallery of Art', 'en'], ['Hirshhorn Museum and Sculpture Garden', 'en']], q: 'Smithsonian American Art Museum', needsKey: 'si' },
   { id: 'harvard', es: 'Harvard Art Museums', city: 'Cambridge (EE. UU.)', ids: [], direct: 'harvard', labels: [['Harvard Art Museums', 'en']], needsKey: 'harvard' },
-  { id: 'open', es: 'Colecciones abiertas', city: 'WikiArt, Commons, Wikidata y Europeana', ids: [], open: true, labels: [], q: '', note: 'No distinguen museos: se mezclan con cualquier museo' },
+  { id: 'open', es: 'Colecciones abiertas', city: 'WikiArt, Google Art Project, Commons, Wikidata, Princeton y Europeana', ids: [], open: true, labels: [], q: '', note: 'No distinguen museos: se mezclan con cualquier museo' },
   { id: 'louvre', es: 'Louvre', city: 'París', ids: ['Q19675'], labels: [['Louvre', 'en'], ['Musée du Louvre', 'fr'], ['Louvre Museum', 'en']] },
   { id: 'orsay', es: 'Orsay', city: 'París', ids: ['Q23402'], labels: [["Musée d'Orsay", 'fr'], ["Musée d'Orsay", 'en'], ['Orsay Museum', 'en']] },
   { id: 'versailles', es: 'Versalles', city: 'Versalles', ids: ['Q2946'], labels: [['Palace of Versailles', 'en'], ['Château de Versailles', 'fr'], ['Musée national des châteaux de Versailles et de Trianon', 'fr']] },
@@ -807,7 +807,7 @@ const MUSEUMS = [
   { id: 'lille', es: 'Bellas Artes de Lille', city: 'Lille', ids: [], labels: [['Palais des Beaux-Arts de Lille', 'fr']] },
   { id: 'fabre', es: 'Museo Fabre', city: 'Montpellier', ids: [], labels: [['Musée Fabre', 'fr'], ['Musée Fabre', 'en']] },
   { id: 'rouen', es: 'Bellas Artes de Ruan', city: 'Ruan', ids: [], labels: [['Musée des Beaux-Arts de Rouen', 'fr']] },
-  { id: 'moma', es: 'MoMA', city: 'Nueva York', ids: [], labels: [['Museum of Modern Art', 'en'], ['Museum of Modern Art', 'es']] },
+  { id: 'moma', es: 'MoMA', city: 'Nueva York', ids: [], direct: 'moma', labels: [['Museum of Modern Art', 'en'], ['Museum of Modern Art', 'es']] },
   { id: 'guggenheim', es: 'Guggenheim Nueva York', city: 'Nueva York', ids: [], labels: [['Solomon R. Guggenheim Museum', 'en'], ['Guggenheim Museum', 'en']] },
   { id: 'whitney', es: 'Whitney', city: 'Nueva York', ids: [], labels: [['Whitney Museum of American Art', 'en']] },
   { id: 'getty', es: 'J. Paul Getty Museum', city: 'Los Ángeles', ids: [], labels: [['J. Paul Getty Museum', 'en'], ['Getty Center', 'en']] },
@@ -1132,11 +1132,22 @@ function commonsQueries(plan, f, m) {
   else q.push((plan.keyword || pick(GENERIC)) + ' ' + kind + ' museum' + tail);
   return q;
 }
-async function commonsFetch(plan, f, ctx, m) {
+async function commonsFetch(plan, f, ctx, m) { return commonsSearch(commonsQueries(plan, f, m), plan, ctx, m); }
+/* Portada de Commons: imágenes destacadas y las del proyecto Google Art Project (miles de cuadros en alta resolución). */
+async function commonsSpecial(kind, plan, f, ctx) {
+  const k = COMMONS_KIND[plan.type] || 'painting', artist = plan.artist || plan.hintArtist, kw = plan.keyword ? ' ' + plan.keyword : '';
+  const who = plan.artist ? ' "' + plan.artist + '"' : (plan.style ? ' ' + plan.style.q : '');
+  const tail = ' filetype:bitmap';
+  const qs = kind === 'gap'
+    ? ['"Google Art Project"' + who + kw + tail, '"Google Art Project"' + who + tail, '"Google Art Project" ' + k + tail]
+    : ['incategory:"Featured pictures of ' + (k === 'painting' ? 'paintings' : k === 'sculpture' ? 'sculptures' : 'art') + '"' + who + kw + tail, 'incategory:"Featured pictures of paintings"' + who + tail, 'incategory:"Quality images of paintings"' + who + tail];
+  return commonsSearch(qs, plan, ctx, null, kind === 'gap' ? 'Google Art Project' : 'Commons (destacadas)');
+}
+async function commonsSearch(queries, plan, ctx, m, label) {
   const API = 'https://commons.wikimedia.org/w/api.php?format=json&formatversion=2&origin=*&action=query';
   const W = ctx.hq ? 3000 : 1800;
   let pages = [];
-  for (const q of commonsQueries(plan, f, m)) {
+  for (const q of queries) {
     const total = await memo('cm:' + q, async () => {
       const j = await getJSON(API + '&list=search&srnamespace=6&srlimit=1&srprop=&srinfo=totalhits&srsearch=' + encodeURIComponent(q));
       return (j.query && j.query.searchinfo && j.query.searchinfo.totalhits) || 0;
@@ -1160,7 +1171,7 @@ async function commonsFetch(plan, f, ctx, m) {
     if (m && NOT_ART.test(name)) return null;
     const date = val('DateTimeOriginal');
     return mk({
-      src: 'commons', museum: m ? m.es : 'Wikimedia Commons', id: p.pageid || p.title,
+      src: 'commons', museum: m ? m.es : (label || 'Wikimedia Commons'), id: p.pageid || p.title,
       title, artist: flipName(val('Artist')).slice(0, 80), date: date.slice(0, 40), year: parseYear(cleanDate(date)),
       imgs: [ii.thumburl, ii.url], thumb: ii.thumburl, url: ii.descriptionurl || ('https://commons.wikimedia.org/wiki/' + encodeURIComponent(p.title || '')),
       w: ii.width, h: ii.height, type: classifyType(title) || (plan.type === 'painting' ? 'painting' : null),
@@ -1232,7 +1243,7 @@ async function museumFetch(m, plan, f, ctx) {
   const rep = (name, n, err) => { if (ctx.report) ctx.report(name, n, err); };
   const jobs = [];
   if (m.open) {
-    jobs.push(['WikiArt', () => wikiartFetch(plan, f, ctx)], ['Commons', () => commonsFetch(plan, f, ctx)], ['Wikidata', () => wikiFetch(plan, f, ctx)]);
+    jobs.push(['WikiArt', () => wikiartFetch(plan, f, ctx)], ['Google Art Project', () => commonsSpecial('gap', plan, f, ctx)], ['Commons destacadas', () => commonsSpecial('fp', plan, f, ctx)], ['Commons', () => commonsFetch(plan, f, ctx)], ['Wikidata', () => wikiFetch(plan, f, ctx)], ['Princeton', () => dpulFetch(plan, f, ctx)]);
     if (ctx.keys && ctx.keys.europeana) jobs.push(['Europeana', () => europeanaFetch(plan, f, ctx)]);
   } else {
     if (m.direct && DIRECT[m.direct]) jobs.push(['Directa', () => DIRECT[m.direct](plan, f, ctx)]);
@@ -1277,9 +1288,69 @@ async function resolveMuseum(name) {
 }
 const MUSEUM_DESC = /museum|museo|musée|museu|galler|galería|galerie|pinacoteca|collection|colección|art\b|arte\b/i;
 
+/* MoMA: sin API pública. Se usan los datos abiertos de MoMA (github.com/MuseumofModernArt/collection) convertidos en
+   trozos pequeños en data/moma/ (ver tools/moma-shards.py). Las imágenes son las de moma.org a 1024 px. */
+const MOMA_TYPE = { painting: 'painting', drawing: 'drawing', print: 'print', photo: 'photo', sculpture: 'sculpture' };
+const MOMA_RAW = 'https://raw.githubusercontent.com/Mrtana/screenart/main/data/moma/';
+const momaToken = id => btoa('[["f","' + id + '"],["p","convert","-resize 1024x1024\\u003e"]]').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+async function momaJSON(name) {
+  return memo('moma:' + name, async () => {
+    try { return await getJSON('data/moma/' + name, {}, 25000); }
+    catch (e) { return await getJSON(MOMA_RAW + name, {}, 25000); }
+  });
+}
+async function momaFetch(plan, f, ctx) {
+  const type = MOMA_TYPE[plan.type] || 'painting';
+  const index = await momaJSON('index.json');
+  let parts = index[type] || [];
+  if (plan.range) parts = parts.filter(p => p.y1 == null || (p.y1 >= plan.range[0] && p.y0 <= plan.range[1]));
+  if (!parts.length) return [];
+  const part = pick(parts);
+  const rows = await momaJSON(part.f);
+  const who = plan.artist ? norm(plan.artist) : null, kw = plan.keyword ? norm(plan.keyword) : null;
+  let hits = rows.filter(r => (!plan.range || r[3] == null || (r[3] >= plan.range[0] && r[3] <= plan.range[1])) && (!who || norm(r[2]).includes(who)) && (!kw || norm(r[1]).includes(kw)));
+  if (plan.range) hits = hits.filter(r => r[3] != null);
+  return sampleN(hits, 40).map(r => mk({
+    src: 'moma', museum: 'MoMA (Nueva York)', id: r[0], title: r[1], artist: r[2], date: r[3] == null ? '' : String(r[3]), year: r[3],
+    imgs: ['https://www.moma.org/media/' + momaToken(r[4]) + '.jpg?sha=' + r[5]], url: 'https://www.moma.org/collection/works/' + r[0],
+    type, pd: null, license: 'MoMA (obra con o sin derechos de autor)'
+  }));
+}
+
+/* Princeton (DPUL): catálogo en formato JSON de Blacklight y imágenes IIIF. No está comprobado desde un navegador real:
+   si el servidor no permite la consulta, «Probar fuentes» lo mostrará. */
+const DPUL_WORDS = ['painting', 'print', 'drawing', 'engraving', 'woodcut', 'lithograph', 'watercolor', 'portrait', 'landscape', 'illustration'];
+async function dpulFetch(plan, f, ctx) {
+  const q = [plan.artist || plan.hintArtist, plan.style && plan.style.q, plan.keyword].filter(Boolean).join(' ') || pick(DPUL_WORDS);
+  const base = 'https://dpul.princeton.edu/catalog.json?search_field=all_fields&per_page=24&q=' + encodeURIComponent(q);
+  const first = await memo('dpul:' + q, () => getJSON(base + '&page=1', { headers: { Accept: 'application/json' } }, 20000));
+  const pages = Math.max(1, Math.min(((first.meta && first.meta.pages && first.meta.pages.total_pages) || 1), 40));
+  const n = 1 + rand(pages);
+  const j = n === 1 ? first : await getJSON(base + '&page=' + n, { headers: { Accept: 'application/json' } }, 20000);
+  const items = j.data || (j.response && j.response.docs) || [];
+  const out = [];
+  items.forEach(it => {
+    const txt = JSON.stringify(it);
+    const m = txt.match(/https:\/\/(?:iiif-cloud\.princeton\.edu\/iiif\/2\/[^"\\]+?)\/(?:full|square|\d+,\d+,\d+,\d+)\//);
+    if (!m) return;
+    const at = it.attributes || it;
+    const key = k => { const x = Object.keys(at).find(y => new RegExp('^' + k, 'i').test(y)); const v = x && at[x]; return Array.isArray(v) ? v[0] : (v && v.attributes ? v.attributes.value : v); };
+    const title = key('title_display') || key('title') || '';
+    if (!title) return;
+    const id = it.id || (it.links && it.links.self) || title;
+    const base2 = m[0].replace(/\/(?:full|square|\d+,\d+,\d+,\d+)\/$/, '');
+    out.push(mk({
+      src: 'dpul', museum: 'Princeton (DPUL)', id, title: String(title), artist: String(key('creator') || key('author') || ''), date: String(key('pub_date') || key('date') || ''),
+      imgs: [base2 + '/full/!' + (ctx.hq ? 3000 : 2000) + ',' + (ctx.hq ? 3000 : 2000) + '/0/default.jpg', base2 + '/full/!1200,1200/0/default.jpg'], thumb: base2 + '/full/!500,500/0/default.jpg',
+      url: 'https://dpul.princeton.edu/catalog/' + String(id).replace(/^.*\//, ''), type: classifyType(String(title) + ' ' + q), pd: null, license: 'Princeton University Library'
+    }));
+  });
+  return out;
+}
+
 const GENERIC = ['landscape', 'portrait', 'flowers', 'sea', 'garden', 'still life', 'river', 'mountains', 'figure', 'city', 'harbor', 'winter', 'horse', 'woman', 'sky', 'forest', 'village', 'ship', 'night', 'mother'];
 
-DIRECT.met = metFetch; DIRECT.aic = aicFetch; DIRECT.cma = cmaFetch; DIRECT.rijks = rijksFetch; DIRECT.vam = vamFetch; DIRECT.smk = smkFetch; DIRECT.mia = miaFetch; DIRECT.si = siFetch; DIRECT.harvard = harvardFetch;
+DIRECT.moma = momaFetch; DIRECT.met = metFetch; DIRECT.aic = aicFetch; DIRECT.cma = cmaFetch; DIRECT.rijks = rijksFetch; DIRECT.vam = vamFetch; DIRECT.smk = smkFetch; DIRECT.mia = miaFetch; DIRECT.si = siFetch; DIRECT.harvard = harvardFetch;
 const MUSEUM_SOURCES = [];
 MUSEUMS.forEach(m => { const src = museumSource(m); SOURCE_LIST.push(src); MUSEUM_SOURCES.push(src); });
 
@@ -1302,7 +1373,7 @@ const api = {
   rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
   ERAS, STYLES, TYPES, KEYWORDS, MUSEUMS, DEFAULT_MUSEUMS, MUSEUM_SOURCES, ARTIST_SUGGESTIONS, keywordToQuery,
   defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC, museumIdsByTag,
-  adapters: { wikidataMuseum, wikipediaFetch, commonsFetch, wikiartFetch, metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }
+  adapters: { momaFetch, dpulFetch, commonsSpecial, wikidataMuseum, wikipediaFetch, commonsFetch, wikiartFetch, metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }
 };
 if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.ArtCore = api;
 })(typeof self !== 'undefined' ? self : globalThis);
