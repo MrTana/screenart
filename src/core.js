@@ -250,6 +250,12 @@ function cleanTitle(t) {
   return s.length > 140 ? s.slice(0, 137).trim() + '…' : s;
 }
 
+function cleanDate(d) {
+  if (d == null || typeof d === 'number') return d == null ? '' : d;
+  let s = String(d).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  const i = s.search(/\bQS:/); if (i >= 0) s = s.slice(0, i);
+  return s.replace(/\s+(date|title|label|description)\s*$/i, '').replace(/^(date|fecha):\s*/i, '').trim().slice(0, 40);
+}
 function mk(p) {
   const imgs = [];
   (p.imgs || []).filter(Boolean).forEach(u => { if (/^http:\/\//.test(u)) imgs.push(u.replace(/^http:/, 'https:')); imgs.push(u); });
@@ -258,7 +264,7 @@ function mk(p) {
     src: p.src, museum: p.museum,
     title: cleanTitle(p.title) || 'Sin título',
     artist: (p.artist && String(p.artist).replace(/\s*\bQS:.*$/, '').trim().slice(0, 90)) || '',
-    date: p.date || '', year: p.year == null ? parseYear(p.date) : p.year,
+    date: cleanDate(p.date), year: p.year == null ? parseYear(cleanDate(p.date)) : p.year,
     imgs, thumb: p.thumb || imgs[imgs.length - 1] || '',
     url: p.url || '', w: p.w || null, h: p.h || null,
     type: p.type || null, pd: p.pd === undefined ? null : p.pd, license: p.license || ''
@@ -820,7 +826,7 @@ async function commonsFetch(plan, f, ctx, m) {
     const date = val('DateTimeOriginal');
     return mk({
       src: 'commons', museum: m ? m.es : 'Wikimedia Commons', id: p.pageid || p.title,
-      title, artist: flipName(val('Artist')).slice(0, 80), date: date.slice(0, 40), year: parseYear(date),
+      title, artist: flipName(val('Artist')).slice(0, 80), date: date.slice(0, 40), year: parseYear(cleanDate(date)),
       imgs: [ii.thumburl, ii.url], thumb: ii.thumburl, url: ii.descriptionurl || ('https://commons.wikimedia.org/wiki/' + encodeURIComponent(p.title || '')),
       w: ii.width, h: ii.height, type: classifyType(title) || (plan.type === 'painting' ? 'painting' : null),
       pd: /public domain|pd|cc0/i.test(lic) ? true : (lic ? false : null), license: lic || 'Wikimedia Commons'
@@ -960,7 +966,7 @@ async function runSource(src, f, ctx) {
 const api = {
   rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
   ERAS, STYLES, TYPES, KEYWORDS, MUSEUMS, DEFAULT_MUSEUMS, MUSEUM_SOURCES, ARTIST_SUGGESTIONS, keywordToQuery,
-  defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC,
+  defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC,
   adapters: { wikidataMuseum, wikipediaFetch, commonsFetch, wikiartFetch, metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }
 };
 if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.ArtCore = api;

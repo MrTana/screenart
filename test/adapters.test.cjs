@@ -86,6 +86,9 @@ globalThis.fetch = async (url, init) => {
   assert.strictEqual(C.cleanTitle('German: Wald mit Felsblöcken'), 'Wald mit Felsblöcken');
   assert.strictEqual(C.cleanTitle('English: Rocks in the Wood French: Rochers dans le bois'), 'Rocks in the Wood');
   assert.strictEqual(C.cleanTitle('<b>La Gioconda</b>'), 'La Gioconda');
+  assert.strictEqual(C.cleanDate('1840 date QS:P571,+1840-00-00T00:00:00Z/'), '1840');
+  assert.strictEqual(C.cleanDate('c. 1503–1519'), 'c. 1503–1519'); assert.strictEqual(C.cleanDate(1880), 1880);
+  const mkd = C.mk({ src: 't', id: 1, title: 'x', date: '1840 date QS:P571,+1840-00-00T00:00:00Z/', imgs: ['https://a/b.jpg'] }); assert.strictEqual(mkd.date, '1840'); assert.strictEqual(mkd.year, 1840);
   assert.strictEqual(C.cleanTitle('Water Lilies: Morning'), 'Water Lilies: Morning');
   assert.strictEqual(C.parseYear('c. 1895'), 1895);
   assert.strictEqual(C.parseYear('400 B.C.'), -400);
