@@ -29,7 +29,8 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   console.log('estado fuentes:', JSON.stringify(Object.fromEntries(Object.entries(S.status).map(([k, v]) => [k, v.state]))));
   { const k = S.st.interval; const t = (sec) => { S.st.interval = sec; return A.captionMs(); };
     assert.deepStrictEqual([t(10), t(30), t(900), t(1800), t(3600)], [2500, 7500, 225000, 300000, 300000], 'la ficha dura el 25 % (máx. 5 min)'); S.st.interval = k; }
-  assert.strictEqual(w.document.querySelector('#caption .s'), null, 'la ficha solo lleva título, autor y año');
+  assert.ok(w.document.querySelector('#caption .s'), 'la ficha tiene línea de museo'); assert.strictEqual(S.st.caption, 'def'); assert.strictEqual(A.capMode(), 'auto', 'TV (sin táctil): la ficha sale al inicio');
+  assert.ok(!w.document.getElementById('menuBtn') && !w.document.querySelector('.edge'), 'sin botón de menú ni flechas');
   assert.strictEqual(w.document.querySelector('#c-types'), null, 'ya no existe la sección «Tipo de obra»');
   { const C = w.ArtCore, df = C.defaultFilters(), mkw = (type) => ({ imgs: ['x'], type, year: 1700 });
     assert.ok(!C.accept(mkw('sculpture'), df) && !C.accept(mkw('decorative'), df), 'se descartan esculturas y objetos 3D');
@@ -113,16 +114,19 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   console.log('tras filtros -> mostradas:', S.shown, '| estados:', JSON.stringify(Object.fromEntries(Object.entries(S.status).map(([k, v]) => [k, v.state + (v.msg ? ':' + v.msg : '')]))));
   A.next(); await wait(100); A.prev();
   console.log('historial:', S.hist.length, 'idx', S.hi);
+  assert.ok(S.current && S.current.museum, 'la obra trae museo'); assert.strictEqual(w.document.querySelector('#caption .s').textContent, S.current.museum, 'la ficha lleva el museo');
   // Toques como en un libro electrónico (pantalla de 500 px)
   Object.defineProperty(w, 'innerWidth', { value: 500, configurable: true });
+  S.st.caption = 'def'; assert.strictEqual(A.capMode(), 'always', 'móvil sin TV: la ficha siempre visible'); S.st.caption = 'auto'; assert.strictEqual(A.capMode(), 'auto'); S.st.caption = 'def';
   const tap = x => d.body.dispatchEvent(new w.MouseEvent('click', { clientX: x, bubbles: true }));
   const sh0 = S.shown, hl0 = S.hist.length;
   tap(480); await wait(400);
   const rightOK = !S.menu && (S.adv || S.hist.length > hl0 || S.shown > sh0 || S.hi < S.hist.length - 1);
   const hi1 = S.hi; tap(15); await wait(100);
   const leftOK = !S.menu && (S.hi < hi1 || S.hi === 0);
-  tap(250); const centerOK = S.menu; A.closeMenu();
-  console.log('toques -> derecha:', rightOK, '| izquierda:', leftOK, '| centro abre menú:', centerOK);
+  tap(250); const centerOK = !S.menu; // un toque en el centro ya no abre el menú
+  { d.body.dispatchEvent(new w.MouseEvent('pointerdown', { clientX: 250, clientY: 100, bubbles: true, button: 0 })); await wait(750); assert.ok(S.menu, 'mantener pulsado abre el menú'); d.body.dispatchEvent(new w.MouseEvent('pointerup', { bubbles: true })); tap(250); await wait(50); assert.ok(S.menu, 'el clic tras la pulsación larga no cierra el menú'); await wait(700); A.closeMenu(); }
+  console.log('toques -> derecha:', rightOK, '| izquierda:', leftOK, '| centro ya no abre menú:', centerOK);
   if (!rightOK || !leftOK || !centerOK) { console.error('FALLO toques'); process.exit(1); }
   console.log('errores JS:', errors.length ? errors : 'ninguno');
   process.exit(0);

@@ -77,12 +77,12 @@ En el menú, «Claves de API» incluye un botón **Probar** por cada clave (Euro
 | --- | --- |
 | Flechas izquierda y derecha | Obra anterior y siguiente |
 | Espacio | Pausar y reanudar |
-| Intro, M o flechas arriba y abajo | Abrir el menú |
+| Intro, M o flechas arriba y abajo | Abrir el menú (con ratón o dedo: mantener pulsada la pantalla ≈0,6 s) |
 | F | Pantalla completa |
 | I | Mostrar u ocultar la ficha |
 | L | Guardar o quitar favorita |
 
-En el móvil o la tableta funciona como un libro electrónico: tocar el borde derecho pasa a la siguiente obra, el borde izquierdo vuelve a la anterior y el centro abre el menú. También se puede deslizar el dedo a izquierda o derecha.
+En el móvil o la tableta funciona como un libro electrónico: tocar el borde derecho pasa a la siguiente obra, el borde izquierdo vuelve a la anterior (sin flechas ni botones en pantalla). También se puede deslizar el dedo a izquierda o derecha. El menú se abre manteniendo pulsada la pantalla; un toque suelto ya no lo abre ni muestra botones.
 
 ## Mando desde el móvil (sin usar el control de la TV)
 
@@ -92,6 +92,7 @@ Al abrir la galería en una pantalla grande aparece un **código QR** en la esqu
 - Si no ves el QR, abre la galería en la TV con `?tv=1` al final de la dirección (o pulsa la tecla Q). En el menú de la TV hay también «Mando en el móvil».
 - El móvil queda emparejado por un código aleatorio que la TV guarda en su navegador; puedes añadir la página del mando a la pantalla de inicio del móvil y seguirá funcionando mientras la TV no cambie de código.
 - La comunicación pasa por brokers MQTT públicos gratuitos por WebSocket (emqx, HiveMQ y Mosquitto a la vez, sin cuentas ni servidor propio), con un código aleatorio de 12 caracteres en el tema. Viajan órdenes, filtros, el título de la obra y, si las escribes en el mando, tus claves de API. Si ningún broker responde en 7 s se usa [ntfy.sh](https://ntfy.sh) como reserva (su límite gratuito es de unos 250 mensajes al día por conexión y puede devolver el error 429). Para usar tu propio broker, añade `?broker=wss://tu-broker/mqtt` en ambas direcciones.
+- **Ficha de la obra:** título, autor, año y museo. «Predeterminada»: en el móvil o la tableta (sin TV) siempre visible; en la TV, solo al inicio de cada obra (25 % del tiempo, máx. 5 min). También se puede fijar en «Al inicio», «Siempre visible» u «Oculta».
 - **Fondo y cintillo:** el fondo detrás de la obra, la pantalla de carga, el marco y el cintillo de la ficha siguen los colores, formas y movimiento del skin elegido (ya no hay selector de fondo).
 - **Todo el menú en el móvil:** además de los filtros, el mando tiene «Probar fuentes» (se ejecuta en la TV y el informe llega al móvil), «Restablecer filtros», las claves de API (se envían a la TV por el mismo canal) e «Instalar la app».
 - **Actualizar:** al final del mando hay «Buscar actualización»: la TV borra su copia guardada y recarga la última versión, y el móvil se actualiza después. Muestra la versión de cada uno.

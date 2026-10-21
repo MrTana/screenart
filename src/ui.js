@@ -24,16 +24,17 @@ function normFilters(s) {
 }
 const S = {
   f: loadFilters(),
-  st: Object.assign({ interval: 30, mode: 'gallery', quality: 'normal', kenburns: false, caption: 'auto', skin: 'm3-dark' }, lsGet('st', {})),
+  st: Object.assign({ interval: 30, mode: 'gallery', quality: 'normal', kenburns: false, caption: 'def', skin: 'm3-dark' }, lsGet('st', {})),
   keys: Object.assign({ europeana: 'api2demo', si: 'DEMO_KEY', harvard: '' }, lsGet('keys', {})),
   favs: lsGet('favs', []),
   pool: [], seen: new Set(), seenKey: new Set(), hist: [], hi: -1,
   paused: false, menu: false, epoch: 0, refilling: 0, adv: false, advAt: 0, flight: new Map(), cool: {}, streak: {}, warned: false, recycleAfter: 6000, artGroup: 'impressionism', mfilter: '', detail: {}, acc: null,
   status: {}, counts: {}, layer: 0, nextP: null, nextEpoch: -1,
-  timer: null, capT: null, idleT: null, waiters: [], current: null, shown: 0
+  noClick: 0, timer: null, capT: null, idleT: null, waiters: [], current: null, shown: 0
 };
 function saveAll() { if (REMOTE) { remoteSetSoon(); return; } lsSet('f', S.f); lsSet('st', S.st); lsSet('keys', S.keys); lsSet('favs', S.favs.slice(0, 300)); }
 
+if (S.st.capv !== 2) { S.st.capv = 2; if (S.st.caption === 'auto') S.st.caption = 'def'; } // la ficha ahora es «predeterminada» (móvil: siempre; TV: al inicio)
 S.custom = lsGet('custom', []);
 S.custom.forEach(m => { try { C.addMuseum(m); } catch (e) { /* museo dañado */ } });
 const slides = [$('#slideA'), $('#slideB')];
@@ -203,16 +204,20 @@ async function pullNext() {
 
 /* ───────── escenario ───────── */
 function isFav(w) { return !!w && S.favs.some(x => x.uid === w.uid); }
+/* Ficha «predeterminada»: en un móvil/tableta (sin TV conectada) siempre visible; en la TV, al inicio de cada obra. */
+function capMode() { const c = S.st.caption; return c === 'def' || !c ? (touchLayout() ? 'always' : 'auto') : c; }
 function captionMs() { const s = +S.st.interval || 30; return (s >= 1800 ? 300 : s * 0.25) * 1000; }
 function setCaption(w) {
   const c = $('#caption');
   c.querySelector('.t').textContent = w.title;
   c.querySelector('.m').textContent = [w.artist, w.date || w.year].filter(Boolean).join(' · ');
+  c.querySelector('.s').textContent = w.museum || '';
   clearTimeout(S.capT);
-  if (S.st.caption === 'never') { c.classList.remove('show'); return; }
+  const cm = capMode();
+  if (cm === 'never') { c.classList.remove('show'); return; }
   c.classList.add('show');
   // La ficha dura el 25 % del tiempo de la obra; con 30 min o más, 5 min como máximo.
-  if (S.st.caption === 'auto') S.capT = setTimeout(() => c.classList.remove('show'), captionMs());
+  if (cm === 'auto') S.capT = setTimeout(() => c.classList.remove('show'), captionMs());
 }
 function present(item, fromHist) {
   const nxt = 1 - S.layer, s = slides[nxt];
@@ -390,7 +395,7 @@ const MODES = [['gallery', 'Obra completa'], ['frame', 'Con marco'], ['fill', 'L
 const INTERVALS = [[10, '10 s'], [15, '15 s'], [30, '30 s'], [60, '1 min'], [300, '5 min'], [900, '15 min'], [3600, '1 h']];
 const SKINS = [['m3-dark', 'Material 3 oscuro'], ['m3-light', 'Material 3 claro'], ['m3e-dark', 'Material 3 Expressive oscuro'], ['m3e-light', 'Material 3 Expressive claro']];
 const SKIN_BAR = { 'm3-dark': '#141218', 'm3-light': '#FEF7FF', 'm3e-dark': '#15101C', 'm3e-light': '#FFF7FF' };
-const CAPTIONS = [['auto', 'Al inicio de cada obra'], ['always', 'Siempre visible'], ['never', 'Oculta']];
+const CAPTIONS = [['def', 'Predeterminada (móvil: siempre visible; con TV: al inicio)'], ['auto', 'Al inicio de cada obra'], ['always', 'Siempre visible'], ['never', 'Oculta']];
 
 const chip = (act, id, label, on, cls) => '<button class="chip' + (cls ? ' ' + cls : '') + '" data-act="' + act + '" data-id="' + esc(id) + '" aria-pressed="' + !!on + '">' + esc(label) + '</button>';
 const opts = (list, cur) => list.map(o => '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(cur) ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join('');
@@ -577,20 +582,31 @@ document.addEventListener('touchend', e => {
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-act]');
   if (el) { onAct(el.dataset.act, el.dataset.id); return; }
-  if (e.target.id === 'menuBtn') { openMenu(); return; }
   if (e.target.id === 'loaderMenu') { openMenu(); return; }
   if (e.target.id === 'loaderDiag') { diagnose(); return; }
   if (e.target.closest('#pair')) { hidePair(); return; }
   if (REMOTE) return;
   if (e.target.closest('#drawer') || e.target.closest('#diag')) return;
-  if (!S.menu && touchLayout() && e.clientX != null) {
-    // Como en un libro electrónico: borde derecho = siguiente, borde izquierdo = anterior, centro = menú.
+  if (Date.now() < S.noClick) return; // el clic que sigue a una pulsación larga no cuenta
+  if (S.menu) { closeMenu(); return; }
+  if (touchLayout() && e.clientX != null) {
+    // Sin botones ni flechas: borde derecho = siguiente, borde izquierdo = anterior (y también deslizando). El menú se abre manteniendo pulsado.
     const x = e.clientX / (window.innerWidth || 1);
-    if (x > EDGE_R) { next(); return; }
-    if (x < EDGE_L) { prev(); return; }
+    if (x > EDGE_R) next(); else if (x < EDGE_L) prev();
   }
-  S.menu ? closeMenu() : openMenu();
 });
+// Mantener pulsada la pantalla (≈0,6 s) abre el menú; un clic suelto ya no lo abre ni muestra botones.
+{ let lp = null, p0 = null;
+  const stop = () => { clearTimeout(lp); lp = null; };
+  document.addEventListener('pointerdown', e => {
+    if (REMOTE || S.menu || e.button > 0 || e.target.closest('#drawer, #diag, #pair, #loader, #toast, [data-act]')) return;
+    p0 = { x: e.clientX, y: e.clientY }; stop();
+    lp = setTimeout(() => { lp = null; S.noClick = Date.now() + 700; openMenu(); }, 600);
+  }, { passive: true });
+  document.addEventListener('pointermove', e => { if (lp && p0 && Math.hypot(e.clientX - p0.x, e.clientY - p0.y) > 12) stop(); }, { passive: true });
+  ['pointerup', 'pointercancel', 'pointerleave', 'touchmove'].forEach(ev => document.addEventListener(ev, stop, { passive: true }));
+  document.addEventListener('contextmenu', e => { if (!REMOTE && !e.target.closest('#drawer, #diag, input, textarea, select')) e.preventDefault(); });
+}
 ['mousemove', 'touchstart', 'pointerdown'].forEach(ev => document.addEventListener(ev, activity, { passive: true }));
 document.addEventListener('keydown', e => {
   activity();
@@ -910,11 +926,11 @@ function init() {
   if (REMOTE) { initRemote(); return; }
   applyLook(); renderAll(); activity(); keepAwake();
   document.body.classList.add('active');
-  if (touchLayout() && !lsGet('tapHint', false)) { lsSet('tapHint', true); setTimeout(() => toast('Toca el borde derecho: siguiente · el izquierdo: anterior · el centro: menú'), 2500); }
-  showLoader('Buscando obras en los museos…', 'Pulsa Intro o toca la pantalla para abrir los filtros.', false);
+  if (touchLayout() && !lsGet('tapHint', false)) { lsSet('tapHint', true); setTimeout(() => toast('Toca el borde derecho: siguiente · el izquierdo: anterior · mantén pulsado: menú'), 2500); }
+  showLoader('Buscando obras en los museos…', 'Pulsa Intro o mantén pulsada la pantalla para abrir los filtros.', false);
   advance();
   initTV();
 }
-window.ArtApp = { S, next, prev, advance, openMenu, closeMenu, refill, onAct, render, renderAll, applyChange, present, pullNext, captionMs, parseCode, Remote: () => RC };
+window.ArtApp = { S, next, prev, advance, openMenu, closeMenu, refill, onAct, render, renderAll, applyChange, present, pullNext, captionMs, capMode, parseCode, Remote: () => RC };
 init();
 })();
