@@ -5,12 +5,12 @@ const fs = require('fs');
 const html = fs.readFileSync(__dirname + '/../index.html', 'utf8');
 const J = o => ({ ok: true, status: 200, json: async () => o });
 const dom = new JSDOM(html, { runScripts: 'outside-only', pretendToBeVisual: true, url: 'https://example.test/' });
-const w = dom.window; const errors = [];
+const w = dom.window; w.__ART_TUNING = { sparqlPause: 5 }; const errors = [];
 w.addEventListener('error', e => errors.push(e.message));
 let metCalls = 0;
 w.fetch = async url => {
   url = String(url);
-  if (url.includes('metmuseum') && url.includes('/search')) { metCalls++; return J({ objectIDs: [1, 2] }); }
+  if (url.includes('metmuseum') && url.includes('/search')) { metCalls++; return J({ total: 2, objectIDs: [1, 2] }); }
   if (url.includes('metmuseum') && url.includes('/objects/')) { const id = +url.split('/').pop(); return J({ objectID: id, isPublicDomain: true, primaryImage: 'https://img/met' + id + '.jpg', primaryImageSmall: 'https://img/s' + id + '.jpg', title: 'Obra ' + id, artistDisplayName: 'Autor', objectDate: '1890', objectBeginDate: 1890, objectEndDate: 1890, classification: 'Paintings', medium: 'Oil on canvas', objectURL: 'https://m/' + id }); }
   throw new TypeError('Failed to fetch');
 };

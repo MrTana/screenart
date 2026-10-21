@@ -45,7 +45,7 @@ globalThis.fetch = async (url, init) => {
   url = String(url); calls.push(url);
   if (url.includes('metmuseum.org') && url.includes('/search')) return J(fx.metSearch);
   if (url.includes('metmuseum.org') && url.includes('/objects/')) return J(fx.metObj(+url.split('/').pop()));
-  if (url.includes('api.artic.edu')) { const b = init && init.body ? JSON.parse(init.body) : null; if (b) aicBodies.push(b); return J(b && b.limit === 1 ? fx.aicCount : fx.aicData); }
+  if (url.includes('api.artic.edu')) { aicBodies.push(url); if (init && init.method === 'POST') throw new TypeError('Failed to fetch'); if (/[?&](fields|page)=/.test(url)) throw new TypeError('Failed to fetch'); return J(fx.aicData); }
   if (url.includes('clevelandart')) return J(fx.cma);
   if (url.includes('smk.dk')) return J(fx.smk);
   if (url.includes('vam.ac.uk')) return J(fx.vam);
@@ -138,9 +138,11 @@ globalThis.fetch = async (url, init) => {
   const allMet = await C.adapters.metFetch(plan, C.defaultFilters(), anyCtx);
   assert.ok(!pdOnly.some(w => w.title === 'Obra protegida'), 'Met: la protegida no debe entrar');
   const prot = allMet.find(w => w.title === 'Obra protegida'); assert.ok(prot && prot.pd === false && /derechos/.test(prot.license), 'Met: debe entrar con anyRights');
-  aicBodies = []; await C.adapters.aicFetch(plan, C.defaultFilters(), ctx); const aicPD = JSON.stringify(aicBodies.pop());
-  await C.adapters.aicFetch(plan, C.defaultFilters(), anyCtx); const aicAll = JSON.stringify(aicBodies.pop());
-  assert.ok(/is_public_domain/.test(aicPD) && !/is_public_domain":true/.test(aicAll.replace(/"fields":\[[^\]]*\]/, '')), 'AIC: filtro de dominio público');
+  // AIC: solo q + limit (con fields, page o POST la API no devuelve cabeceras CORS); lo protegido se filtra en el cliente
+  aicBodies = []; const aicPD = await C.adapters.aicFetch(plan, C.defaultFilters(), ctx); const aicAll = await C.adapters.aicFetch(plan, C.defaultFilters(), anyCtx);
+  assert.ok(aicBodies.length >= 1 && aicBodies.every(u => /\/artworks\/search\?/.test(u) && !/[?&](fields|page)=/.test(u) && /limit=100/.test(u)), 'AIC: solo consulta simple: ' + aicBodies[0]);
+  assert.ok(aicPD.length >= 1 && aicAll.length >= aicPD.length, 'AIC devuelve obras');
+  assert.ok(calls.filter(u => u.includes('metmuseum.org') && u.includes('/search')).every(u => u.includes('/v1.1/search') && /limit=/.test(u) && /offset=/.test(u)), 'Met: búsqueda v1.1 con límite y desplazamiento');
   const urlsBefore = calls.length;
   await C.adapters.cmaFetch(plan, C.defaultFilters(), ctx); await C.adapters.cmaFetch(plan, C.defaultFilters(), anyCtx);
   const cmaCalls = calls.slice(urlsBefore).filter(u => u.includes('clevelandart')); assert.ok(cmaCalls.some(u => u.includes('cc0=1')) && cmaCalls.some(u => !u.includes('cc0=1')), 'CMA: cc0');

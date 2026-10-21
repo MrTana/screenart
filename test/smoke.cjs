@@ -4,13 +4,13 @@ const fs = require('fs');
 const html = fs.readFileSync(__dirname + '/../index.html', 'utf8');
 const J = o => ({ ok: true, status: 200, json: async () => o });
 const dom = new JSDOM(html, { runScripts: 'outside-only', pretendToBeVisual: true, url: 'https://example.test/' });
-const w = dom.window;
+const w = dom.window; w.__ART_TUNING = { sparqlPause: 5 };
 const errors = [];
 w.addEventListener('error', e => errors.push(e.message));
 // Mocks: fetch y Image
 w.fetch = async (url, init) => {
   url = String(url);
-  if (url.includes('metmuseum') && url.includes('/search')) return J({ objectIDs: [1, 2, 3] });
+  if (url.includes('metmuseum') && url.includes('/search')) return J({ total: 3, objectIDs: [1, 2, 3] });
   if (url.includes('metmuseum') && url.includes('/objects/')) { const id = +url.split('/').pop(); return J({ objectID: id, isPublicDomain: true, primaryImage: 'https://img/met' + id + '.jpg', primaryImageSmall: 'https://img/met' + id + 's.jpg', title: 'Obra ' + id, artistDisplayName: 'Claude Monet', objectDate: '1880', objectBeginDate: 1880, objectEndDate: 1880, classification: 'Paintings', objectURL: 'https://m/' + id }); }
   if (url.includes('www.wikidata.org/w/api.php')) return J({ search: [{ id: 'Q4242', label: 'Museo de Prueba', description: 'museo de arte' }] });
   throw new TypeError('Failed to fetch');

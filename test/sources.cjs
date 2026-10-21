@@ -68,6 +68,14 @@ const idx = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/moma/index.
   assert.ok(wv.length === 1 && log[0].includes('/en/remedios-varo/mode/all-paintings'), log[0]);
   const none = C.STYLES.find(x => !x.wa);
   log.length = 0; assert.deepStrictEqual(await C.adapters.wikiartFetch(Object.assign({}, plan, { style: none }), C.defaultFilters(), ctx), []); assert.strictEqual(log.length, 0, 'sin WikiArt para ese estilo');
+  // Wikidata: la consulta con artista usa «.» entre los parámetros del servicio (con «;» el servidor responde 400)
+  const sq = [];
+  globalThis.fetch = async u => { u = String(u); if (u.includes('query.wikidata.org')) sq.push(decodeURIComponent(u.split('query=')[1])); return J({ results: { bindings: [{ n: { value: '0' } }] } }); };
+  const fv = Object.assign(C.defaultFilters(), { artists: ['Remedios Varo'] });
+  await C.runSource(C.SOURCE_LIST.find(x => x.id === 'm:orsay'), fv, Object.assign({}, ctx, { anyRights: true }));
+  const aq = sq.find(q => /mwapi/.test(q));
+  assert.ok(aq && /wikibase:api "EntitySearch" \. bd:serviceParam mwapi:search "Remedios Varo" \./.test(aq) && !/"; bd:serviceParam/.test(aq), 'servicio mwapi bien formado');
+  assert.ok(!sq.filter(q => /COUNT/.test(q)).some(q => /wdt:P31 \?cls/.test(q)), 'el conteo no arrastra uniones innecesarias');
   const ids = C.MUSEUMS.map(m => m.id); assert.strictEqual(new Set(ids).size, ids.length, 'ids de museo únicos');
   assert.ok(C.museumIdsByTag('artist').length >= 20, 'museos de un solo artista');
   console.log('MoMA', l.length, '· DPUL', d.length, '· Commons especial OK');
