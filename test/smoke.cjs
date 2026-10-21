@@ -102,9 +102,11 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     const opts = Array.from(d.querySelectorAll('#c-presets option')).map(o => o.textContent);
     assert.ok(opts.includes('Surrealismo') && opts.includes('Impresionismo'), 'colecciones por estilo de las favoritas: ' + opts.join(' | '));
     assert.ok(!opts.includes('Renacimiento'), 'una obra sin artista conocido no crea colección');
-    pick('Surrealismo'); { const on = Object.keys(S.f.sources).filter(k => S.f.sources[k]);
-      assert.strictEqual(JSON.stringify(S.f.styles), '["surrealism"]'); assert.ok(on.includes('m:open') && on.includes('m:magritte') && on.includes('m:moma') && !on.includes('m:louvre'), 'Surrealismo: museos con obras surrealistas + colecciones abiertas'); }
-    pick('Impresionismo'); { const on = Object.keys(S.f.sources).filter(k => S.f.sources[k]); assert.strictEqual(JSON.stringify(S.f.styles), '["impressionism"]'); assert.ok(on.includes('m:louvre') && on.includes('m:open') && on.length > 150, 'Impresionismo: todos los museos'); }
+    A.onAct('era', 'mod'); S.f.orientation = 'landscape'; S.f.artists = ['Monet']; S.f.exclude = ['portraits']; S.f.soloPD = true; Object.keys(S.f.sources).forEach(k => { S.f.sources[k] = k === 'm:met'; });
+    pick('Surrealismo'); { const on = Object.keys(S.f.sources).filter(k => S.f.sources[k]), off = Object.keys(S.f.sources).filter(k => !S.f.sources[k]);
+      assert.strictEqual(JSON.stringify(S.f.styles), '[\"surrealism\"]'); assert.ok(on.includes('m:open') && on.includes('m:louvre') && on.includes('m:magritte') && on.length > 150, 'Surrealismo: todos los museos'); assert.strictEqual(off.join(), 'm:harvard', 'solo falta el que pide clave: ' + off);
+      assert.ok(S.f.eras.join() === 'mod' && S.f.orientation === 'landscape' && S.f.artists.join() === 'Monet' && S.f.exclude.join() === 'portraits' && S.f.soloPD, 'los demás filtros no cambian'); }
+    pick('Impresionismo'); assert.strictEqual(JSON.stringify(S.f.styles), '[\"impressionism\"]', 'solo cambia el estilo');
     assert.strictEqual(C0().styleIdsOf({ artist: 'Vincent van Gogh', year: 1888 }).join(), 'postimpressionism'); assert.strictEqual(C0().styleIdsOf({ artist: 'Vermeer', year: 1660 }).join(), 'dutch');
     S.favs = favs0; A.render('presets'); }
   { A.onAct('era', 'mod'); S.f.orientation = 'landscape'; S.f.soloPD = true; S.f.artists = ['Monet']; pick('Todo el arte');

@@ -202,9 +202,6 @@ function styleIdsOf(w) {
   const near = y != null ? hits.filter(s => y >= s.range[0] - 15 && y <= s.range[1] + 15) : [];
   return (near.length ? near : hits).map(s => s.id);
 }
-/* Estilos cuyas colecciones solo salen de museos con esas obras (el resto de estilos usa todos los museos). */
-const STYLE_MUSEUM_TAG = { surrealism: 'surreal' };
-
 const TYPES = [
   { id: 'painting', es: 'Pintura' },
   { id: 'drawing', es: 'Dibujo y acuarela' },
@@ -1326,7 +1323,7 @@ async function runSource(src, f, ctx) {
 const api = {
   rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
   ERAS, STYLES, TYPES, KEYWORDS, EXCLUDES, excluded, MUSEUMS, DEFAULT_MUSEUMS, MUSEUM_SOURCES, ARTIST_SUGGESTIONS, ARTIST_GROUPS, TUNING, keywordToQuery,
-  museumCountry, countryCollections, styleIdsOf, STYLE_MUSEUM_TAG, countryCollectionName, defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC, museumIdsByTag,
+  museumCountry, countryCollections, styleIdsOf, countryCollectionName, defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC, museumIdsByTag,
   adapters: { momaFetch, ngaFetch, tateFetch, shardFetch, commonsSpecial, wikidataMuseum, wikipediaFetch, commonsFetch, wikiartFetch, metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }
 };
 if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.ArtCore = api;

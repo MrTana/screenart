@@ -384,8 +384,8 @@ function toggleAcc(id) {
 /* ───────── menú ───────── */
 /* Colecciones rápidas: una por país con museos («Museos de México», «Museos de España»…), generadas a partir de los museos que
    hay (incluidos los que se añaden desde el menú), más «Museos de París». */
-/* Colecciones por estilo o movimiento según las pinturas favoritas: p. ej. con una favorita surrealista aparece «Surrealismo», que activa
-   los museos con obras surrealistas y las colecciones abiertas. El resto de estilos usa todos los museos. */
+/* Colecciones por estilo o movimiento según las pinturas favoritas: p. ej. con una favorita surrealista aparece «Surrealismo». Al elegirla se
+   activan todos los museos y las colecciones abiertas, y solo cambia el filtro de estilo (los demás filtros se quedan como están). */
 const hasKey = k => REMOTE ? !!(S.tvKeyset || {})[k] : !!S.keys[k]; // en el mando, las claves están en la TV
 function favStyleIds() {
   if (REMOTE) return S.tvFavStyles || [];
@@ -394,8 +394,7 @@ function favStyleIds() {
 }
 function favStyleCollections() {
   return favStyleIds().map(id => C.STYLES.find(s => s.id === id)).filter(Boolean).sort((a, b) => a.range[0] - b.range[0]).map(s => {
-    const tag = C.STYLE_MUSEUM_TAG[s.id];
-    return { key: 'estilo:' + s.id, es: s.es, patch: { styles: [s.id] }, only: tag ? C.museumIdsByTag(tag).concat(C.SOURCE_LIST.filter(x => x.museum && x.museum.open).map(x => x.id)) : null, allSources: !tag };
+    return { key: 'estilo:' + s.id, es: s.es, styleOnly: s.id };
   });
 }
 function presetList() {
@@ -540,6 +539,10 @@ function onAct(act, id) {
     }
     case 'preset': {
       const p = presetList().find(x => x.key === id || x.es === id); if (!p) break;
+      if (p.styleOnly) {
+        const src = {}; C.SOURCE_LIST.forEach(s => { const nk = s.museum && s.museum.needsKey; src[s.id] = !(nk && !hasKey(nk)); });
+        S.f = Object.assign({}, f, { styles: [p.styleOnly], sources: src }); renderAll(); applyChange(); break;
+      }
       const keep = p.all ? { sources: {} } : { sources: f.sources, orientation: f.orientation, soloPD: f.soloPD, exclude: f.exclude, noWords: f.noWords };
       if (p.all || p.allSources) { if (p.allSources) keep.sources = {}; }
       if (p.all || p.allSources) C.SOURCE_LIST.forEach(s => { const nk = s.museum && s.museum.needsKey; keep.sources[s.id] = !(nk && !hasKey(nk)); }); // todos los museos y fuentes abiertas (salvo los que piden una clave que no hay)
