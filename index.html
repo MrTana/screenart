@@ -265,7 +265,7 @@ details.adv label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut
       <p class="hint">Se guardan solo en este navegador. Con una clave puedes activar esas fuentes.</p>
     </div>
   </section>
-  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 3206b01a81 · 2026-10-21 20:57 UTC</span><br><button class="btn" data-act="update" style="margin-top:10px">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" style="margin-top:10px" hidden>Instalar la app</button> <button class="btn" data-act="diag" style="margin-top:10px">Probar fuentes</button> <button class="btn" data-act="reset" style="margin-top:10px">Restablecer filtros</button></div>
+  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 31c222cb48 · 2026-10-21 21:08 UTC</span><br><button class="btn" data-act="update" style="margin-top:10px">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" style="margin-top:10px" hidden>Instalar la app</button> <button class="btn" data-act="diag" style="margin-top:10px">Probar fuentes</button> <button class="btn" data-act="reset" style="margin-top:10px">Restablecer filtros</button></div>
   <div id="rcfoot" hidden><button class="btn pri" data-act="rc-update">Buscar actualización</button><p id="rcver"></p></div>
 <div id="tvConnect"><button class="btn pri" data-act="tv-connect">Conectar a la TV</button><div class="row" id="tvRow" hidden><input type="text" id="tvCode" placeholder="Código de la TV (ej. abcd-efgh-jkmn)" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn pri" data-act="tv-go">Abrir mando</button></div><p class="hint" id="tvMsg">El código sale bajo el QR en la pantalla de la TV.</p></div>
 </aside>
@@ -2173,29 +2173,68 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
    La TV y el móvil se hablan a través de un canal público de ntfy.sh con un código aleatorio
    (sin cuentas ni servidor propio). La TV escucha, muestra un QR con ?c=<código> y obedece. */
 const RELAY = (Q.get('relay') || 'https://ntfy.sh').replace(/\/+$/, '');
-const RC = { code: '', es: null, poll: null, buf: {}, listening: false, lastPhone: 0, lastNow: 0, pingT: null, helloT: null, helloN: 0, connected: false, setT: null, forceNow: false, nowT: null, sent: 0, err: 0, seen: {}, polled: false, lastState: 0, hellos: 0 };
+const RC = { code: '', links: [], ntfyOn: false, ntfyOk: false, es: null, poll: null, buf: {}, listening: false, lastPhone: 0, lastNow: 0, pingT: null, helloT: null, helloN: 0, connected: false, setT: null, forceNow: false, nowT: null, sent: 0, err: 0, seen: {}, polled: false, lastState: 0, hellos: 0 };
 const asciiJSON = o => JSON.stringify(o).replace(/[\u0080-￿]/g, c => '\\u' + ('0000' + c.charCodeAt(0).toString(16)).slice(-4));
-const myTopic = () => 'galeria-arte-' + RC.code + (REMOTE ? '-ph' : '-tv');
-const peerTopic = () => 'galeria-arte-' + RC.code + (REMOTE ? '-tv' : '-ph');
+const BROKERS = Q.get('broker') ? [Q.get('broker')] : ['wss://broker.emqx.io:8084/mqtt', 'wss://broker.hivemq.com:8884/mqtt', 'wss://test.mosquitto.org:8081/'];
+const topicOf = side => 'galeria-arte/' + RC.code + '/' + side;
+const ntfyTopic = side => 'galeria-arte-' + RC.code + '-' + side;
 function newCode() {
   const a = 'abcdefghjkmnpqrstuvwxyz23456789'; let s = '';
   try { const r = new Uint8Array(12); crypto.getRandomValues(r); r.forEach(n => { s += a[n % a.length]; }); } catch (e) { for (let i = 0; i < 12; i++) s += a[Math.floor(Math.random() * a.length)]; }
   return s;
 }
+
+/* Canal principal: brokers MQTT públicos por WebSocket (sin límites de mensajes y en tiempo real).
+   ntfy.sh queda de reserva si ningún broker responde. Todo se manda por todos los canales abiertos y se descarta lo repetido. */
+const u8 = s => Array.from(unescape(encodeURIComponent(s)), c => c.charCodeAt(0));
+const mqStr = s => { const b = u8(s); return [b.length >> 8, b.length & 255].concat(b); };
+function mqPkt(first, body) { const o = []; let n = body.length; do { let d = n % 128; n = Math.floor(n / 128); o.push(n > 0 ? d | 128 : d); } while (n > 0); return new Uint8Array([first].concat(o, body)); }
+function mqttOpen(url, topic, onText, onChange) {
+  const L = { url, ok: false, ws: null, dead: false, tries: 0, ping: null };
+  L.send = (t, text) => { if (!L.ok) return false; try { L.ws.send(mqPkt(0x30, mqStr(t).concat(u8(text)))); return true; } catch (e) { return false; } };
+  const later = () => { L.ok = false; clearInterval(L.ping); onChange(); if (!L.dead) setTimeout(connect, Math.min(30000, 2000 * Math.pow(2, Math.min(L.tries++, 4)))); };
+  function connect() {
+    let ws; try { ws = new WebSocket(url, 'mqtt'); } catch (e) { later(); return; }
+    L.ws = ws; ws.binaryType = 'arraybuffer';
+    let buf = [], closed = false;
+    const gone = () => { if (closed) return; closed = true; later(); };
+    ws.onopen = () => { ws.send(mqPkt(0x10, [0, 4, 77, 81, 84, 84, 4, 2, 0, 30].concat(mqStr('ga' + Math.random().toString(36).slice(2, 10))))); };
+    ws.onmessage = e => {
+      buf = buf.concat(Array.from(new Uint8Array(e.data)));
+      while (buf.length >= 2) {
+        let mul = 1, len = 0, i = 1, b;
+        do { if (i >= buf.length) return; b = buf[i++]; len += (b & 127) * mul; mul *= 128; } while (b & 128);
+        if (buf.length < i + len) return;
+        const type = buf[0] >> 4, flags = buf[0] & 15, body = buf.slice(i, i + len); buf = buf.slice(i + len);
+        if (type === 2) { if (body[1] === 0) ws.send(mqPkt(0x82, [0, 1].concat(mqStr(topic), [0]))); else ws.close(); }
+        else if (type === 9) { L.ok = true; L.tries = 0; clearInterval(L.ping); L.ping = setInterval(() => { try { ws.send(new Uint8Array([0xC0, 0])); } catch (er) { /* se reconecta */ } }, 20000); onChange(); }
+        else if (type === 3) { let p = 2 + body[0] * 256 + body[1]; if ((flags >> 1) & 3) p += 2; onText(String.fromCharCode.apply(null, body.slice(p))); }
+      }
+    };
+    ws.onerror = gone; ws.onclose = gone;
+  }
+  connect();
+  return L;
+}
 function relaySend(obj) {
   const s = asciiJSON(obj), id = Math.random().toString(36).slice(2, 7), N = 3000, n = Math.max(1, Math.ceil(s.length / N));
+  const peer = REMOTE ? 'tv' : 'ph';
   for (let i = 0; i < n; i++) {
+    const text = id + '|' + i + '|' + n + '|' + s.slice(i * N, (i + 1) * N);
     RC.sent++;
-    try {
-      fetch(RELAY + '/' + peerTopic(), { method: 'POST', body: id + '|' + i + '|' + n + '|' + s.slice(i * N, (i + 1) * N) })
-        .then(r => { RC.err = r && r.ok === false ? r.status : 0; }).catch(() => { RC.err = -1; });
-    } catch (e) { RC.err = -1; }
+    let sent = 0;
+    RC.links.forEach(l => { if (l.send(topicOf(peer), text)) sent++; });
+    if (RC.ntfyOn) {
+      sent++;
+      try { fetch(RELAY + '/' + ntfyTopic(peer), { method: 'POST', body: text }).then(r => { RC.err = r && r.ok === false ? r.status : 0; }).catch(() => { RC.err = -1; }); } catch (e) { RC.err = -1; }
+    }
+    if (!sent) RC.err = -1;
   }
 }
 function relayRecv(text, fn) {
   const m = /^([a-z0-9]+)\|(\d+)\|(\d+)\|([\s\S]*)$/.exec(text || ''); if (!m) return;
   const id = m[1], i = +m[2], n = +m[3];
-  const seen = id + '|' + i; if (RC.seen[seen]) return; // el mismo mensaje por SSE y por sondeo
+  const seen = id + '|' + i; if (RC.seen[seen]) return; // el mismo mensaje llega por varios canales
   RC.seen[seen] = Date.now();
   const b = RC.buf[id] || (RC.buf[id] = { n, parts: [], got: 0, t: Date.now() });
   if (b.parts[i] == null) { b.parts[i] = m[4]; b.got++; }
@@ -2208,9 +2247,20 @@ function relayRecv(text, fn) {
 }
 function relayListen(fn) {
   if (RC.listening || !RC.code) return; RC.listening = true;
-  const url = RELAY + '/' + myTopic();
-  const onData = d => { let m; try { m = typeof d === 'string' ? JSON.parse(d) : d; } catch (e) { return; } if (m && m.event === 'message') relayRecv(m.message, fn); };
-  // Sondeo de reserva: algunos navegadores de TV o redes cortan las conexiones SSE. Una consulta cada 5 s cabe en el límite de ntfy.
+  const onText = t => relayRecv(t, fn);
+  const change = () => {
+    RC.connected = RC.links.some(l => l.ok) || RC.ntfyOk;
+    if (RC.connected && REMOTE && !RC.helloN) remoteHello();
+    if (!REMOTE) { const p = $('#pair'); if (p && !p.hidden) pairStatus(); }
+  };
+  RC.links = BROKERS.map(u => mqttOpen(u, topicOf(REMOTE ? 'ph' : 'tv'), onText, change));
+  // Reserva: si ningún broker responde en 7 s, se usa ntfy.sh (SSE y, si también falla, sondeo cada 5 s).
+  setTimeout(() => { if (!RC.links.some(l => l.ok)) ntfyListen(onText, change); }, 7000);
+}
+function ntfyListen(onText, change) {
+  if (RC.ntfyOn) return; RC.ntfyOn = true;
+  const url = RELAY + '/' + ntfyTopic(REMOTE ? 'ph' : 'tv');
+  const onData = d => { let m; try { m = typeof d === 'string' ? JSON.parse(d) : d; } catch (e) { return; } if (m && m.event === 'message') onText(m.message); };
   let since = String(Math.floor(Date.now() / 1000) - 30), polling = false;
   const startPoll = () => {
     if (polling) return; polling = true;
@@ -2224,13 +2274,17 @@ function relayListen(fn) {
   };
   if (typeof EventSource === 'function') {
     const es = RC.es = new EventSource(url + '/sse');
-    es.onmessage = e => { RC.connected = true; onData(e.data); };
-    es.onopen = () => { RC.connected = true; if (REMOTE) { if (!RC.helloN) remoteHello(); } else if (!$('#pair').hidden) pairStatus(); };
-    es.onerror = () => { RC.connected = false; setTimeout(() => { if (!RC.connected) startPoll(); }, 8000); };
-    setTimeout(() => { if (!RC.connected) startPoll(); }, 6000);
-  } else { RC.connected = true; startPoll(); if (REMOTE) remoteHello(); }
+    es.onmessage = e => { RC.ntfyOk = true; onData(e.data); };
+    es.onopen = () => { RC.ntfyOk = true; change(); };
+    es.onerror = () => { RC.ntfyOk = false; setTimeout(() => { if (!RC.ntfyOk) startPoll(); }, 8000); };
+    setTimeout(() => { if (!RC.ntfyOk) startPoll(); }, 6000);
+  } else { RC.ntfyOk = true; startPoll(); }
+  change();
 }
-function relayInfo() { return 'Relé ' + (RC.connected ? 'conectado' : RC.polled ? 'por sondeo' : 'sin conexión') + ' · enviados ' + RC.sent + (RC.err ? ' · error ' + (RC.err === -1 ? 'de red' : 'HTTP ' + RC.err) : ''); }
+function relayInfo() {
+  const n = RC.links.filter(l => l.ok).length;
+  return 'Relé ' + (n ? n + ' de ' + RC.links.length + ' brokers' : RC.ntfyOn ? 'ntfy' + (RC.polled ? ' (sondeo)' : '') : 'sin conexión') + ' · enviados ' + RC.sent + (RC.err ? ' · error ' + (RC.err === -1 ? 'de red' : 'HTTP ' + RC.err) : '');
+}
 
 /* — lado TV — */
 function buildVer() { const v = document.querySelector('.ver'); const m = v && /Versión\s+(\w+)/.exec(v.textContent); return m ? m[1] : ''; }
@@ -2363,7 +2417,7 @@ function initRemote() {
   document.title = 'Mando · Galería de arte';
   remoteStat('Conectando con la TV…', false, false);
   relayListen(remoteHandle);
-  setTimeout(() => { if (!RC.helloN) remoteHello(); }, 1500);
+  setTimeout(() => { if (!RC.helloN) remoteStat('No consigo conectar con el servicio de mensajes (' + relayInfo() + '). Comprueba la conexión a internet del móvil.', false, true); }, 9000);
   RC.pingT = setInterval(() => { if (document.visibilityState === 'visible' && RC.gotState) relaySend({ t: 'ping' }); }, 90000);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && RC.gotState) relaySend({ t: 'ping' }); });
 }

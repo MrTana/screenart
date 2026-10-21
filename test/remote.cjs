@@ -1,4 +1,4 @@
-// Mando desde el móvil: dos páginas (TV y móvil) hablan por un relé simulado de ntfy.
+// Mando desde el móvil: dos páginas (TV y móvil) hablan por un broker MQTT simulado (y, como reserva, ntfy).
 const assert = require('assert');
 const { JSDOM } = require('jsdom');
 const fs = require('fs');
@@ -6,6 +6,28 @@ const html = fs.readFileSync(__dirname + '/../index.html', 'utf8');
 const scripts = Array.from(html.matchAll(/<script>\n([\s\S]*?)<\/script>/g), m => m[1]).join('\n');
 const J = o => ({ ok: true, status: 200, json: async () => o });
 const subs = {}; let posts = 0;
+// Broker MQTT simulado: entiende CONNECT, SUBSCRIBE, PUBLISH y PINGREQ y reparte entre todas las páginas.
+const mq = {};
+const enc = t => Array.from(Buffer.from(t, 'utf8'));
+const lenB = n => { const o = []; do { let d = n % 128; n = Math.floor(n / 128); o.push(n > 0 ? d | 128 : d); } while (n > 0); return o; };
+function FakeWS(url) {
+  const ws = this; ws.url = url; ws.subs = []; ws.readyState = 0;
+  ws.send = data => {
+    const a = Array.from(new Uint8Array(data)); const type = a[0] >> 4; let i = 1, mul = 1, len = 0, b;
+    do { b = a[i++]; len += (b & 127) * mul; mul *= 128; } while (b & 128);
+    const body = a.slice(i, i + len), reply = bytes => setTimeout(() => ws.onmessage && ws.onmessage({ data: new Uint8Array(bytes).buffer }), 1);
+    if (type === 1) reply([0x20, 2, 0, 0]);
+    else if (type === 8) { const tl = body[2] * 256 + body[3]; ws.subs.push(Buffer.from(body.slice(4, 4 + tl)).toString()); (mq[url] = mq[url] || []).push(ws); reply([0x90, 3, body[0], body[1], 0]); }
+    else if (type === 3) {
+      const tl = body[0] * 256 + body[1], topic = Buffer.from(body.slice(2, 2 + tl)).toString(), payload = body.slice(2 + tl);
+      if (/emqx/.test(url)) { posts++; assert.ok(payload.every(c => c < 128), 'carga ASCII'); }
+      (mq[url] || []).filter(w => w.subs.includes(topic)).forEach(w => { const inner = [0, topic.length].concat(enc(topic), payload); setTimeout(() => w.onmessage && w.onmessage({ data: new Uint8Array([0x30].concat(lenB(inner.length), inner)).buffer }), 2); });
+    }
+  };
+  ws.close = () => {};
+  setTimeout(() => { ws.readyState = 1; ws.onopen && ws.onopen(); }, 2);
+}
+function DeadWS() { const ws = this; ws.close = () => {}; setTimeout(() => { ws.onerror && ws.onerror(); }, 2); }
 const queue = {};
 function make(url, opt) {
   opt = opt || {};
@@ -26,6 +48,7 @@ function make(url, opt) {
     if (u.includes('metmuseum') && u.includes('/objects/')) { const id = +u.split('/').pop(); return J({ objectID: id, isPublicDomain: true, primaryImage: 'https://img/met' + id + '.jpg', primaryImageSmall: 'https://img/s' + id + '.jpg', title: 'Obra á' + id, artistDisplayName: 'Artista ñ', objectDate: '1880', objectBeginDate: 1880, objectEndDate: 1880, department: 'Paintings', classification: 'Paintings', objectName: 'Painting', objectURL: 'https://met/' + id, medium: 'oil', creditLine: 'x', tags: [] }); }
     throw new TypeError('Failed to fetch');
   };
+  w.WebSocket = opt.noMQTT ? DeadWS : FakeWS;
   if (opt.noSSE) w.EventSource = function () { /* nunca abre: simula un navegador de TV que corta SSE */ }; else w.EventSource = function (u) { const t = String(u).replace(/^https:\/\/ntfy\.sh\//, '').replace(/\/sse$/, ''); (subs[t] = subs[t] || []).push(this); setTimeout(() => this.onopen && this.onopen(), 2); };
   w.Image = function () { const o = { set src(v) { this._s = v; setTimeout(() => { o.naturalWidth = 1600; o.naturalHeight = 1000; o.onload && o.onload(); }, 5); }, get src() { return this._s; } }; return o; };
   w.AbortController = AbortController;
@@ -54,7 +77,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   assert.ok(p.getElementById('rcT').textContent.includes('Obra'), 'el móvil ve la obra actual');
   assert.ok(!tv.document.getElementById('pair').hidden, 'el QR sigue hasta que el móvil manda una orden');
   assert.ok(posts <= 3, 'hello y estado caben en pocos mensajes: ' + posts);
-  assert.ok(/Relé conectado/.test(tv.document.getElementById('pairSt').textContent), 'la TV muestra el estado del relé: ' + tv.document.getElementById('pairSt').textContent);
+  assert.ok(/Relé 3 de 3 brokers/.test(tv.document.getElementById('pairSt').textContent), 'la TV muestra el estado del relé: ' + tv.document.getElementById('pairSt').textContent);
   assert.strictEqual(ph.localStorage.length, 1, 'el móvil solo guarda el código (no pisa filtros)');
 
   // órdenes
@@ -107,12 +130,12 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   ph2.ArtApp.onAct('tv-go'); assert.ok(/no es válido/.test(ph2.document.getElementById('tvMsg').textContent), 'rechaza un código vacío');
   // móvil que reaparece tras actualizar: la TV conserva todos los museos
   assert.ok(Object.keys(tvA.S.f.sources).length > 100, 'la TV conserva la lista completa de museos');
-  // TV cuyo navegador no abre SSE: funciona por sondeo
-  const tv2 = make('https://example.test/?tv=1', { noSSE: true });
+  // sin brokers MQTT y sin SSE (TV y móvil): reserva ntfy por sondeo
+  const tv2 = make('https://example.test/?tv=1', { noSSE: true, noMQTT: true });
   await wait(2200);
   const code2 = tv2.document.getElementById('pairUrl').textContent.split('=')[1];
-  const ph3 = make('https://example.test/?c=' + code2);
-  for (let i = 0; i < 70 && !/Conectado/.test(ph3.document.getElementById('rcstat').textContent); i++) await wait(250);
+  const ph3 = make('https://example.test/?c=' + code2, { noMQTT: true });
+  for (let i = 0; i < 160 && !/Conectado/.test(ph3.document.getElementById('rcstat').textContent); i++) await wait(250);
   assert.ok(/Conectado/.test(ph3.document.getElementById('rcstat').textContent), 'conecta por sondeo: ' + ph3.document.getElementById('rcstat').textContent);
   // en el móvil nada cierra el menú
   ph.ArtApp.closeMenu(); assert.ok(!p.getElementById('drawer').hidden, 'el menú del móvil no se cierra');
