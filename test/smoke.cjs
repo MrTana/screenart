@@ -49,6 +49,12 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   flt.value = ''; flt.dispatchEvent(new w.Event('input'));
   d.getElementById('museumIn').value = 'Museo de Prueba'; d.querySelector('[data-act=add-museum]').click(); await wait(300);
   console.log('museo añadido:', d.getElementById('museumMsg').textContent, '| guardado:', S.custom.length, '| activo:', !!S.f.sources['m:cQ4242'], '| en lista:', /Museo de Prueba/.test(d.getElementById('c-msrcs').textContent));
+  for (const [name, n] of [['Museos de México', 18], ['Museos de Bélgica', 28], ['Surrealismo en museos', 63]]) {
+    const i2 = Array.from(d.querySelectorAll('#c-presets .chip')).findIndex(c => c.textContent === name); d.querySelectorAll('#c-presets .chip')[i2].click();
+    const act = Object.keys(S.f.sources).filter(k => S.f.sources[k]).length;
+    console.log('preset', name, '->', act, 'museos activos', name.startsWith('Surr') ? '| estilo: ' + S.f.styles : '');
+    if (act !== n) { console.error('FALLO preset', name, act, 'esperaba', n); process.exit(1); }
+  }
   const pi = Array.from(d.querySelectorAll('#c-presets .chip')).findIndex(c => c.textContent === 'Museos de París'); d.querySelectorAll('#c-presets .chip')[pi].click();
   console.log('preset Museos de París -> fuentes activas:', Object.keys(S.f.sources).filter(k => S.f.sources[k]).join(','), );
   A.closeMenu();

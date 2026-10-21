@@ -334,6 +334,9 @@ const PRESETS = [
   { es: 'Paisajes', patch: { keywords: ['landscape'], types: ['painting'] } },
   { es: 'Retratos', patch: { keywords: ['portrait'], types: ['painting'] } },
   { es: 'París', patch: { keywords: ['Paris'] } },
+  { es: 'Museos de México', only: C.museumIdsByTag('mx'), patch: {} },
+  { es: 'Museos de Bélgica', only: C.museumIdsByTag('be'), patch: {} },
+  { es: 'Surrealismo en museos', only: C.museumIdsByTag('surreal').concat(['m:open']), patch: { styles: ['surrealism'] } },
   { es: 'Museos de París', only: ['m:louvre', 'm:orsay', 'm:orangerie', 'm:versailles', 'm:marmottan', 'm:petitpalais', 'm:carnavalet'], patch: {} },
   { es: 'Grandes museos de Europa', only: ['m:louvre', 'm:orsay', 'm:prado', 'm:uffizi', 'm:hermitage', 'm:nationalgallery', 'm:vangogh', 'm:mauritshuis', 'm:kunsthistorisches', 'm:versailles'], patch: {} }
 ];
@@ -375,7 +378,7 @@ function srcNote(s) {
 function srcRow(s) {
   return '<button class="src" data-act="src" data-id="' + esc(s.id) + '" aria-pressed="' + !!S.f.sources[s.id] + '"><span class="box"></span><span class="nm"><b>' + esc(s.name) + '</b><span data-sn="' + esc(s.id) + '">' + esc(srcNote(s)) + '</span></span><span class="dot ' + ((S.status[s.id] && S.status[s.id].state) || '') + '" data-dot="' + esc(s.id) + '"></span></button>';
 }
-function visibleMuseums() { const q = C.norm(S.mfilter); return C.SOURCE_LIST.filter(s => !q || C.norm(s.name + ' ' + s.place).includes(q)); }
+function visibleMuseums() { const q = C.norm(S.mfilter); return C.SOURCE_LIST.filter(s => !q || C.norm(s.name + ' ' + s.place + ' ' + (s.tags || '')).includes(q)); }
 function renderSrcs() {
   $('#c-msrcs').innerHTML = visibleMuseums().map(srcRow).join('') || '<p class="hint">Ningún museo coincide. Puedes añadirlo con su nombre aquí abajo.</p>';
 }

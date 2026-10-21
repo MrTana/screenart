@@ -602,6 +602,102 @@ const MUSEUMS = [
   { id: 'irelandng', es: 'Galería Nacional de Irlanda', city: 'Dublín', ids: [], labels: [['National Gallery of Ireland', 'en']] },
 ];
 
+/* Museos por país y con surrealismo. Fila: id, nombre, ciudad, país, etiquetas, nombres en Wikidata (texto@idioma). */
+const MORE_MUSEUMS = [
+  // México
+  ['munal', 'Museo Nacional de Arte (MUNAL)', 'Ciudad de México', 'México', 'mx', ['Museo Nacional de Arte@es', 'National Museum of Art@en']],
+  ['mammx', 'Museo de Arte Moderno de México', 'Ciudad de México', 'México', 'mx surreal', ['Museo de Arte Moderno@es', 'Museum of Modern Art@en']],
+  ['tamayo', 'Museo Tamayo', 'Ciudad de México', 'México', 'mx', ['Museo Tamayo@es', 'Rufino Tamayo Museum@en']],
+  ['kahlo', 'Museo Frida Kahlo (Casa Azul)', 'Ciudad de México', 'México', 'mx surreal', ['Museo Frida Kahlo@es', 'Frida Kahlo Museum@en']],
+  ['olmedo', 'Museo Dolores Olmedo', 'Ciudad de México', 'México', 'mx surreal', ['Museo Dolores Olmedo@es', 'Dolores Olmedo Museum@en']],
+  ['bellasartesmx', 'Palacio de Bellas Artes', 'Ciudad de México', 'México', 'mx', ['Palacio de Bellas Artes@es', 'Palace of Fine Arts@en']],
+  ['jumex', 'Museo Jumex', 'Ciudad de México', 'México', 'mx', ['Museo Jumex@es', 'Jumex Museum@en']],
+  ['franzmayer', 'Museo Franz Mayer', 'Ciudad de México', 'México', 'mx', ['Museo Franz Mayer@es', 'Franz Mayer Museum@en']],
+  ['carrillogil', 'Museo de Arte Carrillo Gil', 'Ciudad de México', 'México', 'mx', ['Museo de Arte Carrillo Gil@es']],
+  ['muac', 'MUAC (Arte Contemporáneo UNAM)', 'Ciudad de México', 'México', 'mx', ['Museo Universitario Arte Contemporáneo@es', 'University Museum of Contemporary Art@en']],
+  ['sancarlos', 'Museo Nacional de San Carlos', 'Ciudad de México', 'México', 'mx', ['Museo Nacional de San Carlos@es']],
+  ['anahuacalli', 'Museo Anahuacalli', 'Ciudad de México', 'México', 'mx', ['Museo Anahuacalli@es', 'Anahuacalli Museum@en']],
+  ['casaestudio', 'Casa Estudio Diego Rivera y Frida Kahlo', 'Ciudad de México', 'México', 'mx', ['Museo Casa Estudio Diego Rivera y Frida Kahlo@es']],
+  ['muraldiego', 'Museo Mural Diego Rivera', 'Ciudad de México', 'México', 'mx', ['Museo Mural Diego Rivera@es']],
+  ['antropologia', 'Museo Nacional de Antropología', 'Ciudad de México', 'México', 'mx', ['Museo Nacional de Antropología@es', 'National Museum of Anthropology@en']],
+  ['cabanas', 'Instituto Cultural Cabañas', 'Guadalajara', 'México', 'mx', ['Hospicio Cabañas@es', 'Instituto Cultural Cabañas@es']],
+  ['marco', 'MARCO Monterrey', 'Monterrey', 'México', 'mx', ['Museo de Arte Contemporáneo de Monterrey@es', 'MARCO@es']],
+  // Bélgica
+  ['kmskb', 'Museos Reales de Bellas Artes de Bélgica', 'Bruselas', 'Bélgica', 'be surreal', ['Royal Museums of Fine Arts of Belgium@en', 'Musées royaux des Beaux-Arts de Belgique@fr', 'Koninklijke Musea voor Schone Kunsten van België@nl']],
+  ['magritte', 'Museo Magritte', 'Bruselas', 'Bélgica', 'be surreal', ['Magritte Museum@en', 'Musée Magritte@fr', 'Musée Magritte Museum@fr']],
+  ['magrittecasa', 'Casa-museo René Magritte', 'Jette', 'Bélgica', 'be surreal', ['Musée René Magritte@fr', 'René Magritte Museum@en']],
+  ['findesiecle', 'Museo Fin-de-Siècle', 'Bruselas', 'Bélgica', 'be', ['Musée Fin-de-Siècle@fr', 'Fin-de-Siècle Museum@en']],
+  ['oldmasters', 'Museo Oldmasters', 'Bruselas', 'Bélgica', 'be', ['Oldmasters Museum@en', 'Musée Oldmasters@fr']],
+  ['bozar', 'Bozar', 'Bruselas', 'Bélgica', 'be', ['Bozar@fr', 'Centre for Fine Arts, Brussels@en']],
+  ['ixelles', "Museo de Ixelles", 'Bruselas', 'Bélgica', 'be', ["Musée d'Ixelles@fr", 'Museum of Ixelles@en']],
+  ['horta', 'Museo Horta', 'Bruselas', 'Bélgica', 'be', ['Musée Horta@fr', 'Horta Museum@en']],
+  ['groeninge', 'Museo Groeninge', 'Brujas', 'Bélgica', 'be', ['Groeningemuseum@nl', 'Groeninge Museum@en']],
+  ['memling', 'Memling en el Sint-Janshospitaal', 'Brujas', 'Bélgica', 'be', ['Sint-Janshospitaal@nl', 'Memling in Sint-Jan@en']],
+  ['kmska', 'Real Museo de Bellas Artes de Amberes', 'Amberes', 'Bélgica', 'be', ['Royal Museum of Fine Arts Antwerp@en', 'Koninklijk Museum voor Schone Kunsten Antwerpen@nl']],
+  ['rubenshuis', 'Casa de Rubens', 'Amberes', 'Bélgica', 'be', ['Rubenshuis@nl', 'Rubens House@en']],
+  ['plantin', 'Museo Plantin-Moretus', 'Amberes', 'Bélgica', 'be', ['Museum Plantin-Moretus@nl', 'Plantin-Moretus Museum@en']],
+  ['mayervdb', 'Museo Mayer van den Bergh', 'Amberes', 'Bélgica', 'be', ['Museum Mayer van den Bergh@nl', 'Mayer van den Bergh Museum@en']],
+  ['mhka', 'M HKA', 'Amberes', 'Bélgica', 'be', ['M HKA@nl', 'Museum of Contemporary Art Antwerp@en']],
+  ['mskgent', 'Museo de Bellas Artes de Gante', 'Gante', 'Bélgica', 'be', ['Museum voor Schone Kunsten Gent@nl', 'Museum of Fine Arts, Ghent@en']],
+  ['smak', 'S.M.A.K.', 'Gante', 'Bélgica', 'be', ['S.M.A.K.@nl', 'Stedelijk Museum voor Actuele Kunst@nl']],
+  ['mleuven', 'M Leuven', 'Lovaina', 'Bélgica', 'be', ['M – Museum Leuven@nl', 'M Leuven@en']],
+  ['muzee', 'Mu.ZEE', 'Ostende', 'Bélgica', 'be surreal', ['Mu.ZEE@nl', 'Mu.ZEE@en']],
+  ['dhondt', 'Museum Dhondt-Dhaenens', 'Deurle', 'Bélgica', 'be', ['Museum Dhondt-Dhaenens@nl']],
+  ['delvaux', 'Museo Paul Delvaux', 'Saint-Idesbald', 'Bélgica', 'be surreal', ['Paul Delvaux Museum@en', 'Musée Paul Delvaux@fr', 'Paul Delvaux Museum@nl']],
+  ['boverie', 'La Boverie (Bellas Artes de Lieja)', 'Lieja', 'Bélgica', 'be', ['La Boverie@fr', 'Musée des Beaux-Arts de Liège@fr']],
+  ['bam', 'BAM (Bellas Artes de Mons)', 'Mons', 'Bélgica', 'be', ['Musée des Beaux-Arts de Mons@fr', 'BAM@fr']],
+  ['tournai', 'Bellas Artes de Tournai', 'Tournai', 'Bélgica', 'be', ['Musée des Beaux-Arts de Tournai@fr']],
+  ['mariemont', 'Museo Real de Mariemont', 'Morlanwelz', 'Bélgica', 'be', ['Musée royal de Mariemont@fr']],
+  ['rops', 'Museo Félicien Rops', 'Namur', 'Bélgica', 'be', ['Musée Félicien Rops@fr', 'Félicien Rops Museum@en']],
+  ['grandhornu', "MAC's Grand-Hornu", 'Hornu', 'Bélgica', 'be', ["MAC's Grand-Hornu@fr", 'Musée des arts contemporains@fr']],
+  ['museel', 'Musée L', 'Lovaina la Nueva', 'Bélgica', 'be', ['Musée L@fr']],
+  // Con obras surrealistas
+  ['dalifigueres', 'Teatro-Museo Dalí', 'Figueres', 'España', 'surreal', ['Dalí Theatre and Museum@en', 'Teatro-Museo Dalí@es', 'Teatre-Museu Dalí@ca']],
+  ['dalifl', 'Museo Dalí de San Petersburgo', 'San Petersburgo (Florida)', 'EE. UU.', 'surreal', ['Salvador Dalí Museum@en', 'Dalí Museum@en']],
+  ['miro', 'Fundació Joan Miró', 'Barcelona', 'España', 'surreal', ['Fundació Joan Miró@ca', 'Joan Miró Foundation@en']],
+  ['mnac', 'MNAC', 'Barcelona', 'España', 'surreal', ["Museu Nacional d'Art de Catalunya@ca", 'National Art Museum of Catalonia@en']],
+  ['picassobcn', 'Museo Picasso de Barcelona', 'Barcelona', 'España', 'surreal', ['Museu Picasso de Barcelona@ca', 'Museu Picasso@ca']],
+  ['guggenheimbilbao', 'Guggenheim Bilbao', 'Bilbao', 'España', 'surreal', ['Guggenheim Museum Bilbao@en', 'Museo Guggenheim Bilbao@es']],
+  ['mamparis', 'Museo de Arte Moderno de París', 'París', 'Francia', 'surreal', ["Musée d'Art moderne de Paris@fr", 'Museum of Modern Art of the City of Paris@en']],
+  ['maeght', 'Fundación Maeght', 'Saint-Paul-de-Vence', 'Francia', 'surreal', ['Fondation Maeght@fr']],
+  ['grenoble', 'Museo de Grenoble', 'Grenoble', 'Francia', 'surreal', ['Musée de Grenoble@fr']],
+  ['k20', 'K20 Düsseldorf', 'Düsseldorf', 'Alemania', 'surreal', ['Kunstsammlung Nordrhein-Westfalen@de', 'K20@de']],
+  ['maxernst', 'Museo Max Ernst', 'Brühl', 'Alemania', 'surreal', ['Max Ernst Museum Brühl des LVR@de', 'Max Ernst Museum@en']],
+  ['folkwang', 'Museum Folkwang', 'Essen', 'Alemania', 'surreal', ['Museum Folkwang@de', 'Museum Folkwang@en']],
+  ['hamburger', 'Hamburger Kunsthalle', 'Hamburgo', 'Alemania', 'surreal', ['Hamburger Kunsthalle@de', 'Hamburger Kunsthalle@en']],
+  ['ludwig', 'Museum Ludwig', 'Colonia', 'Alemania', 'surreal', ['Museum Ludwig@de', 'Museum Ludwig@en']],
+  ['pinakothekmod', 'Pinakothek der Moderne', 'Múnich', 'Alemania', 'surreal', ['Pinakothek der Moderne@de', 'Pinakothek der Moderne@en']],
+  ['brandhorst', 'Museum Brandhorst', 'Múnich', 'Alemania', 'surreal', ['Museum Brandhorst@de']],
+  ['beyeler', 'Fondation Beyeler', 'Riehen', 'Suiza', 'surreal', ['Fondation Beyeler@de', 'Fondation Beyeler@en']],
+  ['zpk', 'Zentrum Paul Klee', 'Berna', 'Suiza', 'surreal', ['Zentrum Paul Klee@de', 'Zentrum Paul Klee@en']],
+  ['moderna', 'Moderna Museet', 'Estocolmo', 'Suecia', 'surreal', ['Moderna Museet@sv', 'Moderna Museet@en']],
+  ['louisiana', 'Louisiana Museum of Modern Art', 'Humlebæk', 'Dinamarca', 'surreal', ['Louisiana Museum of Modern Art@en', 'Louisiana Museum of Modern Art@da']],
+  ['sngma', 'Scottish National Gallery of Modern Art', 'Edimburgo', 'Reino Unido', 'surreal', ['Scottish National Gallery of Modern Art@en']],
+  ['menil', 'Menil Collection', 'Houston', 'EE. UU.', 'surreal', ['Menil Collection@en', 'The Menil Collection@en']],
+  ['mfah', 'Museum of Fine Arts, Houston', 'Houston', 'EE. UU.', 'surreal', ['Museum of Fine Arts, Houston@en']],
+  ['sfmoma', 'SFMOMA', 'San Francisco', 'EE. UU.', 'surreal', ['San Francisco Museum of Modern Art@en']],
+  ['wadsworth', 'Wadsworth Atheneum', 'Hartford', 'EE. UU.', 'surreal', ['Wadsworth Atheneum@en']],
+  ['yale', 'Yale University Art Gallery', 'New Haven', 'EE. UU.', 'surreal', ['Yale University Art Gallery@en']],
+  ['nortonsimon', 'Norton Simon Museum', 'Pasadena', 'EE. UU.', 'surreal', ['Norton Simon Museum@en']],
+  ['dia', 'Detroit Institute of Arts', 'Detroit', 'EE. UU.', 'surreal', ['Detroit Institute of Arts@en']],
+  ['brooklyn', 'Brooklyn Museum', 'Nueva York', 'EE. UU.', 'surreal', ['Brooklyn Museum@en']],
+  ['carnegie', 'Carnegie Museum of Art', 'Pittsburgh', 'EE. UU.', 'surreal', ['Carnegie Museum of Art@en']],
+  ['slam', 'Saint Louis Art Museum', 'San Luis', 'EE. UU.', 'surreal', ['Saint Louis Art Museum@en']],
+  ['ago', 'Art Gallery of Ontario', 'Toronto', 'Canadá', 'surreal', ['Art Gallery of Ontario@en']],
+  ['mmfa', 'Museo de Bellas Artes de Montreal', 'Montreal', 'Canadá', 'surreal', ['Montreal Museum of Fine Arts@en', 'Musée des beaux-arts de Montréal@fr']],
+  ['malba', 'MALBA', 'Buenos Aires', 'Argentina', 'surreal', ['Museo de Arte Latinoamericano de Buenos Aires@es', 'MALBA@es']],
+  ['momat', 'Museo Nacional de Arte Moderno de Tokio', 'Tokio', 'Japón', 'surreal', ['National Museum of Modern Art, Tokyo@en', 'MOMAT@en']],
+  ['lam', 'Museo Nacional de Bellas Artes de Cuba', 'La Habana', 'Cuba', 'surreal', ['Museo Nacional de Bellas Artes de Cuba@es', 'National Museum of Fine Arts of Cuba@en']]
+];
+const TAG_NAMES = { mx: 'México', be: 'Bélgica', surreal: 'surrealismo' };
+MORE_MUSEUMS.forEach(r => MUSEUMS.push({ id: r[0], es: r[1], city: r[2], country: r[3], tags: r[4].split(' '), ids: [], labels: r[5].map(x => { const k = x.lastIndexOf('@'); return [x.slice(0, k), x.slice(k + 1)]; }) }));
+// Los museos ya existentes que también tienen surrealismo o son de esos países
+const MORE_TAGS = { surreal: ['moma', 'guggenheim', 'peggy', 'pma', 'reinasofia', 'thyssen', 'boijmans', 'zurich', 'pompidou', 'tate', 'aic', 'lacma', 'picassoparis', 'ngc', 'ngv', 'basel', 'staedel', 'nga'], mx: ['soumaya'] };
+Object.keys(MORE_TAGS).forEach(t => MORE_TAGS[t].forEach(id => { const m = MUSEUMS.find(x => x.id === id); if (m) m.tags = (m.tags || []).concat(t); }));
+MUSEUMS.forEach(m => { if (m.tags && m.tags.length && !DEFAULT_MUSEUMS.includes(m.id)) DEFAULT_MUSEUMS.push(m.id); });
+DEFAULT_MUSEUMS.forEach(id => { SOURCE_DEFAULTS['m:' + id] = true; });
+const museumIdsByTag = tag => MUSEUMS.filter(m => (m.tags || []).includes(tag)).map(m => 'm:' + m.id);
+
 /* Máximo 2 consultas a Wikidata a la vez: el servicio corta a quien abusa. */
 let sparqlActive = 0; const sparqlQueue = [];
 const sparqlSlot = () => new Promise(res => { if (sparqlActive < 2) { sparqlActive++; res(); } else sparqlQueue.push(res); });
@@ -916,7 +1012,7 @@ async function museumFetch(m, plan, f, ctx) {
 
 function museumSource(m) {
   finishMuseum(m);
-  return { id: 'm:' + m.id, group: 'museum', name: m.es, place: m.city, museum: m, fetch: (plan, f, ctx) => museumFetch(m, plan, f, ctx),
+  return { id: 'm:' + m.id, group: 'museum', name: m.es, place: m.country ? m.city + ', ' + m.country : m.city, tags: (m.tags || []).map(t => TAG_NAMES[t] || t).join(' '), museum: m, fetch: (plan, f, ctx) => museumFetch(m, plan, f, ctx),
     note: m.note || ((m.direct ? 'Directa · ' : '') + 'Wikidata · Commons · Wikipedia') };
 }
 /* Museos añadidos por el usuario: se busca el museo en Wikidata por su nombre. */
@@ -966,7 +1062,7 @@ async function runSource(src, f, ctx) {
 const api = {
   rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
   ERAS, STYLES, TYPES, KEYWORDS, MUSEUMS, DEFAULT_MUSEUMS, MUSEUM_SOURCES, ARTIST_SUGGESTIONS, keywordToQuery,
-  defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC,
+  defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC, museumIdsByTag,
   adapters: { wikidataMuseum, wikipediaFetch, commonsFetch, wikiartFetch, metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }
 };
 if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.ArtCore = api;

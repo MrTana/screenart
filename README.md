@@ -4,7 +4,7 @@ Una sola página web que muestra obras de museos en pantalla completa y cambia s
 
 ## Museos
 
-El menú ya no tiene una lista de fuentes: solo **museos**. Hay más de 70 (Louvre, Orsay, Versalles, Prado, Uffizi, Hermitage, The Met, Rijksmuseum, MoMA, Tate, Städel, Pushkin, Tokio, Buenos Aires, Sídney…), con un filtro para encontrarlos y botones para marcar o quitar los de la lista. Para cualquier otro, escribe su nombre en «Añadir otro museo»: la app lo busca en Wikidata y lo guarda en el navegador.
+El menú ya no tiene una lista de fuentes: solo **museos**. Hay unos 160 (Louvre, Orsay, Versalles, Prado, Uffizi, Hermitage, The Met, Rijksmuseum, MoMA, Tate, Städel, Pushkin, Tokio, Buenos Aires, Sídney…), con un filtro para encontrarlos y botones para marcar o quitar los de la lista. Hay 18 de México, 28 de Bélgica (Bruselas, Brujas, Amberes, Gante…) y unos 60 con obras surrealistas (Museo Magritte, Teatro-Museo Dalí, MoMA, Peggy Guggenheim, Menil, Max Ernst…), con colecciones rápidas «Museos de México», «Museos de Bélgica» y «Surrealismo en museos». Para cualquier otro, escribe su nombre en «Añadir otro museo»: la app lo busca en Wikidata y lo guarda en el navegador.
 
 **Cada museo se consulta a la vez en todas sus fuentes:**
 - **Directa**: la API del propio museo, cuando tiene una abierta (The Met, Art Institute of Chicago, Cleveland, Rijksmuseum, V&A, SMK, Minneapolis; Smithsonian y Harvard con clave gratuita).

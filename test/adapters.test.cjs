@@ -187,6 +187,15 @@ globalThis.fetch = async (url, init) => {
   console.log('museos   |', museumSrcs.length, 'fuentes, Louvre ->', ws.map(w => w.title).join(', '), '| máx. consultas simultáneas:', sparqlMax);
 
 
+  // México, Bélgica y surrealismo
+  const mx = C.museumIdsByTag('mx'), be = C.museumIdsByTag('be'), su = C.museumIdsByTag('surreal');
+  assert.ok(mx.length >= 15 && mx.includes('m:munal') && mx.includes('m:soumaya') && mx.includes('m:kahlo'), 'México');
+  assert.ok(be.length >= 25 && be.includes('m:magritte') && be.includes('m:groeninge') && be.includes('m:kmskb'), 'Bélgica');
+  assert.ok(su.length >= 50 && ['m:moma', 'm:dalifigueres', 'm:peggy', 'm:magritte', 'm:menil', 'm:reinasofia'].every(id => su.includes(id)), 'surrealismo');
+  [mx, be, su].forEach(l => l.forEach(id => assert.ok(C.SOURCE_LIST.some(x => x.id === id) && C.SOURCE_DEFAULTS[id], 'existe y está activo: ' + id)));
+  const mg = C.SOURCE_LIST.find(x => x.id === 'm:magritte'); assert.ok(/Bélgica/.test(mg.place) && /surrealismo/.test(mg.tags) && /Bélgica/.test(mg.tags));
+  sparqlLog.length = 0; await C.runSource(mg, C.defaultFilters(), anyCtx);
+  assert.ok(/"Musée Magritte"@fr/.test(sparqlLog.filter(q => !/COUNT\(/.test(q)).pop()), 'Magritte: nombre en francés');
   // Un museo, varias fuentes
   const orsay = museumSrcs.find(x => x.id === 'm:orsay'); const rp = {}; commonsLog.length = 0;
   const fo = C.defaultFilters();
