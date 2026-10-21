@@ -16,7 +16,7 @@ w.fetch = async url => {
 };
 w.Image = function () { const o = { set src(v) { this._s = v; setTimeout(() => { o.naturalWidth = 1600; o.naturalHeight = 1000; o.onload && o.onload(); }, 5); }, get src() { return this._s; } }; return o; };
 w.AbortController = AbortController;
-w.eval(html.match(/<script>\n([\s\S]*?)<\/script>\s*<script>\n([\s\S]*?)<\/script>/).slice(1, 3).join('\n'));
+w.eval(Array.from(html.matchAll(/<script>\n([\s\S]*?)<\/script>/g), m => m[1]).join('\n'));
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const until = async (fn, ms) => { const t = Date.now(); while (!fn() && Date.now() - t < ms) await wait(50); return fn(); };
 (async () => {

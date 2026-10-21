@@ -5,12 +5,17 @@ const C = ArtCore;
 const $ = s => document.querySelector(s);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const KEY = 'galeria-arte-v1';
+const Q = (() => { try { return new URLSearchParams(location.search); } catch (e) { return new URLSearchParams(''); } })();
+// Con «?c=código» la página es el mando del móvil: no muestra obras, controla la TV.
+const REMOTE = /^[a-z0-9]{6,24}$/i.test(Q.get('c') || '') ? Q.get('c').toLowerCase() : '';
 function lsGet(k, def) { try { const v = localStorage.getItem(KEY + ':' + k); return v ? JSON.parse(v) : def; } catch (e) { return def; } }
-function lsSet(k, v) { try { localStorage.setItem(KEY + ':' + k, JSON.stringify(v)); } catch (e) { /* sin almacenamiento */ } }
+function lsSet(k, v) { if (REMOTE && k !== 'rc') return; try { localStorage.setItem(KEY + ':' + k, JSON.stringify(v)); } catch (e) { /* sin almacenamiento */ } }
 
 /* ───────── estado ───────── */
-function loadFilters() {
-  const d = C.defaultFilters(), s = lsGet('f', {});
+function loadFilters() { return normFilters(lsGet('f', {})); }
+function normFilters(s) {
+  const d = C.defaultFilters();
+  s = s && typeof s === 'object' ? s : {};
   const f = Object.assign(d, s);
   f.sources = Object.assign({}, d.sources, s.sources || {});
   ['eras', 'styles', 'types', 'artists', 'keywords'].forEach(k => { if (!Array.isArray(f[k])) f[k] = []; });
@@ -26,7 +31,7 @@ const S = {
   status: {}, counts: {}, layer: 0, nextP: null, nextEpoch: -1,
   timer: null, capT: null, idleT: null, waiters: [], current: null, shown: 0
 };
-function saveAll() { lsSet('f', S.f); lsSet('st', S.st); lsSet('keys', S.keys); lsSet('favs', S.favs.slice(0, 300)); }
+function saveAll() { if (REMOTE) { remoteSetSoon(); return; } lsSet('f', S.f); lsSet('st', S.st); lsSet('keys', S.keys); lsSet('favs', S.favs.slice(0, 300)); }
 
 S.custom = lsGet('custom', []);
 S.custom.forEach(m => { try { C.addMuseum(m); } catch (e) { /* museo dañado */ } });
@@ -218,6 +223,7 @@ function present(item, fromHist) {
   if (!fromHist) { S.hist.push(item); if (S.hist.length > 120) S.hist.shift(); S.hi = S.hist.length - 1; }
   S.current = item; S.shown++;
   setCaption(item); updateFavBtn();
+  tvNowSoon();
 }
 function schedule() {
   clearTimeout(S.timer);
@@ -261,12 +267,12 @@ function prev() {
   if (S.hi > 0) { S.hi--; present(S.hist[S.hi], true); schedule(); }
   else toast('No hay obra anterior');
 }
-function togglePlay() { S.paused = !S.paused; $('#playBtn').textContent = S.paused ? 'Reanudar' : 'Pausar'; toast(S.paused ? 'En pausa' : 'Reproduciendo'); schedule(); }
+function togglePlay() { S.paused = !S.paused; $('#playBtn').textContent = S.paused ? 'Reanudar' : 'Pausar'; toast(S.paused ? 'En pausa' : 'Reproduciendo'); schedule(); tvNowSoon(true); }
 function toggleFav() {
   const w = S.current; if (!w) return;
   if (isFav(w)) { S.favs = S.favs.filter(x => x.uid !== w.uid); toast('Quitada de favoritas'); }
   else { S.favs.unshift({ uid: w.uid, src: w.src, museum: w.museum, title: w.title, artist: w.artist, date: w.date, year: w.year, imgs: [w.url].concat(w.imgs.filter(u => u !== w.url)), thumb: w.thumb, url: w.url_page || w.url, type: w.type, pd: w.pd, license: w.license, w: w.w, h: w.h }); toast('Guardada en favoritas'); }
-  saveAll(); updateFavBtn(); setCaption(w);
+  saveAll(); updateFavBtn(); setCaption(w); tvNowSoon(true);
 }
 function updateFavBtn() { $('#favBtn').textContent = isFav(S.current) ? 'Quitar favorita' : 'Guardar favorita'; }
 function toggleFS() {
@@ -327,6 +333,7 @@ async function diagnose() {
 let applyT;
 function applyChange() {
   saveAll();
+  if (REMOTE) return;
   clearTimeout(applyT);
   applyT = setTimeout(() => {
     S.epoch++; S.pool = []; S.nextP = null; S.flight = new Map(); S.cool = {}; S.streak = {}; S.warned = false; S.adv = false; S.counts = {}; S.status = {};
@@ -463,7 +470,7 @@ function renderAll() {
   $('#playBtn').textContent = S.paused ? 'Reanudar' : 'Pausar'; updateFavBtn(); updateSums();
 }
 function openMenu() { if (S.menu) return; S.menu = true; clearTimeout(S.timer); renderAll(); $('#drawer').hidden = false; const b = $('#drawer [data-act=next]'); if (b) b.focus({ preventScroll: true }); }
-function closeMenu() { if (!S.menu) return; S.menu = false; $('#drawer').hidden = true; schedule(); try { document.activeElement.blur(); } catch (e) { /* nada */ } }
+function closeMenu() { if (REMOTE || !S.menu) return; S.menu = false; $('#drawer').hidden = true; schedule(); try { document.activeElement.blur(); } catch (e) { /* nada */ } }
 const toggleArr = (arr, v) => { const i = arr.indexOf(v); i < 0 ? arr.push(v) : arr.splice(i, 1); };
 
 function addArtist(name) { name = (name || '').trim(); if (!name || S.f.artists.some(a => C.norm(a) === C.norm(name))) return; S.f.artists.push(name); render('artists'); render('artistsug'); applyChange(); }
@@ -471,8 +478,12 @@ function addKeyword(text) { const q = C.keywordToQuery(text || ''); if (!q || S.
 
 function onAct(act, id) {
   const f = S.f;
+  if (REMOTE && (act === 'prev' || act === 'next' || act === 'play' || act === 'fav')) { remoteCmd(act); return; }
   switch (act) {
-    case 'close': closeMenu(); break;
+    case 'close': if (!REMOTE) closeMenu(); break;
+    case 'qr': showPair(true); closeMenu(); break;
+    case 'qr-close': hidePair(); break;
+    case 'rc-retry': remoteHello(true); break;
     case 'acc': toggleAcc(id); break;
     case 'diag': diagnose(); break;
     case 'install': installApp(); break;
@@ -541,6 +552,8 @@ document.addEventListener('click', e => {
   if (e.target.id === 'menuBtn') { openMenu(); return; }
   if (e.target.id === 'loaderMenu') { openMenu(); return; }
   if (e.target.id === 'loaderDiag') { diagnose(); return; }
+  if (e.target.closest('#pair')) { hidePair(); return; }
+  if (REMOTE) return;
   if (e.target.closest('#drawer') || e.target.closest('#diag')) return;
   if (!S.menu && touchLayout() && e.clientX != null) {
     // Como en un libro electrónico: borde derecho = siguiente, borde izquierdo = anterior, centro = menú.
@@ -569,6 +582,7 @@ document.addEventListener('keydown', e => {
   else if (k === 'f' || k === 'F') toggleFS();
   else if (k === 'i' || k === 'I') { const c = $('#caption'); c.classList.toggle('show'); clearTimeout(S.capT); }
   else if (k === 'l' || k === 'L') toggleFav();
+  else if (k === 'q' || k === 'Q') showPair(true);
 });
 [['presets', 'preset'], ['artgroup', 'artgroup'], ['orient', 'orient'], ['mode', 'mode'], ['interval', 'interval'], ['caption', 'caption']].forEach(([box, act]) => {
   $('#' + BOX[box]).addEventListener('change', e => {
@@ -610,14 +624,172 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
   window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => { /* sin service worker la app funciona igual */ }); });
 }
 
+/* ───────── mando desde el móvil ─────────
+   La TV y el móvil se hablan a través de un canal público de ntfy.sh con un código aleatorio
+   (sin cuentas ni servidor propio). La TV escucha, muestra un QR con ?c=<código> y obedece. */
+const RELAY = (Q.get('relay') || 'https://ntfy.sh').replace(/\/+$/, '');
+const RC = { code: '', es: null, poll: null, buf: {}, listening: false, lastPhone: 0, lastNow: 0, pingT: null, helloT: null, helloN: 0, connected: false, setT: null, forceNow: false, nowT: null, sent: 0 };
+const asciiJSON = o => JSON.stringify(o).replace(/[\u0080-￿]/g, c => '\\u' + ('0000' + c.charCodeAt(0).toString(16)).slice(-4));
+const myTopic = () => 'galeria-arte-' + RC.code + (REMOTE ? '-ph' : '-tv');
+const peerTopic = () => 'galeria-arte-' + RC.code + (REMOTE ? '-tv' : '-ph');
+function newCode() {
+  const a = 'abcdefghjkmnpqrstuvwxyz23456789'; let s = '';
+  try { const r = new Uint8Array(12); crypto.getRandomValues(r); r.forEach(n => { s += a[n % a.length]; }); } catch (e) { for (let i = 0; i < 12; i++) s += a[Math.floor(Math.random() * a.length)]; }
+  return s;
+}
+function relaySend(obj) {
+  const s = asciiJSON(obj), id = Math.random().toString(36).slice(2, 7), N = 3000, n = Math.max(1, Math.ceil(s.length / N));
+  for (let i = 0; i < n; i++) {
+    RC.sent++;
+    try { fetch(RELAY + '/' + peerTopic(), { method: 'POST', body: id + '|' + i + '|' + n + '|' + s.slice(i * N, (i + 1) * N) }).catch(() => { /* sin red: se reintenta con la siguiente orden */ }); } catch (e) { /* fetch no disponible */ }
+  }
+}
+function relayRecv(text, fn) {
+  const m = /^([a-z0-9]+)\|(\d+)\|(\d+)\|([\s\S]*)$/.exec(text || ''); if (!m) return;
+  const id = m[1], i = +m[2], n = +m[3];
+  const b = RC.buf[id] || (RC.buf[id] = { n, parts: [], got: 0, t: Date.now() });
+  if (b.parts[i] == null) { b.parts[i] = m[4]; b.got++; }
+  Object.keys(RC.buf).forEach(k => { if (Date.now() - RC.buf[k].t > 60000) delete RC.buf[k]; });
+  if (b.got < b.n) return;
+  delete RC.buf[id];
+  let o; try { o = JSON.parse(b.parts.join('')); } catch (e) { return; }
+  if (o && typeof o === 'object') fn(o);
+}
+function relayListen(fn) {
+  if (RC.listening || !RC.code) return; RC.listening = true;
+  const url = RELAY + '/' + myTopic();
+  const onData = d => { let m; try { m = typeof d === 'string' ? JSON.parse(d) : d; } catch (e) { return; } if (m && m.event === 'message') relayRecv(m.message, fn); };
+  if (typeof EventSource === 'function') {
+    const es = RC.es = new EventSource(url + '/sse');
+    es.onmessage = e => onData(e.data);
+    es.onopen = () => { RC.connected = true; if (REMOTE && !RC.helloN) remoteHello(); };
+    es.onerror = () => { RC.connected = false; };
+  } else {
+    // Navegadores sin EventSource: se consulta cada 3 s.
+    let since = String(Math.floor(Date.now() / 1000)); RC.connected = true; if (REMOTE) remoteHello();
+    RC.poll = setInterval(async () => {
+      try {
+        const r = await fetch(url + '/json?poll=1&since=' + since); const t = await r.text();
+        t.split('\n').forEach(l => { if (!l.trim()) return; let m; try { m = JSON.parse(l); } catch (e) { return; } if (m.id) since = m.id; onData(m); });
+      } catch (e) { /* se reintenta */ }
+    }, 3000);
+  }
+}
+
+/* — lado TV — */
+function tvState() { return { t: 'state', f: S.f, st: S.st, custom: S.custom, paused: S.paused, now: tvNow() }; }
+function tvNow() {
+  const w = S.current; if (!w) return null;
+  return { uid: w.uid, title: w.title, artist: w.artist, date: w.date, museum: w.museum, thumb: w.thumb || w.url, fav: isFav(w), paused: S.paused };
+}
+// Con un móvil conectado la TV le cuenta cada obra nueva (como mucho una cada 8 s) para no agotar el límite diario de ntfy.
+function tvNowSoon(force) {
+  if (REMOTE || !RC.code || !RC.lastPhone) return;
+  if (force) RC.forceNow = true;
+  if (Date.now() - RC.lastPhone > 240000) return;
+  clearTimeout(RC.nowT);
+  const wait = RC.forceNow ? 120 : Math.max(300, 8000 - (Date.now() - RC.lastNow));
+  RC.nowT = setTimeout(() => { RC.forceNow = false; RC.lastNow = Date.now(); relaySend({ t: 'now', now: tvNow() }); }, wait);
+}
+function tvHandle(m) {
+  if (m.t === 'hello' || m.t === 'ping' || m.t === 'cmd' || m.t === 'set') {
+    RC.lastPhone = Date.now(); lsSet('paired', true); hidePair();
+  }
+  if (m.t === 'hello') { relaySend(tvState()); return; }
+  if (m.t === 'ping') { RC.forceNow = true; tvNowSoon(); return; }
+  if (m.t === 'cmd') {
+    RC.forceNow = true;
+    if (m.c === 'next') next(); else if (m.c === 'prev') prev(); else if (m.c === 'play') togglePlay(); else if (m.c === 'fav') toggleFav();
+    return;
+  }
+  if (m.t === 'set' && m.f) {
+    const before = JSON.stringify(S.f);
+    (m.custom || []).forEach(c => { if (c && c.id && !S.custom.some(x => x.id === c.id)) { try { C.addMuseum(c); S.custom.push(c); lsSet('custom', S.custom); } catch (e) { /* museo dañado */ } } });
+    S.f = normFilters(m.f);
+    if (m.st && typeof m.st === 'object') S.st = Object.assign(S.st, m.st);
+    applyLook();
+    if (JSON.stringify(S.f) !== before) applyChange(); else { saveAll(); schedule(); }
+    if (S.menu) renderAll();
+    toast('Ajustes cambiados desde el móvil');
+    relaySend(tvState());
+  }
+}
+function pairUrl() { return location.origin + location.pathname + '?c=' + RC.code; }
+function showPair(manual) {
+  if (REMOTE || !/^https?:$/.test(location.protocol)) { if (manual) toast('El mando necesita abrir la galería desde su dirección https'); return; }
+  if (!RC.code) { RC.code = lsGet('rc', '') || newCode(); lsSet('rc', RC.code); }
+  relayListen(tvHandle);
+  const url = pairUrl();
+  try { const q = qrcode(0, 'M'); q.addData(url); q.make(); $('#pairQR').innerHTML = q.createSvgTag({ cellSize: 4, margin: 2, scalable: true }); } catch (e) { $('#pairQR').textContent = ''; }
+  $('#pairUrl').textContent = url.replace(/^https?:\/\//, '');
+  $('#pair').hidden = false;
+  clearTimeout(RC.hideT); RC.hideT = setTimeout(hidePair, manual ? 120000 : (lsGet('paired', false) ? 20000 : 150000));
+}
+function hidePair() { const p = $('#pair'); if (p) p.hidden = true; clearTimeout(RC.hideT); }
+function initTV() {
+  if (Q.get('tv') === '0') return;
+  if (Q.get('tv') === '1' || (window.innerWidth || 1024) > 820) setTimeout(() => showPair(false), 1500);
+}
+
+/* — lado móvil — */
+function remoteStat(text, ok, retry) { const s = $('#rcstat'); s.textContent = text; s.classList.toggle('ok', !!ok); $('#rcRetry').hidden = !retry; }
+function remoteNow(n) {
+  if (!n) return;
+  S.current = { uid: n.uid }; S.favs = n.fav ? [{ uid: n.uid }] : []; S.paused = !!n.paused;
+  $('#rcnow').hidden = false; $('#rcT').textContent = n.title || ''; $('#rcA').textContent = [n.artist, n.date].filter(Boolean).join(' · ');
+  const im = $('#rcImg'); if (n.thumb && im.dataset.u !== n.thumb) { im.dataset.u = n.thumb; im.src = n.thumb; }
+  $('#playBtn').textContent = S.paused ? 'Reanudar' : 'Pausar'; updateFavBtn();
+}
+function remoteHello(again) {
+  if (again) RC.helloN = 0;
+  clearTimeout(RC.helloT);
+  if (RC.gotState) return;
+  if (RC.helloN >= 10) { remoteStat('No encuentro la TV. Comprueba que tiene abierta la galería y que ambos tenéis internet.', false, true); return; }
+  RC.helloN++; relaySend({ t: 'hello' });
+  remoteStat('Conectando con la TV…', false, false);
+  RC.helloT = setTimeout(() => remoteHello(false), Math.min(60000, 3000 * Math.pow(2, RC.helloN - 1)));
+}
+function remoteHandle(m) {
+  if (m.t === 'state' && m.f) {
+    RC.gotState = true; clearTimeout(RC.helloT);
+    (m.custom || []).forEach(c => { try { if (c && c.id) { C.addMuseum(c); if (!S.custom.some(x => x.id === c.id)) S.custom.push(c); } } catch (e) { /* museo dañado */ } });
+    S.f = normFilters(m.f); if (m.st) S.st = Object.assign(S.st, m.st);
+    renderAll(); remoteNow(m.now);
+    remoteStat('Conectado a la TV. Lo que cambies aquí se aplica en la pantalla.', true, false);
+  } else if (m.t === 'now') { remoteNow(m.now); if (!RC.gotState) remoteHello(true); }
+}
+function remoteCmd(c) {
+  if (!RC.gotState) { toast('Todavía no hay conexión con la TV'); return; }
+  relaySend({ t: 'cmd', c });
+  toast(c === 'next' ? 'Siguiente obra…' : c === 'prev' ? 'Obra anterior…' : c === 'play' ? 'Pausa / reanudar…' : 'Favorita…');
+}
+function remoteSetSoon() {
+  if (!REMOTE) return;
+  clearTimeout(RC.setT);
+  RC.setT = setTimeout(() => { relaySend({ t: 'set', f: S.f, st: S.st, custom: S.custom }); toast('Enviado a la TV'); }, 900);
+}
+function initRemote() {
+  RC.code = REMOTE; lsSet('rc', REMOTE);
+  document.body.classList.add('rc');
+  S.menu = true; applyLook(); renderAll();
+  $('#rcinfo').hidden = false; $('#drawer').hidden = false;
+  document.title = 'Mando · Galería de arte';
+  remoteStat('Conectando con la TV…', false, false);
+  relayListen(remoteHandle);
+  RC.pingT = setInterval(() => { if (document.visibilityState === 'visible' && RC.gotState) relaySend({ t: 'ping' }); }, 90000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && RC.gotState) relaySend({ t: 'ping' }); });
+}
+
 /* ───────── inicio ───────── */
 function init() {
+  if (REMOTE) { initRemote(); return; }
   applyLook(); renderAll(); activity(); keepAwake();
   document.body.classList.add('active');
   if (touchLayout() && !lsGet('tapHint', false)) { lsSet('tapHint', true); setTimeout(() => toast('Toca el borde derecho: siguiente · el izquierdo: anterior · el centro: menú'), 2500); }
   showLoader('Buscando obras en los museos…', 'Pulsa Intro o toca la pantalla para abrir los filtros.', false);
   advance();
+  initTV();
 }
-window.ArtApp = { S, next, prev, advance, openMenu, closeMenu, refill, onAct, render, renderAll, applyChange, present, pullNext };
+window.ArtApp = { S, next, prev, advance, openMenu, closeMenu, refill, onAct, render, renderAll, applyChange, present, pullNext, Remote: () => RC };
 init();
 })();

@@ -92,6 +92,25 @@ body.active #menuBtn,#menuBtn:focus-visible{opacity:1}
   #edgeR{right:max(8px,env(safe-area-inset-right,0px))}
 }
 
+/* mando desde el móvil */
+#pair{position:fixed;right:max(18px,env(safe-area-inset-right,0px));bottom:max(18px,env(safe-area-inset-bottom,0px));z-index:9;display:flex;align-items:center;gap:clamp(12px,1.4vw,24px);background:#fff;color:#1b1b19;border:1px solid #d9d6cc;border-radius:12px;padding:clamp(12px,1.2vw,20px);box-shadow:0 8px 40px rgba(0,0,0,.25);max-width:min(92vw,720px)}
+#pair .pq{width:clamp(130px,15vmin,260px);height:clamp(130px,15vmin,260px);flex:none}
+#pair .pq svg{display:block;width:100%;height:100%}
+#pair .pt{display:flex;flex-direction:column;gap:.35em;min-width:0}
+#pair b{font:italic 500 clamp(20px,2.2vw,36px) var(--serif)}
+#pair span{font-size:clamp(14px,1.4vw,22px);color:#4d4d46}
+#pair code{font:500 clamp(12px,1.1vw,17px) ui-monospace,monospace;color:#6e6e66;word-break:break-all}
+body.rc #stage,body.rc #menuBtn,body.rc #caption,body.rc .edge,body.rc #loader,body.rc #pair,body.rc #busy{display:none!important}
+body.rc [data-act=close],body.rc [data-act=fs],body.rc [data-act=qr],body.rc [data-act=diag],body.rc [data-acc=claves],body.rc .foot{display:none!important}
+body.rc #drawer{width:100vw;border:0;left:0}
+#rcnow{display:flex;gap:12px;align-items:center;margin:12px 0 0;padding:10px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.03)}
+#rcnow img{width:64px;height:64px;object-fit:cover;border-radius:4px;background:#222;flex:none}
+#rcnow .rt{min-width:0}
+#rcnow .rt b{display:block;font:italic 500 18px var(--serif);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#rcnow .rt span{display:block;font-size:14px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#rcstat{margin:10px 0 0;font-size:14px;color:var(--muted)}
+#rcstat.ok{color:var(--accent)}
+
 /* panel */
 #drawer{position:fixed;top:0;right:0;bottom:0;width:min(600px,100vw);background:var(--panel);border-left:1px solid var(--line);z-index:12;overflow-y:auto;overscroll-behavior:contain;padding-block:max(14px,env(safe-area-inset-top,0px)) max(24px,env(safe-area-inset-bottom,0px));padding-left:20px;padding-right:max(20px,env(safe-area-inset-right,0px));font-size:17px;box-shadow:-20px 0 60px rgba(0,0,0,.5)}
 #drawer[hidden]{display:none}
@@ -167,15 +186,18 @@ details.adv label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut
 <div id="toast" role="status"></div>
 <div class="edge" id="edgeL" aria-hidden="true">‹</div><div class="edge" id="edgeR" aria-hidden="true">›</div>
 <button id="menuBtn" aria-label="Abrir menú de filtros">Menú</button>
+<div id="pair" hidden><div class="pq" id="pairQR"></div><div class="pt"><b>Mándala desde el móvil</b><span>Apunta la cámara del móvil a este código y manejarás los filtros sin el mando.</span><code id="pairUrl"></code></div></div>
 
 <aside id="drawer" hidden aria-label="Filtros y ajustes">
   <div class="dhead"><h1>Galería de arte</h1><button class="btn" data-act="close">Cerrar</button></div>
+  <div id="rcinfo" hidden><div id="rcnow" hidden><img id="rcImg" alt=""><div class="rt"><b id="rcT"></b><span id="rcA"></span></div></div><p id="rcstat">Conectando con la TV…</p><button class="btn" data-act="rc-retry" id="rcRetry" hidden>Reintentar</button></div>
   <div class="bar">
     <button class="btn" data-act="prev">Anterior</button>
     <button class="btn" data-act="play" id="playBtn">Pausar</button>
     <button class="btn pri" data-act="next">Siguiente</button>
     <button class="btn" data-act="fav" id="favBtn">Guardar favorita</button>
     <button class="btn" data-act="fs">Pantalla completa</button>
+    <button class="btn" data-act="qr">Mando en el móvil</button>
   </div>
 
   <section class="qs" aria-label="Ajustes rápidos">
@@ -236,6 +258,9 @@ details.adv label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut
   </section>
   <div class="foot">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión __BUILD__</span><br><button class="btn" data-act="update" style="margin-top:10px">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" style="margin-top:10px" hidden>Instalar la app</button> <button class="btn" data-act="diag" style="margin-top:10px">Probar fuentes</button> <button class="btn" data-act="reset" style="margin-top:10px">Restablecer filtros</button></div>
 </aside>
+<script>
+/*__QR__*/
+</script>
 <script>
 /*__CORE__*/
 </script>

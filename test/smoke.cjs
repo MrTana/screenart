@@ -18,7 +18,7 @@ w.fetch = async (url, init) => {
 w.Image = function () { const o = { set src(v) { this._s = v; setTimeout(() => { o.naturalWidth = 1600; o.naturalHeight = 1000; o.onload && o.onload(); }, 5); }, get src() { return this._s; } }; return o; };
 w.AbortController = AbortController;
 w.eval(fs.readFileSync(__dirname + '/../src/core.js', 'utf8').replace(/^[\s\S]*$/, m => m)); // sanity: core evaluates alone
-w.eval(html.match(/<script>\n([\s\S]*?)<\/script>\s*<script>\n([\s\S]*?)<\/script>/).slice(1, 3).join('\n'));
+w.eval(Array.from(html.matchAll(/<script>\n([\s\S]*?)<\/script>/g), m => m[1]).join('\n'));
 const wait = ms => new Promise(r => setTimeout(r, ms));
 (async () => {
   await wait(600);

@@ -70,6 +70,15 @@ Abre el menú y pulsa **Probar fuentes** (también sale en la pantalla de carga 
 
 En el móvil o la tableta funciona como un libro electrónico: tocar el borde derecho pasa a la siguiente obra, el borde izquierdo vuelve a la anterior y el centro abre el menú. También se puede deslizar el dedo a izquierda o derecha.
 
+## Mando desde el móvil (sin usar el control de la TV)
+
+Al abrir la galería en una pantalla grande aparece un **código QR** en la esquina (unos 2 minutos la primera vez, 20 segundos después de emparejar). Escanéalo con la cámara del móvil: se abre la misma página en modo **mando**, con el menú de filtros siempre abierto y los botones Anterior, Pausar, Siguiente y Favorita. Todo lo que cambies en el móvil se aplica en la TV.
+
+- Si no ves el QR, abre la galería en la TV con `?tv=1` al final de la dirección (o pulsa la tecla Q). En el menú de la TV hay también «Mando en el móvil».
+- El móvil queda emparejado por un código aleatorio que la TV guarda en su navegador; puedes añadir la página del mando a la pantalla de inicio del móvil y seguirá funcionando mientras la TV no cambie de código.
+- La comunicación pasa por el canal público de [ntfy.sh](https://ntfy.sh) (sin cuentas ni servidor propio): solo viajan órdenes, filtros y el título de la obra, nunca claves de API. Con el límite gratuito de unos 250 mensajes al día por conexión, la TV solo avisa de cada obra nueva mientras hay un móvil conectado (como mucho una cada 8 segundos). Para usar tu propio servidor ntfy, añade `?relay=https://tu-servidor` en ambas direcciones.
+- Pruebas: `test/remote.cjs` simula TV y móvil.
+
 ## Instalarla como app (PWA)
 
 La galería es una app instalable: tiene manifiesto, iconos y un service worker que la abre sin conexión (las obras sí necesitan internet). Abre la página publicada y:
