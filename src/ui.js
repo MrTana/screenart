@@ -470,6 +470,18 @@ function activity() {
   clearTimeout(S.idleT);
   S.idleT = setTimeout(() => { if (!S.menu) { document.body.classList.remove('active'); document.body.classList.add('idle'); } }, 4500);
 }
+const EDGE_L = 0.28, EDGE_R = 0.72;
+function touchLayout() {
+  try { return (typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches) || (window.innerWidth || 1024) <= 820; } catch (err) { return false; }
+}
+// Deslizar el dedo también cambia de obra.
+let swipe = null;
+document.addEventListener('touchstart', e => { const t = e.touches[0]; swipe = e.touches.length === 1 && !S.menu ? { x: t.clientX, y: t.clientY } : null; }, { passive: true });
+document.addEventListener('touchend', e => {
+  if (!swipe || S.menu) return;
+  const t = e.changedTouches[0], dx = t.clientX - swipe.x, dy = t.clientY - swipe.y; swipe = null;
+  if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5) { dx < 0 ? next() : prev(); }
+}, { passive: true });
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-act]');
   if (el) { onAct(el.dataset.act, el.dataset.id); return; }
@@ -477,6 +489,12 @@ document.addEventListener('click', e => {
   if (e.target.id === 'loaderMenu') { openMenu(); return; }
   if (e.target.id === 'loaderDiag') { diagnose(); return; }
   if (e.target.closest('#drawer') || e.target.closest('#diag')) return;
+  if (!S.menu && touchLayout() && e.clientX != null) {
+    // Como en un libro electrónico: borde derecho = siguiente, borde izquierdo = anterior, centro = menú.
+    const x = e.clientX / (window.innerWidth || 1);
+    if (x > EDGE_R) { next(); return; }
+    if (x < EDGE_L) { prev(); return; }
+  }
   S.menu ? closeMenu() : openMenu();
 });
 ['mousemove', 'touchstart', 'pointerdown'].forEach(ev => document.addEventListener(ev, activity, { passive: true }));
@@ -513,6 +531,7 @@ async function keepAwake() { try { if ('wakeLock' in navigator) lock = await nav
 function init() {
   applyLook(); renderAll(); activity(); keepAwake();
   document.body.classList.add('active');
+  if (touchLayout() && !lsGet('tapHint', false)) { lsSet('tapHint', true); setTimeout(() => toast('Toca el borde derecho: siguiente · el izquierdo: anterior · el centro: menú'), 2500); }
   showLoader('Buscando obras en los museos…', 'Pulsa Intro o toca la pantalla para abrir los filtros.', false);
   advance();
 }

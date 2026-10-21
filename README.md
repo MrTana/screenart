@@ -41,7 +41,7 @@ Abre el menú y pulsa **Probar fuentes** (también sale en la pantalla de carga 
 | I | Mostrar u ocultar la ficha |
 | L | Guardar o quitar favorita |
 
-En una pantalla táctil, tocar la pantalla abre el menú.
+En el móvil o la tableta funciona como un libro electrónico: tocar el borde derecho pasa a la siguiente obra, el borde izquierdo vuelve a la anterior y el centro abre el menú. También se puede deslizar el dedo a izquierda o derecha.
 
 ## Publicar en GitHub Pages
 

@@ -71,6 +71,13 @@ button{cursor:pointer}
 /* botón de menú */
 #menuBtn{position:fixed;top:max(14px,env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px));z-index:8;background:rgba(16,17,16,.82);border:1px solid var(--line);border-radius:6px;padding:.55em 1em;font-size:clamp(15px,1.4vw,22px);font-weight:500;opacity:0;transition:opacity .35s}
 body.active #menuBtn,#menuBtn:focus-visible{opacity:1}
+.edge{display:none}
+@media (pointer:coarse),(max-width:820px){
+  .edge{display:flex;position:fixed;top:50%;transform:translateY(-50%);z-index:6;width:44px;height:44px;border-radius:50%;align-items:center;justify-content:center;font-size:34px;line-height:1;color:rgba(255,255,255,.7);background:rgba(16,17,16,.35);opacity:0;transition:opacity .4s;pointer-events:none}
+  body.active .edge{opacity:1}
+  #edgeL{left:max(8px,env(safe-area-inset-left,0px))}
+  #edgeR{right:max(8px,env(safe-area-inset-right,0px))}
+}
 
 /* panel */
 #drawer{position:fixed;top:0;right:0;bottom:0;width:min(600px,100vw);background:var(--panel);border-left:1px solid var(--line);z-index:12;overflow-y:auto;overscroll-behavior:contain;padding-block:max(14px,env(safe-area-inset-top,0px)) max(24px,env(safe-area-inset-bottom,0px));padding-left:20px;padding-right:max(20px,env(safe-area-inset-right,0px));font-size:17px;box-shadow:-20px 0 60px rgba(0,0,0,.5)}
@@ -124,6 +131,7 @@ details.adv label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut
 <div id="diag" hidden><div class="dhead"><h1>Diagnóstico de fuentes</h1><button class="btn" data-act="diag-close">Cerrar</button></div><pre id="diagOut"></pre></div>
 <div id="busy">Aplicando filtros…</div>
 <div id="toast" role="status"></div>
+<div class="edge" id="edgeL" aria-hidden="true">‹</div><div class="edge" id="edgeR" aria-hidden="true">›</div>
 <button id="menuBtn" aria-label="Abrir menú de filtros">Menú</button>
 
 <aside id="drawer" hidden aria-label="Filtros y ajustes">
@@ -1711,6 +1719,18 @@ function activity() {
   clearTimeout(S.idleT);
   S.idleT = setTimeout(() => { if (!S.menu) { document.body.classList.remove('active'); document.body.classList.add('idle'); } }, 4500);
 }
+const EDGE_L = 0.28, EDGE_R = 0.72;
+function touchLayout() {
+  try { return (typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches) || (window.innerWidth || 1024) <= 820; } catch (err) { return false; }
+}
+// Deslizar el dedo también cambia de obra.
+let swipe = null;
+document.addEventListener('touchstart', e => { const t = e.touches[0]; swipe = e.touches.length === 1 && !S.menu ? { x: t.clientX, y: t.clientY } : null; }, { passive: true });
+document.addEventListener('touchend', e => {
+  if (!swipe || S.menu) return;
+  const t = e.changedTouches[0], dx = t.clientX - swipe.x, dy = t.clientY - swipe.y; swipe = null;
+  if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5) { dx < 0 ? next() : prev(); }
+}, { passive: true });
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-act]');
   if (el) { onAct(el.dataset.act, el.dataset.id); return; }
@@ -1718,6 +1738,12 @@ document.addEventListener('click', e => {
   if (e.target.id === 'loaderMenu') { openMenu(); return; }
   if (e.target.id === 'loaderDiag') { diagnose(); return; }
   if (e.target.closest('#drawer') || e.target.closest('#diag')) return;
+  if (!S.menu && touchLayout() && e.clientX != null) {
+    // Como en un libro electrónico: borde derecho = siguiente, borde izquierdo = anterior, centro = menú.
+    const x = e.clientX / (window.innerWidth || 1);
+    if (x > EDGE_R) { next(); return; }
+    if (x < EDGE_L) { prev(); return; }
+  }
   S.menu ? closeMenu() : openMenu();
 });
 ['mousemove', 'touchstart', 'pointerdown'].forEach(ev => document.addEventListener(ev, activity, { passive: true }));
@@ -1754,6 +1780,7 @@ async function keepAwake() { try { if ('wakeLock' in navigator) lock = await nav
 function init() {
   applyLook(); renderAll(); activity(); keepAwake();
   document.body.classList.add('active');
+  if (touchLayout() && !lsGet('tapHint', false)) { lsSet('tapHint', true); setTimeout(() => toast('Toca el borde derecho: siguiente · el izquierdo: anterior · el centro: menú'), 2500); }
   showLoader('Buscando obras en los museos…', 'Pulsa Intro o toca la pantalla para abrir los filtros.', false);
   advance();
 }

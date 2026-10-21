@@ -62,6 +62,17 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   console.log('tras filtros -> mostradas:', S.shown, '| estados:', JSON.stringify(Object.fromEntries(Object.entries(S.status).map(([k, v]) => [k, v.state + (v.msg ? ':' + v.msg : '')]))));
   A.next(); await wait(100); A.prev();
   console.log('historial:', S.hist.length, 'idx', S.hi);
+  // Toques como en un libro electrónico (pantalla de 500 px)
+  Object.defineProperty(w, 'innerWidth', { value: 500, configurable: true });
+  const tap = x => d.body.dispatchEvent(new w.MouseEvent('click', { clientX: x, bubbles: true }));
+  const sh0 = S.shown, hl0 = S.hist.length;
+  tap(480); await wait(400);
+  const rightOK = !S.menu && (S.adv || S.hist.length > hl0 || S.shown > sh0 || S.hi < S.hist.length - 1);
+  const hi1 = S.hi; tap(15); await wait(100);
+  const leftOK = !S.menu && (S.hi < hi1 || S.hi === 0);
+  tap(250); const centerOK = S.menu; A.closeMenu();
+  console.log('toques -> derecha:', rightOK, '| izquierda:', leftOK, '| centro abre menú:', centerOK);
+  if (!rightOK || !leftOK || !centerOK) { console.error('FALLO toques'); process.exit(1); }
   console.log('errores JS:', errors.length ? errors : 'ninguno');
   process.exit(0);
 })();
