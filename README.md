@@ -61,6 +61,8 @@ Abre el menú y pulsa **Probar fuentes** (también sale en la pantalla de carga 
 
 El menú, el mando y los avisos siguen **Material Design 3** (tema oscuro): roles de color M3, tipografía Roboto, botones rellenos, tonales y con contorno con iconos, chips de filtro con marca de selección, campos con contorno y etiqueta flotante, secciones plegables como tarjetas, botón de menú extendido, panel lateral modal con velo, avisos tipo snackbar, estados de pulsación y foco visibles, y objetivos táctiles de al menos 48 px. La obra y su ficha conservan el estilo de galería.
 
+Al final del menú, la sección **Skin** permite elegir entre cuatro aspectos: Material 3 oscuro (el predeterminado), Material 3 claro, Material 3 Expressive oscuro y Material 3 Expressive claro (formas más redondas, tipografía enfática, colores más vivos, botones que cambian de forma al pulsarlos y movimiento con rebote). También se puede cambiar desde el mando del móvil y se recuerda entre sesiones.
+
 ## No quiero ver
 
 La sección **No quiero ver** del menú quita temas sin limitar los demás: retratos y autorretratos, naturalezas muertas, flores, paisajes, marinas, ciudades, desnudos, religión, mitología, animales, batallas y escenas con personas. Se descartan las obras cuyo título encaja con el tema (en español, inglés, francés, italiano, alemán y neerlandés), y también puedes añadir tus propias palabras (por ejemplo «caballos»). Se conserva al cambiar de colección rápida y no afecta a las favoritas.

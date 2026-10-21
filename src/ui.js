@@ -23,7 +23,7 @@ function normFilters(s) {
 }
 const S = {
   f: loadFilters(),
-  st: Object.assign({ interval: 30, mode: 'gallery', quality: 'normal', kenburns: false, caption: 'auto', bg: 'black' }, lsGet('st', {})),
+  st: Object.assign({ interval: 30, mode: 'gallery', quality: 'normal', kenburns: false, caption: 'auto', bg: 'black', skin: 'm3-dark' }, lsGet('st', {})),
   keys: Object.assign({ europeana: 'api2demo', si: 'DEMO_KEY', harvard: '' }, lsGet('keys', {})),
   favs: lsGet('favs', []),
   pool: [], seen: new Set(), seenKey: new Set(), hist: [], hi: -1,
@@ -286,6 +286,9 @@ function applyLook() {
   $('#stage').className = 'mode-' + S.st.mode + (S.st.kenburns ? ' kb' : '');
   document.body.dataset.mode = S.st.mode;
   document.body.dataset.bg = S.st.bg === 'white' ? 'white' : 'black';
+  const sk = SKIN_BAR[S.st.skin] ? S.st.skin : 'm3-dark';
+  document.documentElement.dataset.skin = sk;
+  try { const m = document.querySelector('meta[name=theme-color]'); if (m) m.setAttribute('content', SKIN_BAR[sk]); } catch (e) { /* sin meta */ }
   document.documentElement.style.setProperty('--dur', S.st.interval + 's');
 }
 
@@ -357,6 +360,7 @@ function accSummary(id) {
     case 'estilo': return f.styles.length ? j(names(C.STYLES, f.styles)) : 'Todos los estilos';
     case 'tipo': return f.types.length ? j(names(C.TYPES, f.types)) : 'Todos los tipos';
     case 'artistas': return f.artists.length ? j(f.artists) : 'Todos los artistas';
+    case 'skin': return (SKINS.find(x => x[0] === S.st.skin) || SKINS[0])[1];
     case 'noquiero': { const n = f.exclude.map(id => (C.EXCLUDES.find(x => x.id === id) || { es: id }).es).concat(f.noWords); return n.length ? j(n) : 'Nada excluido'; }
     case 'tema': return f.keywords.length ? j(f.keywords.map(q => { const k = C.KEYWORDS.find(x => x.q === q); return k ? k.es : q; })) : 'Cualquier tema';
     case 'opciones': { const o = []; if (S.st.kenburns) o.push('zoom lento'); if (S.st.quality === 'high') o.push('alta calidad'); if (f.soloPD) o.push('solo dominio público'); if (f.onlyFavs) o.push('solo favoritas'); return o.length ? j(o) : 'Ninguna activada'; }
@@ -401,6 +405,8 @@ const ORIENT = [['any', 'Cualquiera'], ['landscape', 'Horizontal'], ['portrait',
 const MODES = [['gallery', 'Obra completa'], ['frame', 'Con marco'], ['fill', 'Llenar (recorta)']];
 const INTERVALS = [[10, '10 s'], [15, '15 s'], [30, '30 s'], [60, '1 min'], [300, '5 min'], [900, '15 min'], [3600, '1 h']];
 const BGS = [['black', 'Negro'], ['white', 'Blanco']];
+const SKINS = [['m3-dark', 'Material 3 oscuro'], ['m3-light', 'Material 3 claro'], ['m3e-dark', 'Material 3 Expressive oscuro'], ['m3e-light', 'Material 3 Expressive claro']];
+const SKIN_BAR = { 'm3-dark': '#141218', 'm3-light': '#FEF7FF', 'm3e-dark': '#15101C', 'm3e-light': '#FFF7FF' };
 const CAPTIONS = [['auto', 'Al inicio de cada obra'], ['always', 'Siempre visible'], ['never', 'Oculta']];
 
 const chip = (act, id, label, on, cls) => '<button class="chip' + (cls ? ' ' + cls : '') + '" data-act="' + act + '" data-id="' + esc(id) + '" aria-pressed="' + !!on + '">' + esc(label) + '</button>';
@@ -422,10 +428,11 @@ const R = {
   interval: () => opts(INTERVALS, S.st.interval),
   caption: () => opts(CAPTIONS, S.st.caption),
   bg: () => opts(BGS, S.st.bg),
+  skin: () => opts(SKINS, S.st.skin),
   opts: () => chip('opt', 'kb', 'Zoom lento', S.st.kenburns) + chip('opt', 'hq', 'Imágenes en alta calidad', S.st.quality === 'high') +
     chip('opt', 'pd', 'Solo dominio público', S.f.soloPD) + chip('opt', 'favs', 'Solo mis favoritas (' + S.favs.length + ')', S.f.onlyFavs)
 };
-const BOX = { presets: 'c-presets', eras: 'c-eras', styles: 'c-styles', types: 'c-types', artists: 'c-artists', artgroup: 'c-artgroup', artistsug: 'c-artist-sug', kws: 'c-kws', excl: 'c-excl', exwords: 'c-exwords', orient: 'c-orient', mode: 'c-mode', interval: 'c-interval', caption: 'c-caption', bg: 'c-bg', opts: 'c-opts' };
+const BOX = { presets: 'c-presets', eras: 'c-eras', styles: 'c-styles', types: 'c-types', artists: 'c-artists', artgroup: 'c-artgroup', artistsug: 'c-artist-sug', kws: 'c-kws', excl: 'c-excl', exwords: 'c-exwords', orient: 'c-orient', mode: 'c-mode', interval: 'c-interval', caption: 'c-caption', bg: 'c-bg', skin: 'c-skin', opts: 'c-opts' };
 
 function srcNote(s) {
   const st = S.status[s.id], base = s.place + ' · ' + s.note;
@@ -556,6 +563,7 @@ function onAct(act, id) {
     case 'key-test': testKey(id); break;
     case 'mode': S.st.mode = id; applyLook(); saveAll(); render('mode'); break;
     case 'interval': S.st.interval = +id; saveAll(); render('interval'); schedule(); break;
+    case 'skin': S.st.skin = SKIN_BAR[id] ? id : 'm3-dark'; applyLook(); saveAll(); render('skin'); updateSums(); break;
     case 'bg': S.st.bg = id === 'white' ? 'white' : 'black'; applyLook(); saveAll(); render('bg'); break;
     case 'caption': S.st.caption = id; saveAll(); render('caption'); if (S.current) setCaption(S.current); break;
     case 'opt':
@@ -623,7 +631,7 @@ document.addEventListener('keydown', e => {
   else if (k === 'l' || k === 'L') toggleFav();
   else if (k === 'q' || k === 'Q') showPair(true);
 });
-[['presets', 'preset'], ['artgroup', 'artgroup'], ['orient', 'orient'], ['mode', 'mode'], ['interval', 'interval'], ['caption', 'caption'], ['bg', 'bg']].forEach(([box, act]) => {
+[['presets', 'preset'], ['artgroup', 'artgroup'], ['orient', 'orient'], ['mode', 'mode'], ['interval', 'interval'], ['caption', 'caption'], ['bg', 'bg'], ['skin', 'skin']].forEach(([box, act]) => {
   $('#' + BOX[box]).addEventListener('change', e => {
     const v = e.target.value;
     if (act === 'preset') { if (v === '') return; onAct('preset', v); e.target.value = ''; return; }

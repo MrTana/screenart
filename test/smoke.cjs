@@ -30,6 +30,13 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     assert.deepStrictEqual([t(10), t(30), t(900), t(1800), t(3600)], [2500, 7500, 225000, 300000, 300000], 'la ficha dura el 25 % (máx. 5 min)'); S.st.interval = k; }
   assert.strictEqual(w.document.querySelector('#caption .s'), null, 'la ficha solo lleva título, autor y año');
   assert.strictEqual(w.document.body.dataset.bg, 'black', 'fondo negro por defecto');
+  { const dd = w.document, de = dd.documentElement;
+    assert.strictEqual(de.dataset.skin, 'm3-dark', 'skin por defecto');
+    assert.strictEqual(dd.querySelectorAll('#c-skin option').length, 4, 'cuatro skins');
+    for (const sk of ['m3-light', 'm3e-dark', 'm3e-light']) { A.onAct('skin', sk); assert.strictEqual(de.dataset.skin, sk); assert.strictEqual(S.st.skin, sk); }
+    assert.ok(/Expressive claro/.test(dd.querySelector('[data-sum=skin]').textContent), 'resumen del skin');
+    assert.strictEqual(dd.querySelector('meta[name=theme-color]').getAttribute('content'), '#FFF7FF');
+    A.onAct('skin', 'inventado'); assert.strictEqual(de.dataset.skin, 'm3-dark', 'skin desconocido vuelve al predeterminado'); }
   A.onAct('bg', 'white'); assert.strictEqual(w.document.body.dataset.bg, 'white'); A.onAct('bg', 'black');
   A.openMenu();
   { const d0 = w.document; assert.ok(d0.querySelectorAll('#c-excl .chip').length >= 10, 'chips de «No quiero ver»');
