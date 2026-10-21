@@ -1,11 +1,9 @@
 /* Pequeño intermediario para el navegador (Cloudflare Pages Function).
-   Algunas colecciones (WikiArt, Princeton, la búsqueda del Art Institute of Chicago) no envían cabeceras CORS y el navegador
+   Algunas colecciones (WikiArt y la búsqueda del Art Institute of Chicago) no envían cabeceras CORS y el navegador
    no deja leerlas. Aquí se piden desde el servidor y se devuelven desde el mismo sitio. Solo GET, solo estas direcciones,
    y solo desde la propia página. */
 const ALLOWED = [
   /^https:\/\/www\.wikiart\.org\/en\/[^?#]*\?[^#]*json=2/,
-  /^https:\/\/dpul\.princeton\.edu\/catalog\.json\?/,
-  /^https:\/\/dpul\.princeton\.edu\/catalog\/[0-9a-f-]{32,36}\/manifest$/,
   /^https:\/\/api\.artic\.edu\/api\/v1\/artworks\/search\?/
 ];
 export async function onRequestGet({ request }) {

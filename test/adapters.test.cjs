@@ -220,7 +220,7 @@ globalThis.fetch = async (url, init) => {
   // colecciones abiertas
   const op = museumSrcs.find(x => x.id === 'm:open'); const rpo = {}; const fsx = C.defaultFilters(); fsx.styles = ['surrealism'];
   await C.runSource(op, fsx, Object.assign({}, anyCtx, { keys: { europeana: 'k' }, report: (n, c, e) => { rpo[n] = e ? 'x' : c; } }));
-  assert.deepStrictEqual(Object.keys(rpo).sort(), ['Commons', 'Commons destacadas', 'Europeana', 'Google Art Project', 'Princeton', 'WikiArt', 'Wikidata'], JSON.stringify(rpo));
+  assert.deepStrictEqual(Object.keys(rpo).sort(), ['Commons', 'Commons destacadas', 'Europeana', 'Google Art Project', 'WikiArt', 'Wikidata'], JSON.stringify(rpo));
   // museos añadidos por nombre
   const rm = await C.resolveMuseum('Museo de Ejemplo'); assert.strictEqual(rm.ids[0], 'Q999'); assert.strictEqual(rm.id, 'cQ999');
   const cs = C.addMuseum(rm); assert.ok(C.SOURCE_LIST.includes(cs) && cs.id === 'm:cQ999'); assert.strictEqual(C.addMuseum(rm), cs, 'no se duplica');
@@ -233,11 +233,11 @@ globalThis.fetch = async (url, init) => {
   const fs = C.defaultFilters(); fs.styles = ['surrealism'];
   commonsLog.length = 0;
   const cm = await C.adapters.commonsFetch(C.makePlan(fs), fs, anyCtx);
-  assert.ok(commonsLog.some(x => x.includes('incategory:"Surrealist paintings"')), 'Commons: usa la categoría');
+  assert.ok(commonsLog.some(x => x.includes('deepcategory:"Surrealist paintings"')), 'Commons: usa la categoría');
   assert.deepStrictEqual(cm.map(w => w.title), ['The Persistence of Memory', 'Golconda'], 'se descartan miniaturas y pdf');
   assert.strictEqual(cm[0].artist, 'Salvador Dalí'); assert.strictEqual(cm[0].year, 1931); assert.strictEqual(cm[0].pd, true); assert.strictEqual(cm[1].pd, false); assert.strictEqual(cm[1].year, 1953);
   assert.ok(cm.every(w => C.accept(w, fs)), 'accept deja pasar el Surrealismo');
-  commonsEmpty = ['incategory:']; commonsLog.length = 0;
+  commonsEmpty = ['deepcategory:']; commonsLog.length = 0;
   const fs2 = C.defaultFilters(); fs2.styles = ['surrealism']; fs2.keywords = ['landscape'];
   const cm2 = await C.adapters.commonsFetch(C.makePlan(fs2), fs2, anyCtx); commonsEmpty = [];
   assert.ok(cm2.length === 2 && commonsLog.some(x => /^Surrealism \w+ landscape/.test(x)), 'Commons: sin categoría usa el texto');

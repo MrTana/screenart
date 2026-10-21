@@ -1,4 +1,4 @@
-/* Pruebas de MoMA (datos abiertos), Princeton (DPUL) y Commons especial, con red simulada. */
+/* Pruebas de MoMA (datos abiertos), Commons especial, con red simulada. */
 const assert = require('assert'), fs = require('fs'), path = require('path');
 const C = require('../src/core.js');
 const J = o => ({ ok: true, status: 200, json: async () => o });
@@ -10,7 +10,7 @@ const idx = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/moma/index.
   globalThis.fetch = async u => {
     u = String(u); log.push(u);
     const dm = u.match(/data\/(moma|nga|tate)\/(.+)$/); if (dm) { if (!u.startsWith('http')) throw new Error('relativa'); return J(JSON.parse(fs.readFileSync(path.join(__dirname, '../data', dm[1], dm[2]), 'utf8'))); }
-    if (u.includes('dpul.princeton.edu')) return J({ meta: { pages: { total_pages: 3 } }, data: [
+    if (false) return J({ meta: { pages: { total_pages: 3 } }, data: [
       { id: 'abc-123', attributes: { title_display: { attributes: { value: 'Flowers' } }, creator_display: 'x' }, links: { iiif: 'https://iiif-cloud.princeton.edu/iiif/2/ab%2Fcd%2Fef%2Fabcdef/full/!200,200/0/default.jpg' } },
       { id: 'no-img', attributes: { title_display: 'Sin imagen' } }] });
     if (u.includes('commons.wikimedia.org')) return J({ query: { pages: [] } });
@@ -36,10 +36,6 @@ const idx = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/moma/index.
   assert.ok(l3.every(x => x.year >= 1880 && x.year <= 1890), 'rango respetado');
   // es la fuente directa del museo MoMA
   assert.ok(C.SOURCE_LIST.find(s => s.id === 'm:moma'), 'existe m:moma');
-  // DPUL
-  const d = await C.adapters.dpulFetch(Object.assign({}, plan, { keyword: 'flowers' }), C.defaultFilters(), ctx);
-  assert.strictEqual(d.length, 1, 'DPUL sólo con imagen');
-  assert.ok(/^https:\/\/iiif-cloud\.princeton\.edu\/iiif\/2\/ab%2Fcd%2Fef%2Fabcdef\/full\/!2000,2000\/0\/default\.jpg$/.test(d[0].imgs[0]), d[0].imgs[0]);
   // Commons especial: consultas
   log.length = 0;
   await C.adapters.commonsSpecial('gap', Object.assign({}, plan, { artist: 'Claude Monet' }), C.defaultFilters(), ctx);
@@ -85,5 +81,5 @@ const idx = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/moma/index.
   delete globalThis.location;
   const ids = C.MUSEUMS.map(m => m.id); assert.strictEqual(new Set(ids).size, ids.length, 'ids de museo únicos');
   assert.ok(C.museumIdsByTag('artist').length >= 20, 'museos de un solo artista');
-  console.log('MoMA', l.length, '· DPUL', d.length, '· Commons especial OK');
+  console.log('MoMA', l.length, '· Commons especial OK');
 })().catch(e => { console.error('FALLO', e); process.exit(1); });
