@@ -29,6 +29,8 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   { const k = S.st.interval; const t = (sec) => { S.st.interval = sec; return A.captionMs(); };
     assert.deepStrictEqual([t(10), t(30), t(900), t(1800), t(3600)], [2500, 7500, 225000, 300000, 300000], 'la ficha dura el 25 % (máx. 5 min)'); S.st.interval = k; }
   assert.strictEqual(w.document.querySelector('#caption .s'), null, 'la ficha solo lleva título, autor y año');
+  assert.strictEqual(w.document.body.dataset.bg, 'black', 'fondo negro por defecto');
+  A.onAct('bg', 'white'); assert.strictEqual(w.document.body.dataset.bg, 'white'); A.onAct('bg', 'black');
   A.openMenu();
   const d = w.document; function d0(){return d;}
   console.log('filas de museos:', d0().querySelectorAll('#c-msrcs .src').length, '| activas:', d0().querySelectorAll('#c-msrcs .src[aria-pressed=true]').length);
