@@ -208,6 +208,33 @@ const KEYWORDS = [
   { q: 'mythology', es: 'Mitología' }
 ];
 
+/* «No quiero ver»: temas que se descartan por el título de la obra (en español, inglés, francés, italiano, alemán y neerlandés).
+   Los términos van sin tildes y en minúsculas, y se buscan al comienzo de una palabra. */
+const EXCLUDES = [
+  { id: 'portraits', es: 'Retratos y autorretratos', t: 'portrait|autorretrat|zelfportr|selbstportr|retrat|ritratt|portret|bildnis|autoportrait|self.?portrait|selbstbild|head of|tete de|madame|mademoiselle|monsieur|lady|gentleman|young man|young woman|girl with|boy with|woman with|man with|woman in|man in|portaretrato|mrs\\.|mr\\.|duke|duchess|countess|princess|queen|king|emperor|cardinal' },
+  { id: 'stilllife', es: 'Naturalezas muertas', t: 'still.?life|nature morte|naturaleza muerta|stilleven|stillleben|natura morta|bodeg|vanitas|fruit|banquet|breakfast piece|dead game|\\bjug\\b|\\bbottle|\\bskull' },
+  { id: 'flowers', es: 'Flores', t: 'flower|bouquet|fleur|flores|\\brose|tulip|sunflower|\\biris|lil(y|ies)|blume|bloem|peon(y|ies)|poppy|poppies|chrysanthem|orchid|wisteria|water lil' },
+  { id: 'landscapes', es: 'Paisajes', t: 'landscape|paisaje|paysage|landschap|landschaft|paesaggio|view of|vue de|valley|mountain|forest|\\briver|\\bfields?\\b|meadow|\\btrees?\\b|woods|haystack|sunset|sunrise' },
+  { id: 'seascapes', es: 'Marinas y barcos', t: 'seascape|marina|marine|\\bsea\\b|ocean|coast|harbo|\\bport\\b|\\bships?\\b|boats?\\b|\\bbeach|\\bwaves?\\b|sailing|lighthouse|naufrag|shipwreck|mer\\b|\\bmeer\\b|\\bzee' },
+  { id: 'cities', es: 'Ciudades y edificios', t: 'city|\\bcity\\b|\\bstreet|\\brue\\b|boulevard|church|cathedral|bridge|\\btown\\b|village|palace|castle|\\bhouse|interior|piazza|canal|ruins?\\b' },
+  { id: 'nudes', es: 'Desnudos', t: 'nude|desnud|\\bnu\\b|\\bakt\\b|bather|bathing|baigneuse|naked|odalisque|reclining|venus|\\bbath\\b|bathers' },
+  { id: 'religion', es: 'Religión y escenas bíblicas', t: 'madonna|virgin|christ|crucifi|\\bsaint|\\bst\\.? |annunciation|nativity|adoration|\\bholy|pieta|last supper|resurrection|\\bangels?\\b|apostle|\\bmagi\\b|baptism|deposition|ascension|bibl|jesus|\\bmary\\b|altarpiece|saint |martyr|prophet|moses|\\bdavid and|\\bjob\\b|\\bgod\\b|sacra|santo|santa|virgen|cristo|crucifixion' },
+  { id: 'mythology', es: 'Mitología y alegorías', t: 'mytholog|\\bvenus\\b|apollo|diana|jupiter|zeus|bacchus|hercules|\\bmars\\b|minerva|cupid|triumph of|nympha?|satyr|centaur|olymp|ariadne|narcissus|orpheus|allegor|alegor|muses?\\b|\\bgods?\\b|\\bgoddess' },
+  { id: 'animals', es: 'Animales', t: 'horses?\\b|\\bdogs?\\b|\\bcats?\\b|\\bbirds?\\b|animal|\\bcows?\\b|\\blions?\\b|sheep|cheval|chevaux|pferd|paard|\\bdeer\\b|\\bhounds?\\b|hunting|\\bcaballo|\\bperro|\\bgato\\b|\\bfish\\b|\\bowl\\b|peacock|\\bswans?\\b|\\bducks?\\b|chicken|\\bbull\\b|\\btiger' },
+  { id: 'war', es: 'Batallas y guerra', t: 'battle|\\bwar\\b|bataille|siege|soldier|military|execution|massacre|\\barmy\\b|\\bnapoleon|cavalry|victory|surrender|schlacht|slag\\b|batalla|guerra|conquest|invasion' },
+  { id: 'people', es: 'Escenas con personas', t: 'dancers?\\b|\\bdance|\\bballet|concert|\\bmusic|musician|\\bplayers?\\b|\\bfarmers?\\b|peasant|\\bworkers?\\b|\\bfamily|\\bchildren|\\bchild\\b|\\bmother|\\bfather|\\bwomen\\b|\\bmen\\b|\\bgirls?\\b|\\bboys?\\b|\\bfigures?\\b|\\bcrowd|\\bwedding|\\bfeast|\\btavern|\\bcafe' }
+];
+EXCLUDES.forEach(e => { e.re = new RegExp('(?:^|[^a-z])(?:' + e.t + ')', 'i'); });
+const exTerm = w => { const a = norm(w), b = norm(keywordToQuery(w)); return Array.from(new Set([a, b])).filter(x => x.length > 2).map(x => (x.length > 4 ? x.replace(/(es|s)$/, '') : x).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')); };
+function excluded(w, f) {
+  if (!f || f.onlyFavs) return false;
+  const ids = f.exclude || [], words = f.noWords || [];
+  if (!ids.length && !words.length) return false;
+  const t = norm(w.title);
+  if (ids.some(id => { const e = EXCLUDES.find(x => x.id === id); return e && e.re.test(t); })) return true;
+  return words.some(x => exTerm(x).some(s => new RegExp('(?:^|[^a-z])' + s, 'i').test(t)));
+}
+
 /* Los artistas más importantes, agrupados. Cada nombre se busca en todas las fuentes: datos abiertos de MoMA, NGA y Tate,
    WikiArt (página del artista), Wikimedia Commons (categoría «Paintings by …»), Wikidata y los museos activos. */
 const ARTIST_GROUPS = [
@@ -240,7 +267,7 @@ function defaultFilters() {
   return {
     sources: Object.assign({}, SOURCE_DEFAULTS),
     eras: [], yearFrom: '', yearTo: '',
-    styles: [], types: [], artists: [], keywords: [],
+    styles: [], types: [], artists: [], keywords: [], exclude: [], noWords: [],
     orientation: 'any', soloPD: false, onlyFavs: false
   };
 }
@@ -299,6 +326,7 @@ function accept(w, f) {
     if (f.orientation === 'square' && (r < 0.87 || r > 1.15)) return false;
   }
   if (f.soloPD && w.pd !== true) return false;
+  if (excluded(w, f)) return false;
   return true;
 }
 
@@ -1245,7 +1273,7 @@ async function runSource(src, f, ctx) {
 
 const api = {
   rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
-  ERAS, STYLES, TYPES, KEYWORDS, MUSEUMS, DEFAULT_MUSEUMS, MUSEUM_SOURCES, ARTIST_SUGGESTIONS, ARTIST_GROUPS, TUNING, keywordToQuery,
+  ERAS, STYLES, TYPES, KEYWORDS, EXCLUDES, excluded, MUSEUMS, DEFAULT_MUSEUMS, MUSEUM_SOURCES, ARTIST_SUGGESTIONS, ARTIST_GROUPS, TUNING, keywordToQuery,
   defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC, museumIdsByTag,
   adapters: { momaFetch, ngaFetch, tateFetch, shardFetch, commonsSpecial, wikidataMuseum, wikipediaFetch, commonsFetch, wikiartFetch, metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }
 };

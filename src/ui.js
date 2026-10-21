@@ -18,7 +18,7 @@ function normFilters(s) {
   s = s && typeof s === 'object' ? s : {};
   const f = Object.assign(d, s);
   f.sources = Object.assign({}, dsrc, s.sources || {});
-  ['eras', 'styles', 'types', 'artists', 'keywords'].forEach(k => { if (!Array.isArray(f[k])) f[k] = []; });
+  ['eras', 'styles', 'types', 'artists', 'keywords', 'exclude', 'noWords'].forEach(k => { if (!Array.isArray(f[k])) f[k] = []; });
   return f;
 }
 const S = {
@@ -300,6 +300,7 @@ function describeFilters() {
   if (f.types.length) parts.push('tipo: ' + nm(C.TYPES, f.types));
   if (f.artists.length) parts.push('artistas: ' + f.artists.join(', '));
   if (f.keywords.length) parts.push('tema: ' + f.keywords.join(', '));
+  if (f.exclude.length || f.noWords.length) parts.push('sin: ' + f.exclude.concat(f.noWords).join(', '));
   if (f.orientation !== 'any') parts.push('formato: ' + f.orientation);
   if (f.soloPD) parts.push('solo dominio público');
   return parts.length ? parts.join(' · ') : 'sin filtros';
@@ -356,6 +357,7 @@ function accSummary(id) {
     case 'estilo': return f.styles.length ? j(names(C.STYLES, f.styles)) : 'Todos los estilos';
     case 'tipo': return f.types.length ? j(names(C.TYPES, f.types)) : 'Todos los tipos';
     case 'artistas': return f.artists.length ? j(f.artists) : 'Todos los artistas';
+    case 'noquiero': { const n = f.exclude.map(id => (C.EXCLUDES.find(x => x.id === id) || { es: id }).es).concat(f.noWords); return n.length ? j(n) : 'Nada excluido'; }
     case 'tema': return f.keywords.length ? j(f.keywords.map(q => { const k = C.KEYWORDS.find(x => x.q === q); return k ? k.es : q; })) : 'Cualquier tema';
     case 'opciones': { const o = []; if (S.st.kenburns) o.push('zoom lento'); if (S.st.quality === 'high') o.push('alta calidad'); if (f.soloPD) o.push('solo dominio público'); if (f.onlyFavs) o.push('solo favoritas'); return o.length ? j(o) : 'Ninguna activada'; }
     case 'claves': { const n = ['europeana', 'si', 'harvard'].filter(k => S.keys[k] && !/^(api2demo|DEMO_KEY)$/.test(S.keys[k])).length; return n ? n + ' configuradas' : 'Opcional'; }
@@ -411,6 +413,8 @@ const R = {
   artists: () => S.f.artists.map(a => chip('rm-artist', a, a, true, 'rm')).join('') || '<span class="hint" style="font-size:14px;color:var(--muted)">Ninguno. Se muestran todos los artistas.</span>',
   artgroup: () => opts(C.ARTIST_GROUPS.map(g => [g.id, g.es + ' (' + g.names.length + ')']), S.artGroup),
   artistsug: () => ((C.ARTIST_GROUPS.find(g => g.id === S.artGroup) || C.ARTIST_GROUPS[0]).names).filter(a => !S.f.artists.some(x => C.norm(x) === C.norm(a))).map(a => chip('add-sug', a, a, false)).join('') || '<span class="hint" style="font-size:14px;color:var(--muted)">Ya elegiste todos los de este grupo.</span>',
+  excl: () => C.EXCLUDES.map(e => chip('ex', e.id, e.es, S.f.exclude.includes(e.id))).join(''),
+  exwords: () => S.f.noWords.map(w => chip('rm-exw', w, w, true, 'rm')).join(''),
   kws: () => C.KEYWORDS.map(k => chip('kw', k.q, k.es, S.f.keywords.includes(k.q))).join('') +
     S.f.keywords.filter(q => !C.KEYWORDS.some(k => k.q === q)).map(q => chip('kw', q, q, true, 'rm')).join(''),
   orient: () => opts(ORIENT, S.f.orientation),
@@ -421,7 +425,7 @@ const R = {
   opts: () => chip('opt', 'kb', 'Zoom lento', S.st.kenburns) + chip('opt', 'hq', 'Imágenes en alta calidad', S.st.quality === 'high') +
     chip('opt', 'pd', 'Solo dominio público', S.f.soloPD) + chip('opt', 'favs', 'Solo mis favoritas (' + S.favs.length + ')', S.f.onlyFavs)
 };
-const BOX = { presets: 'c-presets', eras: 'c-eras', styles: 'c-styles', types: 'c-types', artists: 'c-artists', artgroup: 'c-artgroup', artistsug: 'c-artist-sug', kws: 'c-kws', orient: 'c-orient', mode: 'c-mode', interval: 'c-interval', caption: 'c-caption', bg: 'c-bg', opts: 'c-opts' };
+const BOX = { presets: 'c-presets', eras: 'c-eras', styles: 'c-styles', types: 'c-types', artists: 'c-artists', artgroup: 'c-artgroup', artistsug: 'c-artist-sug', kws: 'c-kws', excl: 'c-excl', exwords: 'c-exwords', orient: 'c-orient', mode: 'c-mode', interval: 'c-interval', caption: 'c-caption', bg: 'c-bg', opts: 'c-opts' };
 
 function srcNote(s) {
   const st = S.status[s.id], base = s.place + ' · ' + s.note;
@@ -478,6 +482,24 @@ function closeMenu() { if (REMOTE || !S.menu) return; S.menu = false; $('#drawer
 const toggleArr = (arr, v) => { const i = arr.indexOf(v); i < 0 ? arr.push(v) : arr.splice(i, 1); };
 
 function addArtist(name) { name = (name || '').trim(); if (!name || S.f.artists.some(a => C.norm(a) === C.norm(name))) return; S.f.artists.push(name); render('artists'); render('artistsug'); applyChange(); }
+function addExWord(text) { text = (text || '').trim().slice(0, 40); if (!text || S.f.noWords.some(x => C.norm(x) === C.norm(text))) return; S.f.noWords.push(text); render('exwords'); applyChange(); }
+async function testKey(name) {
+  const msg = $('#keyMsg'), el = $('#k-' + name), key = (el.value || S.keys[name] || '').trim();
+  if (!key) { msg.textContent = REMOTE ? 'Escribe la clave aquí para probarla (la guardada está en la TV).' : 'Escribe primero la clave.'; return; }
+  const urls = {
+    europeana: 'https://api.europeana.eu/record/v2/search.json?wskey=' + encodeURIComponent(key) + '&query=painting&rows=1&media=true',
+    si: 'https://api.si.edu/openaccess/api/v1.0/search?api_key=' + encodeURIComponent(key) + '&q=painting&rows=1',
+    harvard: 'https://api.harvardartmuseums.org/object?apikey=' + encodeURIComponent(key) + '&size=1'
+  };
+  const label = { europeana: 'Europeana', si: 'Smithsonian', harvard: 'Harvard' }[name];
+  msg.textContent = 'Probando la clave de ' + label + '…';
+  try {
+    const r = await fetch(urls[name]); let j = null; try { j = await r.json(); } catch (e) { /* sin JSON */ }
+    const n = j && (j.totalResults != null ? j.totalResults : j.response ? j.response.rowCount : j.info ? j.info.totalrecords : null);
+    if (r.ok && n != null && !(j && j.success === false)) msg.textContent = '✔ La clave de ' + label + ' funciona (' + n + ' resultados de prueba).';
+    else msg.textContent = '✖ ' + label + ' la rechaza' + (r.status ? ' (HTTP ' + r.status + ')' : '') + (j && (j.error || j.message) ? ': ' + String(j.error || j.message).slice(0, 120) : '') + '. Revisa que esté bien copiada.';
+  } catch (e) { msg.textContent = '✖ No pude conectar con ' + label + ': ' + errText(e); }
+}
 function addKeyword(text) { const q = C.keywordToQuery(text || ''); if (!q || S.f.keywords.includes(q)) return; S.f.keywords.push(q); render('kws'); applyChange(); }
 
 function onAct(act, id) {
@@ -510,7 +532,7 @@ function onAct(act, id) {
       const keep = { sources: f.sources }; S.f = Object.assign(C.defaultFilters(), keep); renderAll(); applyChange(); toast('Filtros restablecidos'); break;
     }
     case 'preset': {
-      const p = PRESETS[+id]; const keep = { sources: f.sources, orientation: f.orientation, soloPD: f.soloPD };
+      const p = PRESETS[+id]; const keep = { sources: f.sources, orientation: f.orientation, soloPD: f.soloPD, exclude: f.exclude, noWords: f.noWords };
       if (p.only) { keep.sources = {}; Object.keys(f.sources).forEach(k => { keep.sources[k] = p.only.includes(k); }); }
       S.f = Object.assign(C.defaultFilters(), keep, JSON.parse(JSON.stringify(p.patch)));
       renderAll(); applyChange(); break;
@@ -528,6 +550,10 @@ function onAct(act, id) {
     case 'artgroup': S.artGroup = id; render('artistsug'); break;
     case 'rm-artist': f.artists = f.artists.filter(a => a !== id); render('artists'); render('artistsug'); applyChange(); break;
     case 'add-kw': addKeyword($('#kwIn').value); $('#kwIn').value = ''; break;
+    case 'ex': toggleArr(f.exclude, id); render('excl'); applyChange(); break;
+    case 'add-exw': addExWord($('#exwIn').value); $('#exwIn').value = ''; break;
+    case 'rm-exw': f.noWords = f.noWords.filter(x => x !== id); render('exwords'); applyChange(); break;
+    case 'key-test': testKey(id); break;
     case 'mode': S.st.mode = id; applyLook(); saveAll(); render('mode'); break;
     case 'interval': S.st.interval = +id; saveAll(); render('interval'); schedule(); break;
     case 'bg': S.st.bg = id === 'white' ? 'white' : 'black'; applyLook(); saveAll(); render('bg'); break;
@@ -581,7 +607,7 @@ document.addEventListener('keydown', e => {
   activity();
   const tag = (e.target.tagName || '').toLowerCase(), typing = tag === 'input' || tag === 'textarea';
   if (typing) {
-    if (e.key === 'Enter') { if (e.target.id === 'artistIn') { addArtist(e.target.value); e.target.value = ''; } if (e.target.id === 'kwIn') { addKeyword(e.target.value); e.target.value = ''; } if (e.target.id === 'museumIn') addMuseumByName(); if (e.target.id === 'tvCode') onAct('tv-go'); }
+    if (e.key === 'Enter') { if (e.target.id === 'artistIn') { addArtist(e.target.value); e.target.value = ''; } if (e.target.id === 'kwIn') { addKeyword(e.target.value); e.target.value = ''; } if (e.target.id === 'museumIn') addMuseumByName(); if (e.target.id === 'tvCode') onAct('tv-go'); if (e.target.id === 'exwIn') { addExWord(e.target.value); e.target.value = ''; } }
     if (e.key === 'Escape') e.target.blur();
     return;
   }

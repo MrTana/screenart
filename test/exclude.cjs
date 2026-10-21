@@ -1,0 +1,21 @@
+// «No quiero ver»: descarta obras por tema según el título, sin tocar las demás.
+const assert = require('assert');
+const C = require('../src/core.js');
+const f = ex => Object.assign(C.defaultFilters(), ex);
+const ok = (title, filt) => C.accept({ imgs: ['https://x/y.jpg'], title, type: 'painting' }, filt);
+const retr = f({ exclude: ['portraits'] });
+['Portrait of Dr. Gachet', 'Self-Portrait with Bandaged Ear', 'Madame Cézanne in a Red Armchair', 'Retrato de Felipe IV', 'Zelfportret', 'Bildnis eines Mannes'].forEach(t => assert.strictEqual(ok(t, retr), false, 'debe ocultar: ' + t));
+['The Starry Night', 'Impression, Sunrise', 'Les Meules', 'Composition VIII'].forEach(t => assert.strictEqual(ok(t, retr), true, 'debe mostrar: ' + t));
+const sl = f({ exclude: ['stilllife', 'flowers'] });
+['Still Life with Apples', 'Nature morte aux pommes', 'Bodegón', 'Sunflowers', 'Vase with Irises'].forEach(t => assert.strictEqual(ok(t, sl), false, t));
+assert.strictEqual(ok('Water Lilies', f({ exclude: ['flowers'] })), false);
+assert.strictEqual(ok('The Night Watch', sl), true);
+assert.strictEqual(ok('Horse Fair', f({ noWords: ['caballos'] })), false, 'palabra libre en español → inglés');
+assert.strictEqual(ok('Caballos en la playa', f({ noWords: ['caballos'] })), false);
+assert.strictEqual(ok('Café Terrace at Night', f({ noWords: ['caballos'] })), true);
+assert.strictEqual(ok('Crucifixion', f({ exclude: ['religion'] })), false);
+assert.strictEqual(ok('Portrait of a Man', f({ exclude: ['portraits'], onlyFavs: true })), true, 'las favoritas no se filtran');
+assert.strictEqual(ok('Portrait of a Man', C.defaultFilters()), true, 'sin exclusiones todo pasa');
+assert.deepStrictEqual(C.defaultFilters().exclude, []);
+assert.ok(C.EXCLUDES.length >= 10 && C.EXCLUDES.every(e => e.id && e.es && e.re));
+console.log('NO QUIERO VER OK · ' + C.EXCLUDES.length + ' temas');

@@ -252,6 +252,12 @@ details.adv label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut
     <div class="accb"><div class="chips" id="c-kws"></div>
       <div class="row" style="margin-top:10px"><input type="text" id="kwIn" placeholder="Otro tema (ej. caballos, nieve)" autocomplete="off"><button class="btn" data-act="add-kw">Añadir</button></div></div>
   </section>
+  <section class="acc" data-acc="noquiero">
+    <button class="acch" data-act="acc" data-id="noquiero" aria-expanded="false"><span class="at">No quiero ver</span><span class="as" data-sum="noquiero"></span><span class="ac">›</span></button>
+    <div class="accb"><p class="hint" style="margin-top:0">Deja todo activado y quita lo que no te guste: se descartan las obras cuyo título encaja con el tema marcado.</p><div class="chips" id="c-excl"></div>
+      <div class="chips" id="c-exwords" style="margin-top:8px"></div>
+      <div class="row" style="margin-top:10px"><input type="text" id="exwIn" placeholder="Otra palabra que no quiero (ej. caballos, santos)" autocomplete="off"><button class="btn" data-act="add-exw">Añadir</button></div></div>
+  </section>
   <section class="acc" data-acc="opciones">
     <button class="acch" data-act="acc" data-id="opciones" aria-expanded="false"><span class="at">Opciones</span><span class="as" data-sum="opciones"></span><span class="ac">›</span></button>
     <div class="accb"><div class="chips" id="c-opts"></div><p class="hint">Con «Solo dominio público» apagado se usan todas las imágenes que cada museo entrega, con o sin derechos de autor. Si un museo no sirve la imagen de una obra protegida, la app la salta.</p></div>
@@ -262,6 +268,8 @@ details.adv label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut
       <label class="lbl" for="k-europeana">Europeana (clave gratuita)</label><input type="password" id="k-europeana" autocomplete="off">
       <label class="lbl" for="k-si">Smithsonian (clave de api.data.gov)</label><input type="password" id="k-si" autocomplete="off">
       <label class="lbl" for="k-harvard">Harvard Art Museums</label><input type="password" id="k-harvard" autocomplete="off">
+      <div class="row" style="margin-top:10px;flex-wrap:wrap"><button class="btn" data-act="key-test" data-id="europeana">Probar Europeana</button><button class="btn" data-act="key-test" data-id="si">Probar Smithsonian</button><button class="btn" data-act="key-test" data-id="harvard">Probar Harvard</button></div>
+      <p class="hint" id="keyMsg" role="status"></p>
       <p class="hint">Se guardan solo en este navegador. Con una clave puedes activar esas fuentes.</p>
     </div>
   </section>

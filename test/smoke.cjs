@@ -32,6 +32,13 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   assert.strictEqual(w.document.body.dataset.bg, 'black', 'fondo negro por defecto');
   A.onAct('bg', 'white'); assert.strictEqual(w.document.body.dataset.bg, 'white'); A.onAct('bg', 'black');
   A.openMenu();
+  { const d0 = w.document; assert.ok(d0.querySelectorAll('#c-excl .chip').length >= 10, 'chips de «No quiero ver»');
+    A.onAct('ex', 'portraits'); assert.deepStrictEqual(Array.from(S.f.exclude), ['portraits']);
+    d0.getElementById('exwIn').value = 'caballos'; A.onAct('add-exw'); assert.deepStrictEqual(Array.from(S.f.noWords), ['caballos']);
+    assert.ok(/Retratos/.test(d0.querySelector('[data-sum=noquiero]').textContent), 'resumen: ' + d0.querySelector('[data-sum=noquiero]').textContent);
+    A.onAct('rm-exw', 'caballos'); A.onAct('ex', 'portraits'); assert.strictEqual(S.f.exclude.length + S.f.noWords.length, 0);
+    d0.getElementById('k-europeana').value = 'api2demo'; w.fetch = (u0 => async (u, i) => /europeana/.test(String(u)) ? { ok: true, status: 200, json: async () => ({ success: true, totalResults: 12 }) } : u0(u, i))(w.fetch);
+    A.onAct('key-test', 'europeana'); await wait(50); assert.ok(/funciona/.test(d0.getElementById('keyMsg').textContent), d0.getElementById('keyMsg').textContent); }
   const d = w.document; function d0(){return d;}
   console.log('filas de museos:', d0().querySelectorAll('#c-msrcs .src').length, '| activas:', d0().querySelectorAll('#c-msrcs .src[aria-pressed=true]').length);
   console.log('menu abierto:', !d.getElementById('drawer').hidden, '| chips estilos:', d.querySelectorAll('#c-styles .chip').length, '| filas:', d.querySelectorAll('#c-msrcs .src').length, '| sección antigua:', !!d.getElementById('c-srcs'));

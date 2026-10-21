@@ -252,6 +252,12 @@ details.adv label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut
     <div class="accb"><div class="chips" id="c-kws"></div>
       <div class="row" style="margin-top:10px"><input type="text" id="kwIn" placeholder="Otro tema (ej. caballos, nieve)" autocomplete="off"><button class="btn" data-act="add-kw">Añadir</button></div></div>
   </section>
+  <section class="acc" data-acc="noquiero">
+    <button class="acch" data-act="acc" data-id="noquiero" aria-expanded="false"><span class="at">No quiero ver</span><span class="as" data-sum="noquiero"></span><span class="ac">›</span></button>
+    <div class="accb"><p class="hint" style="margin-top:0">Deja todo activado y quita lo que no te guste: se descartan las obras cuyo título encaja con el tema marcado.</p><div class="chips" id="c-excl"></div>
+      <div class="chips" id="c-exwords" style="margin-top:8px"></div>
+      <div class="row" style="margin-top:10px"><input type="text" id="exwIn" placeholder="Otra palabra que no quiero (ej. caballos, santos)" autocomplete="off"><button class="btn" data-act="add-exw">Añadir</button></div></div>
+  </section>
   <section class="acc" data-acc="opciones">
     <button class="acch" data-act="acc" data-id="opciones" aria-expanded="false"><span class="at">Opciones</span><span class="as" data-sum="opciones"></span><span class="ac">›</span></button>
     <div class="accb"><div class="chips" id="c-opts"></div><p class="hint">Con «Solo dominio público» apagado se usan todas las imágenes que cada museo entrega, con o sin derechos de autor. Si un museo no sirve la imagen de una obra protegida, la app la salta.</p></div>
@@ -262,10 +268,12 @@ details.adv label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut
       <label class="lbl" for="k-europeana">Europeana (clave gratuita)</label><input type="password" id="k-europeana" autocomplete="off">
       <label class="lbl" for="k-si">Smithsonian (clave de api.data.gov)</label><input type="password" id="k-si" autocomplete="off">
       <label class="lbl" for="k-harvard">Harvard Art Museums</label><input type="password" id="k-harvard" autocomplete="off">
+      <div class="row" style="margin-top:10px;flex-wrap:wrap"><button class="btn" data-act="key-test" data-id="europeana">Probar Europeana</button><button class="btn" data-act="key-test" data-id="si">Probar Smithsonian</button><button class="btn" data-act="key-test" data-id="harvard">Probar Harvard</button></div>
+      <p class="hint" id="keyMsg" role="status"></p>
       <p class="hint">Se guardan solo en este navegador. Con una clave puedes activar esas fuentes.</p>
     </div>
   </section>
-  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión c1e9eec040 · 2026-10-21 21:14 UTC</span><br><button class="btn" data-act="update" style="margin-top:10px">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" style="margin-top:10px" hidden>Instalar la app</button> <button class="btn" data-act="diag" style="margin-top:10px">Probar fuentes</button> <button class="btn" data-act="reset" style="margin-top:10px">Restablecer filtros</button></div>
+  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión fd732d8d07 · 2026-10-21 22:21 UTC</span><br><button class="btn" data-act="update" style="margin-top:10px">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" style="margin-top:10px" hidden>Instalar la app</button> <button class="btn" data-act="diag" style="margin-top:10px">Probar fuentes</button> <button class="btn" data-act="reset" style="margin-top:10px">Restablecer filtros</button></div>
   <div id="rcfoot" hidden><button class="btn pri" data-act="rc-update">Buscar actualización</button><p id="rcver"></p></div>
 <div id="tvConnect"><button class="btn pri" data-act="tv-connect">Conectar a la TV</button><div class="row" id="tvRow" hidden><input type="text" id="tvCode" placeholder="Código de la TV (ej. abcd-efgh-jkmn)" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn pri" data-act="tv-go">Abrir mando</button></div><p class="hint" id="tvMsg">El código sale bajo el QR en la pantalla de la TV.</p></div>
 </aside>
@@ -484,6 +492,33 @@ const KEYWORDS = [
   { q: 'mythology', es: 'Mitología' }
 ];
 
+/* «No quiero ver»: temas que se descartan por el título de la obra (en español, inglés, francés, italiano, alemán y neerlandés).
+   Los términos van sin tildes y en minúsculas, y se buscan al comienzo de una palabra. */
+const EXCLUDES = [
+  { id: 'portraits', es: 'Retratos y autorretratos', t: 'portrait|autorretrat|zelfportr|selbstportr|retrat|ritratt|portret|bildnis|autoportrait|self.?portrait|selbstbild|head of|tete de|madame|mademoiselle|monsieur|lady|gentleman|young man|young woman|girl with|boy with|woman with|man with|woman in|man in|portaretrato|mrs\\.|mr\\.|duke|duchess|countess|princess|queen|king|emperor|cardinal' },
+  { id: 'stilllife', es: 'Naturalezas muertas', t: 'still.?life|nature morte|naturaleza muerta|stilleven|stillleben|natura morta|bodeg|vanitas|fruit|banquet|breakfast piece|dead game|\\bjug\\b|\\bbottle|\\bskull' },
+  { id: 'flowers', es: 'Flores', t: 'flower|bouquet|fleur|flores|\\brose|tulip|sunflower|\\biris|lil(y|ies)|blume|bloem|peon(y|ies)|poppy|poppies|chrysanthem|orchid|wisteria|water lil' },
+  { id: 'landscapes', es: 'Paisajes', t: 'landscape|paisaje|paysage|landschap|landschaft|paesaggio|view of|vue de|valley|mountain|forest|\\briver|\\bfields?\\b|meadow|\\btrees?\\b|woods|haystack|sunset|sunrise' },
+  { id: 'seascapes', es: 'Marinas y barcos', t: 'seascape|marina|marine|\\bsea\\b|ocean|coast|harbo|\\bport\\b|\\bships?\\b|boats?\\b|\\bbeach|\\bwaves?\\b|sailing|lighthouse|naufrag|shipwreck|mer\\b|\\bmeer\\b|\\bzee' },
+  { id: 'cities', es: 'Ciudades y edificios', t: 'city|\\bcity\\b|\\bstreet|\\brue\\b|boulevard|church|cathedral|bridge|\\btown\\b|village|palace|castle|\\bhouse|interior|piazza|canal|ruins?\\b' },
+  { id: 'nudes', es: 'Desnudos', t: 'nude|desnud|\\bnu\\b|\\bakt\\b|bather|bathing|baigneuse|naked|odalisque|reclining|venus|\\bbath\\b|bathers' },
+  { id: 'religion', es: 'Religión y escenas bíblicas', t: 'madonna|virgin|christ|crucifi|\\bsaint|\\bst\\.? |annunciation|nativity|adoration|\\bholy|pieta|last supper|resurrection|\\bangels?\\b|apostle|\\bmagi\\b|baptism|deposition|ascension|bibl|jesus|\\bmary\\b|altarpiece|saint |martyr|prophet|moses|\\bdavid and|\\bjob\\b|\\bgod\\b|sacra|santo|santa|virgen|cristo|crucifixion' },
+  { id: 'mythology', es: 'Mitología y alegorías', t: 'mytholog|\\bvenus\\b|apollo|diana|jupiter|zeus|bacchus|hercules|\\bmars\\b|minerva|cupid|triumph of|nympha?|satyr|centaur|olymp|ariadne|narcissus|orpheus|allegor|alegor|muses?\\b|\\bgods?\\b|\\bgoddess' },
+  { id: 'animals', es: 'Animales', t: 'horses?\\b|\\bdogs?\\b|\\bcats?\\b|\\bbirds?\\b|animal|\\bcows?\\b|\\blions?\\b|sheep|cheval|chevaux|pferd|paard|\\bdeer\\b|\\bhounds?\\b|hunting|\\bcaballo|\\bperro|\\bgato\\b|\\bfish\\b|\\bowl\\b|peacock|\\bswans?\\b|\\bducks?\\b|chicken|\\bbull\\b|\\btiger' },
+  { id: 'war', es: 'Batallas y guerra', t: 'battle|\\bwar\\b|bataille|siege|soldier|military|execution|massacre|\\barmy\\b|\\bnapoleon|cavalry|victory|surrender|schlacht|slag\\b|batalla|guerra|conquest|invasion' },
+  { id: 'people', es: 'Escenas con personas', t: 'dancers?\\b|\\bdance|\\bballet|concert|\\bmusic|musician|\\bplayers?\\b|\\bfarmers?\\b|peasant|\\bworkers?\\b|\\bfamily|\\bchildren|\\bchild\\b|\\bmother|\\bfather|\\bwomen\\b|\\bmen\\b|\\bgirls?\\b|\\bboys?\\b|\\bfigures?\\b|\\bcrowd|\\bwedding|\\bfeast|\\btavern|\\bcafe' }
+];
+EXCLUDES.forEach(e => { e.re = new RegExp('(?:^|[^a-z])(?:' + e.t + ')', 'i'); });
+const exTerm = w => { const a = norm(w), b = norm(keywordToQuery(w)); return Array.from(new Set([a, b])).filter(x => x.length > 2).map(x => (x.length > 4 ? x.replace(/(es|s)$/, '') : x).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')); };
+function excluded(w, f) {
+  if (!f || f.onlyFavs) return false;
+  const ids = f.exclude || [], words = f.noWords || [];
+  if (!ids.length && !words.length) return false;
+  const t = norm(w.title);
+  if (ids.some(id => { const e = EXCLUDES.find(x => x.id === id); return e && e.re.test(t); })) return true;
+  return words.some(x => exTerm(x).some(s => new RegExp('(?:^|[^a-z])' + s, 'i').test(t)));
+}
+
 /* Los artistas más importantes, agrupados. Cada nombre se busca en todas las fuentes: datos abiertos de MoMA, NGA y Tate,
    WikiArt (página del artista), Wikimedia Commons (categoría «Paintings by …»), Wikidata y los museos activos. */
 const ARTIST_GROUPS = [
@@ -516,7 +551,7 @@ function defaultFilters() {
   return {
     sources: Object.assign({}, SOURCE_DEFAULTS),
     eras: [], yearFrom: '', yearTo: '',
-    styles: [], types: [], artists: [], keywords: [],
+    styles: [], types: [], artists: [], keywords: [], exclude: [], noWords: [],
     orientation: 'any', soloPD: false, onlyFavs: false
   };
 }
@@ -575,6 +610,7 @@ function accept(w, f) {
     if (f.orientation === 'square' && (r < 0.87 || r > 1.15)) return false;
   }
   if (f.soloPD && w.pd !== true) return false;
+  if (excluded(w, f)) return false;
   return true;
 }
 
@@ -1521,7 +1557,7 @@ async function runSource(src, f, ctx) {
 
 const api = {
   rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
-  ERAS, STYLES, TYPES, KEYWORDS, MUSEUMS, DEFAULT_MUSEUMS, MUSEUM_SOURCES, ARTIST_SUGGESTIONS, ARTIST_GROUPS, TUNING, keywordToQuery,
+  ERAS, STYLES, TYPES, KEYWORDS, EXCLUDES, excluded, MUSEUMS, DEFAULT_MUSEUMS, MUSEUM_SOURCES, ARTIST_SUGGESTIONS, ARTIST_GROUPS, TUNING, keywordToQuery,
   defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC, museumIdsByTag,
   adapters: { momaFetch, ngaFetch, tateFetch, shardFetch, commonsSpecial, wikidataMuseum, wikipediaFetch, commonsFetch, wikiartFetch, metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }
 };
@@ -1550,7 +1586,7 @@ function normFilters(s) {
   s = s && typeof s === 'object' ? s : {};
   const f = Object.assign(d, s);
   f.sources = Object.assign({}, dsrc, s.sources || {});
-  ['eras', 'styles', 'types', 'artists', 'keywords'].forEach(k => { if (!Array.isArray(f[k])) f[k] = []; });
+  ['eras', 'styles', 'types', 'artists', 'keywords', 'exclude', 'noWords'].forEach(k => { if (!Array.isArray(f[k])) f[k] = []; });
   return f;
 }
 const S = {
@@ -1832,6 +1868,7 @@ function describeFilters() {
   if (f.types.length) parts.push('tipo: ' + nm(C.TYPES, f.types));
   if (f.artists.length) parts.push('artistas: ' + f.artists.join(', '));
   if (f.keywords.length) parts.push('tema: ' + f.keywords.join(', '));
+  if (f.exclude.length || f.noWords.length) parts.push('sin: ' + f.exclude.concat(f.noWords).join(', '));
   if (f.orientation !== 'any') parts.push('formato: ' + f.orientation);
   if (f.soloPD) parts.push('solo dominio público');
   return parts.length ? parts.join(' · ') : 'sin filtros';
@@ -1888,6 +1925,7 @@ function accSummary(id) {
     case 'estilo': return f.styles.length ? j(names(C.STYLES, f.styles)) : 'Todos los estilos';
     case 'tipo': return f.types.length ? j(names(C.TYPES, f.types)) : 'Todos los tipos';
     case 'artistas': return f.artists.length ? j(f.artists) : 'Todos los artistas';
+    case 'noquiero': { const n = f.exclude.map(id => (C.EXCLUDES.find(x => x.id === id) || { es: id }).es).concat(f.noWords); return n.length ? j(n) : 'Nada excluido'; }
     case 'tema': return f.keywords.length ? j(f.keywords.map(q => { const k = C.KEYWORDS.find(x => x.q === q); return k ? k.es : q; })) : 'Cualquier tema';
     case 'opciones': { const o = []; if (S.st.kenburns) o.push('zoom lento'); if (S.st.quality === 'high') o.push('alta calidad'); if (f.soloPD) o.push('solo dominio público'); if (f.onlyFavs) o.push('solo favoritas'); return o.length ? j(o) : 'Ninguna activada'; }
     case 'claves': { const n = ['europeana', 'si', 'harvard'].filter(k => S.keys[k] && !/^(api2demo|DEMO_KEY)$/.test(S.keys[k])).length; return n ? n + ' configuradas' : 'Opcional'; }
@@ -1943,6 +1981,8 @@ const R = {
   artists: () => S.f.artists.map(a => chip('rm-artist', a, a, true, 'rm')).join('') || '<span class="hint" style="font-size:14px;color:var(--muted)">Ninguno. Se muestran todos los artistas.</span>',
   artgroup: () => opts(C.ARTIST_GROUPS.map(g => [g.id, g.es + ' (' + g.names.length + ')']), S.artGroup),
   artistsug: () => ((C.ARTIST_GROUPS.find(g => g.id === S.artGroup) || C.ARTIST_GROUPS[0]).names).filter(a => !S.f.artists.some(x => C.norm(x) === C.norm(a))).map(a => chip('add-sug', a, a, false)).join('') || '<span class="hint" style="font-size:14px;color:var(--muted)">Ya elegiste todos los de este grupo.</span>',
+  excl: () => C.EXCLUDES.map(e => chip('ex', e.id, e.es, S.f.exclude.includes(e.id))).join(''),
+  exwords: () => S.f.noWords.map(w => chip('rm-exw', w, w, true, 'rm')).join(''),
   kws: () => C.KEYWORDS.map(k => chip('kw', k.q, k.es, S.f.keywords.includes(k.q))).join('') +
     S.f.keywords.filter(q => !C.KEYWORDS.some(k => k.q === q)).map(q => chip('kw', q, q, true, 'rm')).join(''),
   orient: () => opts(ORIENT, S.f.orientation),
@@ -1953,7 +1993,7 @@ const R = {
   opts: () => chip('opt', 'kb', 'Zoom lento', S.st.kenburns) + chip('opt', 'hq', 'Imágenes en alta calidad', S.st.quality === 'high') +
     chip('opt', 'pd', 'Solo dominio público', S.f.soloPD) + chip('opt', 'favs', 'Solo mis favoritas (' + S.favs.length + ')', S.f.onlyFavs)
 };
-const BOX = { presets: 'c-presets', eras: 'c-eras', styles: 'c-styles', types: 'c-types', artists: 'c-artists', artgroup: 'c-artgroup', artistsug: 'c-artist-sug', kws: 'c-kws', orient: 'c-orient', mode: 'c-mode', interval: 'c-interval', caption: 'c-caption', bg: 'c-bg', opts: 'c-opts' };
+const BOX = { presets: 'c-presets', eras: 'c-eras', styles: 'c-styles', types: 'c-types', artists: 'c-artists', artgroup: 'c-artgroup', artistsug: 'c-artist-sug', kws: 'c-kws', excl: 'c-excl', exwords: 'c-exwords', orient: 'c-orient', mode: 'c-mode', interval: 'c-interval', caption: 'c-caption', bg: 'c-bg', opts: 'c-opts' };
 
 function srcNote(s) {
   const st = S.status[s.id], base = s.place + ' · ' + s.note;
@@ -2010,6 +2050,24 @@ function closeMenu() { if (REMOTE || !S.menu) return; S.menu = false; $('#drawer
 const toggleArr = (arr, v) => { const i = arr.indexOf(v); i < 0 ? arr.push(v) : arr.splice(i, 1); };
 
 function addArtist(name) { name = (name || '').trim(); if (!name || S.f.artists.some(a => C.norm(a) === C.norm(name))) return; S.f.artists.push(name); render('artists'); render('artistsug'); applyChange(); }
+function addExWord(text) { text = (text || '').trim().slice(0, 40); if (!text || S.f.noWords.some(x => C.norm(x) === C.norm(text))) return; S.f.noWords.push(text); render('exwords'); applyChange(); }
+async function testKey(name) {
+  const msg = $('#keyMsg'), el = $('#k-' + name), key = (el.value || S.keys[name] || '').trim();
+  if (!key) { msg.textContent = REMOTE ? 'Escribe la clave aquí para probarla (la guardada está en la TV).' : 'Escribe primero la clave.'; return; }
+  const urls = {
+    europeana: 'https://api.europeana.eu/record/v2/search.json?wskey=' + encodeURIComponent(key) + '&query=painting&rows=1&media=true',
+    si: 'https://api.si.edu/openaccess/api/v1.0/search?api_key=' + encodeURIComponent(key) + '&q=painting&rows=1',
+    harvard: 'https://api.harvardartmuseums.org/object?apikey=' + encodeURIComponent(key) + '&size=1'
+  };
+  const label = { europeana: 'Europeana', si: 'Smithsonian', harvard: 'Harvard' }[name];
+  msg.textContent = 'Probando la clave de ' + label + '…';
+  try {
+    const r = await fetch(urls[name]); let j = null; try { j = await r.json(); } catch (e) { /* sin JSON */ }
+    const n = j && (j.totalResults != null ? j.totalResults : j.response ? j.response.rowCount : j.info ? j.info.totalrecords : null);
+    if (r.ok && n != null && !(j && j.success === false)) msg.textContent = '✔ La clave de ' + label + ' funciona (' + n + ' resultados de prueba).';
+    else msg.textContent = '✖ ' + label + ' la rechaza' + (r.status ? ' (HTTP ' + r.status + ')' : '') + (j && (j.error || j.message) ? ': ' + String(j.error || j.message).slice(0, 120) : '') + '. Revisa que esté bien copiada.';
+  } catch (e) { msg.textContent = '✖ No pude conectar con ' + label + ': ' + errText(e); }
+}
 function addKeyword(text) { const q = C.keywordToQuery(text || ''); if (!q || S.f.keywords.includes(q)) return; S.f.keywords.push(q); render('kws'); applyChange(); }
 
 function onAct(act, id) {
@@ -2042,7 +2100,7 @@ function onAct(act, id) {
       const keep = { sources: f.sources }; S.f = Object.assign(C.defaultFilters(), keep); renderAll(); applyChange(); toast('Filtros restablecidos'); break;
     }
     case 'preset': {
-      const p = PRESETS[+id]; const keep = { sources: f.sources, orientation: f.orientation, soloPD: f.soloPD };
+      const p = PRESETS[+id]; const keep = { sources: f.sources, orientation: f.orientation, soloPD: f.soloPD, exclude: f.exclude, noWords: f.noWords };
       if (p.only) { keep.sources = {}; Object.keys(f.sources).forEach(k => { keep.sources[k] = p.only.includes(k); }); }
       S.f = Object.assign(C.defaultFilters(), keep, JSON.parse(JSON.stringify(p.patch)));
       renderAll(); applyChange(); break;
@@ -2060,6 +2118,10 @@ function onAct(act, id) {
     case 'artgroup': S.artGroup = id; render('artistsug'); break;
     case 'rm-artist': f.artists = f.artists.filter(a => a !== id); render('artists'); render('artistsug'); applyChange(); break;
     case 'add-kw': addKeyword($('#kwIn').value); $('#kwIn').value = ''; break;
+    case 'ex': toggleArr(f.exclude, id); render('excl'); applyChange(); break;
+    case 'add-exw': addExWord($('#exwIn').value); $('#exwIn').value = ''; break;
+    case 'rm-exw': f.noWords = f.noWords.filter(x => x !== id); render('exwords'); applyChange(); break;
+    case 'key-test': testKey(id); break;
     case 'mode': S.st.mode = id; applyLook(); saveAll(); render('mode'); break;
     case 'interval': S.st.interval = +id; saveAll(); render('interval'); schedule(); break;
     case 'bg': S.st.bg = id === 'white' ? 'white' : 'black'; applyLook(); saveAll(); render('bg'); break;
@@ -2113,7 +2175,7 @@ document.addEventListener('keydown', e => {
   activity();
   const tag = (e.target.tagName || '').toLowerCase(), typing = tag === 'input' || tag === 'textarea';
   if (typing) {
-    if (e.key === 'Enter') { if (e.target.id === 'artistIn') { addArtist(e.target.value); e.target.value = ''; } if (e.target.id === 'kwIn') { addKeyword(e.target.value); e.target.value = ''; } if (e.target.id === 'museumIn') addMuseumByName(); if (e.target.id === 'tvCode') onAct('tv-go'); }
+    if (e.key === 'Enter') { if (e.target.id === 'artistIn') { addArtist(e.target.value); e.target.value = ''; } if (e.target.id === 'kwIn') { addKeyword(e.target.value); e.target.value = ''; } if (e.target.id === 'museumIn') addMuseumByName(); if (e.target.id === 'tvCode') onAct('tv-go'); if (e.target.id === 'exwIn') { addExWord(e.target.value); e.target.value = ''; } }
     if (e.key === 'Escape') e.target.blur();
     return;
   }

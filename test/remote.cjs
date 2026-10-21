@@ -97,10 +97,12 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   // filtros desde el móvil
   p.querySelector('#c-styles [data-id=impressionism]').click();
   ph.ArtApp.onAct('interval', '60');
+  ph.ArtApp.onAct('ex', 'portraits');
   const e0 = tvA.S.epoch;
   await wait(1700);
   assert.deepStrictEqual(Array.from(tvA.S.f.styles), ['impressionism'], 'filtro de estilo aplicado en la TV');
   assert.strictEqual(tvA.S.st.interval, 60, 'intervalo aplicado en la TV');
+  assert.deepStrictEqual(Array.from(tvA.S.f.exclude), ['portraits'], '«No quiero ver» llega a la TV');
   assert.ok(tvA.S.epoch > e0, 'la TV relanzó la búsqueda');
   // clave de API desde el móvil
   const ke = p.getElementById('k-europeana'); ke.value = 'clave-prueba-é'; ke.dispatchEvent(new ph.Event('change'));
