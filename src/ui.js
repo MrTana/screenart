@@ -264,6 +264,7 @@ function toggleFS() {
 }
 function applyLook() {
   $('#stage').className = 'mode-' + S.st.mode + (S.st.kenburns ? ' kb' : '');
+  document.body.dataset.mode = S.st.mode;
   document.documentElement.style.setProperty('--dur', S.st.interval + 's');
 }
 
@@ -368,7 +369,7 @@ const PRESETS = [
   { es: 'Grandes museos de Europa', only: ['m:louvre', 'm:orsay', 'm:prado', 'm:uffizi', 'm:hermitage', 'm:nationalgallery', 'm:vangogh', 'm:mauritshuis', 'm:kunsthistorisches', 'm:versailles'], patch: {} }
 ];
 const ORIENT = [['any', 'Cualquiera'], ['landscape', 'Horizontal'], ['portrait', 'Vertical'], ['square', 'Cuadrada']];
-const MODES = [['gallery', 'Fondo difuminado'], ['frame', 'Marco y paspartú'], ['fill', 'Llenar (recorta)']];
+const MODES = [['gallery', 'Blanco con márgenes'], ['frame', 'Con marco'], ['fill', 'Llenar (recorta)']];
 const INTERVALS = [[10, '10 s'], [15, '15 s'], [30, '30 s'], [60, '1 min'], [300, '5 min'], [900, '15 min'], [3600, '1 h']];
 const CAPTIONS = [['auto', 'Al cambiar de obra'], ['always', 'Siempre visible'], ['never', 'Oculta']];
 
