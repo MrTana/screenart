@@ -22,7 +22,7 @@ const S = {
   keys: Object.assign({ europeana: 'api2demo', si: 'DEMO_KEY', harvard: '' }, lsGet('keys', {})),
   favs: lsGet('favs', []),
   pool: [], seen: new Set(), seenKey: new Set(), hist: [], hi: -1,
-  paused: false, menu: false, epoch: 0, refilling: 0, adv: false, advAt: 0, flight: new Map(), cool: {}, streak: {}, warned: false, recycleAfter: 6000, mfilter: '', detail: {}, acc: null,
+  paused: false, menu: false, epoch: 0, refilling: 0, adv: false, advAt: 0, flight: new Map(), cool: {}, streak: {}, warned: false, recycleAfter: 6000, artGroup: 'impressionism', mfilter: '', detail: {}, acc: null,
   status: {}, counts: {}, layer: 0, nextP: null, nextEpoch: -1,
   timer: null, capT: null, idleT: null, waiters: [], current: null, shown: 0
 };
@@ -362,6 +362,11 @@ const PRESETS = [
   { es: 'Paisajes', patch: { keywords: ['landscape'], types: ['painting'] } },
   { es: 'Retratos', patch: { keywords: ['portrait'], types: ['painting'] } },
   { es: 'París', patch: { keywords: ['Paris'] } },
+  { es: 'Remedios Varo', patch: { artists: ['Remedios Varo'] } },
+  { es: 'Surrealistas de Latinoamérica', patch: { artists: ['Remedios Varo', 'Leonora Carrington', 'Frida Kahlo', 'Wifredo Lam', 'Roberto Matta', 'Maruja Mallo', 'Alice Rahon', 'Óscar Domínguez'] } },
+  { es: 'Mujeres artistas', patch: { artists: ['Artemisia Gentileschi', 'Sofonisba Anguissola', 'Judith Leyster', 'Rachel Ruysch', 'Clara Peeters', 'Angelica Kauffman', 'Élisabeth Vigée Le Brun', 'Rosa Bonheur', 'Berthe Morisot', 'Mary Cassatt', 'Suzanne Valadon', 'Hilma af Klint', 'Paula Modersohn-Becker', 'Gabriele Münter', 'Tamara de Lempicka', 'Marie Laurencin', 'Georgia O\'Keeffe', 'Frida Kahlo', 'Remedios Varo', 'Leonora Carrington', 'Lee Krasner', 'Joan Mitchell', 'Helen Frankenthaler', 'Louise Bourgeois', 'Yayoi Kusama', 'Agnes Martin'] } },
+  { es: 'Los grandes maestros (cientos de artistas)', patch: { artists: [].concat(...C.ARTIST_GROUPS.map(g => g.names)).filter((n, i, a) => a.indexOf(n) === i) } },
+  { es: 'Museos de un solo artista', only: C.museumIdsByTag('artist'), patch: {} },
   { es: 'Museos de México', only: C.museumIdsByTag('mx'), patch: {} },
   { es: 'Museos de Bélgica', only: C.museumIdsByTag('be'), patch: {} },
   { es: 'Surrealismo en museos', only: C.museumIdsByTag('surreal').concat(['m:open']), patch: { styles: ['surrealism'] } },
@@ -381,7 +386,8 @@ const R = {
   styles: () => C.STYLES.map(s => chip('style', s.id, s.es, S.f.styles.includes(s.id))).join(''),
   types: () => C.TYPES.map(t => chip('type', t.id, t.es, S.f.types.includes(t.id))).join(''),
   artists: () => S.f.artists.map(a => chip('rm-artist', a, a, true, 'rm')).join('') || '<span class="hint" style="font-size:14px;color:var(--muted)">Ninguno. Se muestran todos los artistas.</span>',
-  artistsug: () => C.ARTIST_SUGGESTIONS.filter(a => !S.f.artists.includes(a)).slice(0, 14).map(a => chip('add-sug', a, a, false)).join(''),
+  artgroup: () => opts(C.ARTIST_GROUPS.map(g => [g.id, g.es + ' (' + g.names.length + ')']), S.artGroup),
+  artistsug: () => ((C.ARTIST_GROUPS.find(g => g.id === S.artGroup) || C.ARTIST_GROUPS[0]).names).filter(a => !S.f.artists.some(x => C.norm(x) === C.norm(a))).map(a => chip('add-sug', a, a, false)).join('') || '<span class="hint" style="font-size:14px;color:var(--muted)">Ya elegiste todos los de este grupo.</span>',
   kws: () => C.KEYWORDS.map(k => chip('kw', k.q, k.es, S.f.keywords.includes(k.q))).join('') +
     S.f.keywords.filter(q => !C.KEYWORDS.some(k => k.q === q)).map(q => chip('kw', q, q, true, 'rm')).join(''),
   orient: () => opts(ORIENT, S.f.orientation),
@@ -391,7 +397,7 @@ const R = {
   opts: () => chip('opt', 'kb', 'Zoom lento', S.st.kenburns) + chip('opt', 'hq', 'Imágenes en alta calidad', S.st.quality === 'high') +
     chip('opt', 'pd', 'Solo dominio público', S.f.soloPD) + chip('opt', 'favs', 'Solo mis favoritas (' + S.favs.length + ')', S.f.onlyFavs)
 };
-const BOX = { presets: 'c-presets', eras: 'c-eras', styles: 'c-styles', types: 'c-types', artists: 'c-artists', artistsug: 'c-artist-sug', kws: 'c-kws', orient: 'c-orient', mode: 'c-mode', interval: 'c-interval', caption: 'c-caption', opts: 'c-opts' };
+const BOX = { presets: 'c-presets', eras: 'c-eras', styles: 'c-styles', types: 'c-types', artists: 'c-artists', artgroup: 'c-artgroup', artistsug: 'c-artist-sug', kws: 'c-kws', orient: 'c-orient', mode: 'c-mode', interval: 'c-interval', caption: 'c-caption', opts: 'c-opts' };
 
 function srcNote(s) {
   const st = S.status[s.id], base = s.place + ' · ' + s.note;
@@ -483,6 +489,7 @@ function onAct(act, id) {
     case 'orient': f.orientation = id; render('orient'); applyChange(); break;
     case 'add-artist': addArtist($('#artistIn').value); $('#artistIn').value = ''; break;
     case 'add-sug': addArtist(id); break;
+    case 'artgroup': S.artGroup = id; render('artistsug'); break;
     case 'rm-artist': f.artists = f.artists.filter(a => a !== id); render('artists'); render('artistsug'); applyChange(); break;
     case 'add-kw': addKeyword($('#kwIn').value); $('#kwIn').value = ''; break;
     case 'mode': S.st.mode = id; applyLook(); saveAll(); render('mode'); break;
@@ -550,7 +557,7 @@ document.addEventListener('keydown', e => {
   else if (k === 'i' || k === 'I') { const c = $('#caption'); c.classList.toggle('show'); clearTimeout(S.capT); }
   else if (k === 'l' || k === 'L') toggleFav();
 });
-[['presets', 'preset'], ['orient', 'orient'], ['mode', 'mode'], ['interval', 'interval'], ['caption', 'caption']].forEach(([box, act]) => {
+[['presets', 'preset'], ['artgroup', 'artgroup'], ['orient', 'orient'], ['mode', 'mode'], ['interval', 'interval'], ['caption', 'caption']].forEach(([box, act]) => {
   $('#' + BOX[box]).addEventListener('change', e => {
     const v = e.target.value;
     if (act === 'preset') { if (v === '') return; onAct('preset', v); e.target.value = ''; return; }

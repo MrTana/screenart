@@ -18,10 +18,29 @@ Si una fuente de un museo falla, las demás siguen. El punto de color y la líne
 
 ## Repositorios y colecciones añadidos
 
-- **MoMA**: no tiene API, pero publica sus datos abiertos (github.com/MuseumofModernArt/collection). `tools/moma-shards.py` los convierte en trozos pequeños en `data/moma/` (unas 68 000 obras con imagen, por tipo y año, 6 MB). La app descarga solo el trozo que necesita y reconstruye la imagen de moma.org a 1024 px. Para actualizar los datos, vuelve a ejecutar el script.
-- **Wikimedia Commons**: además de las búsquedas por museo, la fila de «colecciones abiertas» consulta el proyecto **Google Art Project** y las **imágenes destacadas** de pinturas.
-- **Biblioteca Digital de Princeton (DPUL)**: adaptador experimental (catálogo JSON + imágenes IIIF). No se ha podido probar desde un navegador real; si el servidor no lo permite, aparecerá como error en «Probar fuentes».
-- **Public Domain Image Archive** (pdimagearchive.org): no se integra. No ofrece API y sus condiciones de uso prohíben el acceso automatizado. Casi todo su contenido procede de museos y bibliotecas que ya se consultan aquí.
+**Datos abiertos incluidos en el propio repositorio** (carpeta `data/`, unos 16 MB en total). Cada museo se convierte en trozos pequeños por tipo y año, y la app solo descarga el que necesita; si buscas un artista, revisa todos los trozos del tipo elegido. Para actualizarlos, vuelve a ejecutar el script correspondiente de `tools/`.
+
+- **MoMA** (`tools/moma-shards.py`): unas 68 000 obras con imagen de moma.org a 1024 px.
+- **National Gallery of Art, Washington** (`tools/nga-shards.py`): unas 62 000 obras de acceso abierto; imágenes IIIF de hasta 1600 px (3000 px con «alta calidad»).
+- **Tate** (`tools/tate-shards.py`): unas 31 000 obras (se dejan fuera los cuadernos de bocetos de Turner). Las imágenes se piden en tamaño grande y, si no existe, en el pequeño.
+
+**Otras fuentes**
+
+- **WikiArt**: además del catálogo por estilo, ahora se consulta la página de cada artista.
+- **Wikimedia Commons**: categorías «Paintings by …» por artista, **Google Art Project** e **imágenes destacadas**.
+- **Biblioteca Digital de Princeton (DPUL)**: adaptador experimental, sin comprobar en un navegador real.
+- **Museos de un solo artista** (Picasso, Miró, Munch, Matisse, Chagall, Rodin, Botero, Sorolla, Klimt…), con colección rápida propia.
+
+**Artistas y estilos**
+
+- Más de 260 artistas agrupados en 13 grupos (menú Artistas). Cada nombre se busca en todas las fuentes anteriores. Hay colecciones rápidas para Remedios Varo, surrealistas de Latinoamérica, mujeres artistas y «Los grandes maestros».
+- 59 estilos (antes 23): gótico, primitivos flamencos, bizantino, orientalismo, neoimpresionismo, futurismo, dadá, constructivismo, Bauhaus, art déco, realismo mágico, muralismo mexicano, campos de color, minimalismo, fotorrealismo, neoexpresionismo, arte urbano, pintura china, miniaturas persas y mogolas, etc.
+
+**No integrados**
+
+- **Public Domain Image Archive** y **Artvee**: sin API y sin permiso claro para el acceso automatizado.
+- **SFMOMA, Museo Thyssen, Newfields, MFAH**: no se encontró API ni datos abiertos utilizables. Siguen en la lista de museos y se consultan por Wikidata, Commons y Wikipedia.
+- **Galería Wendi Norris** (galería comercial con artistas vivos) y **remediosvaro.art** (no se pudo consultar su estructura): para Remedios Varo se usan WikiArt, Commons, Wikidata y los museos.
 
 ## Derechos de autor
 

@@ -1,3 +1,4 @@
+const assert = require('assert');
 const { JSDOM } = require('jsdom');
 const fs = require('fs');
 const html = fs.readFileSync(__dirname + '/../index.html', 'utf8');
@@ -36,6 +37,10 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   console.log('filtros tras preset:', JSON.stringify({ styles: S.f.styles, types: S.f.types }));
   d.querySelector('#c-artist-sug [data-act=add-sug]').click();
   console.log('artistas:', JSON.stringify(S.f.artists), '| chips artista:', d.querySelectorAll('#c-artists .chip').length);
+  const ag = d.getElementById('c-artgroup'); assert.ok(ag.options.length >= 12, 'grupos de artistas');
+  ag.value = 'surrealism'; ag.dispatchEvent(new w.Event('change', { bubbles: true }));
+  assert.ok(/Remedios Varo/.test(d.getElementById('c-artist-sug').textContent), 'el grupo Surrealismo muestra a Remedios Varo');
+  console.log('grupos de artistas:', ag.options.length, '| presets:', d.querySelectorAll('#c-presets option').length);
   d.getElementById('kwIn').value = 'caballos'; d.querySelector('[data-act=add-kw]').click();
   console.log('temas:', JSON.stringify(S.f.keywords));
   // selectores y secciones plegables
@@ -62,7 +67,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   flt.value = ''; flt.dispatchEvent(new w.Event('input'));
   d.getElementById('museumIn').value = 'Museo de Prueba'; d.querySelector('[data-act=add-museum]').click(); await wait(300);
   console.log('museo añadido:', d.getElementById('museumMsg').textContent, '| guardado:', S.custom.length, '| activo:', !!S.f.sources['m:cQ4242'], '| en lista:', /Museo de Prueba/.test(d.getElementById('c-msrcs').textContent));
-  for (const [name, n] of [['Museos de México', 18], ['Museos de Bélgica', 28], ['Surrealismo en museos', 63]]) {
+  for (const [name, n] of [['Museos de México', 18], ['Museos de Bélgica', 28], ['Surrealismo en museos', 64]]) {
     pick(name);
     const act = Object.keys(S.f.sources).filter(k => S.f.sources[k]).length;
     console.log('preset', name, '->', act, 'museos activos', name.startsWith('Surr') ? '| estilo: ' + S.f.styles : '');

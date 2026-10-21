@@ -241,7 +241,8 @@ globalThis.fetch = async (url, init) => {
   assert.ok(cm2.length === 2 && commonsLog.some(x => /^Surrealism \w+ landscape/.test(x)), 'Commons: sin categoría usa el texto');
   const wa = await C.adapters.wikiartFetch(C.makePlan(fs), fs, anyCtx);
   assert.ok(wa.length === 1 && wa[0].year === 1911 && wa[0].url === 'https://www.wikiart.org/en/marc-chagall/the-big-wheel' && wa[0].imgs[0].endsWith('.jpg'), 'WikiArt');
-  const fa = C.defaultFilters(); fa.artists = ['Dalí']; assert.deepStrictEqual(await C.adapters.wikiartFetch(C.makePlan(fa), fa, anyCtx), [], 'WikiArt no sirve para artistas');
+  const fa = C.defaultFilters(); fa.artists = ['Dalí']; const wda = await C.adapters.wikiartFetch(C.makePlan(fa), fa, anyCtx); assert.ok(Array.isArray(wda), 'WikiArt con artista usa la página del artista');
+  const fk = C.defaultFilters(); fk.keywords = ['sea']; assert.deepStrictEqual(await C.adapters.wikiartFetch(C.makePlan(fk), fk, anyCtx), [], 'WikiArt no sirve para palabras clave');
   // Wikidata: el movimiento vale por la obra o por su autor, y las obras sin fecha entran
   sparqlLog.length = 0; await C.runSource(museumSrcs.find(x => x.id === 'm:orsay'), fs, anyCtx);
   const qs = sparqlLog.filter(q => !/COUNT\(/.test(q)).pop();

@@ -9,7 +9,7 @@ const idx = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/moma/index.
   const rows0 = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/moma', idx.painting[0].f), 'utf8'));
   globalThis.fetch = async u => {
     u = String(u); log.push(u);
-    if (u.includes('data/moma/')) { const n = u.split('data/moma/')[1]; if (!u.startsWith('http')) throw new Error('relativa'); return J(JSON.parse(fs.readFileSync(path.join(__dirname, '../data/moma', n), 'utf8'))); }
+    const dm = u.match(/data\/(moma|nga|tate)\/(.+)$/); if (dm) { if (!u.startsWith('http')) throw new Error('relativa'); return J(JSON.parse(fs.readFileSync(path.join(__dirname, '../data', dm[1], dm[2]), 'utf8'))); }
     if (u.includes('dpul.princeton.edu')) return J({ meta: { pages: { total_pages: 3 } }, data: [
       { id: 'abc-123', attributes: { title_display: { attributes: { value: 'Flowers' } }, creator_display: 'x' }, links: { iiif: 'https://iiif-cloud.princeton.edu/iiif/2/ab%2Fcd%2Fef%2Fabcdef/full/!200,200/0/default.jpg' } },
       { id: 'no-img', attributes: { title_display: 'Sin imagen' } }] });
@@ -46,5 +46,29 @@ const idx = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/moma/index.
   await C.adapters.commonsSpecial('fp', plan, C.defaultFilters(), ctx);
   const dec2 = log.map(decodeURIComponent).join('\n');
   assert.ok(/Google Art Project/.test(dec2) && /Featured pictures of paintings/.test(dec2), 'consultas especiales');
+  // NGA y Tate: mismas piezas, imágenes IIIF / de Tate con alternativas
+  const ng = await C.adapters.ngaFetch(plan, C.defaultFilters(), ctx);
+  assert.ok(ng.length > 5 && /^https:\/\/api\.nga\.gov\/iiif\/[0-9a-f-]{36}\/full\/!1600,1600\/0\/default\.jpg$/.test(ng[0].imgs[0]) && ng[0].imgs.length === 2, 'NGA ' + ng[0].imgs);
+  assert.ok(/^https:\/\/www\.nga\.gov\/artworks\/\d+$/.test(ng[0].url));
+  const ta = await C.adapters.tateFetch(plan, C.defaultFilters(), ctx);
+  assert.ok(ta.length > 5 && /^https:\/\/www\.tate\.org\.uk\/art\/images\/work\/\w\/\w+\/\w+_10\.jpg$/.test(ta[0].imgs[0]) && ta[0].imgs.length === 3, 'Tate ' + ta[0].imgs);
+  assert.ok(/^https:\/\/www\.tate\.org\.uk\/art\/artworks\/[\w-]+$/.test(ta[0].url));
+  // con artista se revisan todos los trozos: «Van Gogh» aparece en MoMA y en NGA aunque estén en trozos distintos
+  const pg = Object.assign({}, plan, { artist: 'Vincent van Gogh' });
+  const vg = (await C.adapters.ngaFetch(pg, C.defaultFilters(), ctx)).concat(await C.adapters.momaFetch(pg, C.defaultFilters(), ctx));
+  assert.ok(vg.length > 3 && vg.every(x => /gogh/i.test(x.artist)), 'Van Gogh en NGA/MoMA: ' + vg.length);
+  // catálogo de artistas y estilos
+  const names = [].concat(...C.ARTIST_GROUPS.map(g => g.names));
+  assert.ok(new Set(names).size >= 200 && names.includes('Remedios Varo'), 'al menos 200 artistas');
+  assert.ok(C.STYLES.length >= 55 && C.STYLES.every(x => x.range && x.range[0] < x.range[1]), 'estilos');
+  // WikiArt de un artista y estilo sin WikiArt no recurre a otro estilo
+  globalThis.fetch = async u => { u = String(u); log.push(u); if (u.includes('wikiart.org')) return J({ AllPaintingsCount: 3, PageSize: 60, Paintings: [{ id: 'a', title: 'La tierra', artistName: 'Remedios Varo', year: 1943, image: 'https://uploads.wikiart.org/x/la.jpg!Large.jpg', paintingUrl: '/en/remedios-varo/la' }] }); throw new Error('no'); };
+  log.length = 0;
+  const wv = await C.adapters.wikiartFetch(Object.assign({}, plan, { artist: 'Remedios Varo' }), Object.assign(C.defaultFilters(), { artists: ['Remedios Varo'] }), ctx);
+  assert.ok(wv.length === 1 && log[0].includes('/en/remedios-varo/mode/all-paintings'), log[0]);
+  const none = C.STYLES.find(x => !x.wa);
+  log.length = 0; assert.deepStrictEqual(await C.adapters.wikiartFetch(Object.assign({}, plan, { style: none }), C.defaultFilters(), ctx), []); assert.strictEqual(log.length, 0, 'sin WikiArt para ese estilo');
+  const ids = C.MUSEUMS.map(m => m.id); assert.strictEqual(new Set(ids).size, ids.length, 'ids de museo únicos');
+  assert.ok(C.museumIdsByTag('artist').length >= 20, 'museos de un solo artista');
   console.log('MoMA', l.length, '· DPUL', d.length, '· Commons especial OK');
 })().catch(e => { console.error('FALLO', e); process.exit(1); });

@@ -214,7 +214,7 @@ details.adv label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut
     <button class="acch" data-act="acc" data-id="artistas" aria-expanded="false"><span class="at">Artistas</span><span class="as" data-sum="artistas"></span><span class="ac">›</span></button>
     <div class="accb"><div class="chips" id="c-artists"></div>
       <div class="row" style="margin-top:10px"><input type="text" id="artistIn" list="artistList" placeholder="Escribe un artista" autocomplete="off"><button class="btn" data-act="add-artist">Añadir</button></div>
-      <datalist id="artistList"></datalist><div class="chips" id="c-artist-sug" style="margin-top:10px"></div></div>
+      <datalist id="artistList"></datalist><div class="hint" style="margin-top:12px">Los artistas más importantes, por grupos</div><select class="qs" id="c-artgroup" aria-label="Grupo de artistas"></select><div class="chips" id="c-artist-sug" style="margin-top:10px"></div></div>
   </section>
   <section class="acc" data-acc="tema">
     <button class="acch" data-act="acc" data-id="tema" aria-expanded="false"><span class="at">Tema</span><span class="as" data-sum="tema"></span><span class="ac">›</span></button>
@@ -234,7 +234,7 @@ details.adv label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut
       <p class="hint">Se guardan solo en este navegador. Con una clave puedes activar esas fuentes.</p>
     </div>
   </section>
-  <div class="foot">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión e9ba14abe7 · 2026-10-21 15:54 UTC</span><br><button class="btn" data-act="update" style="margin-top:10px">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" style="margin-top:10px" hidden>Instalar la app</button> <button class="btn" data-act="diag" style="margin-top:10px">Probar fuentes</button> <button class="btn" data-act="reset" style="margin-top:10px">Restablecer filtros</button></div>
+  <div class="foot">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión fa1958b7aa · 2026-10-21 16:36 UTC</span><br><button class="btn" data-act="update" style="margin-top:10px">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" style="margin-top:10px" hidden>Instalar la app</button> <button class="btn" data-act="diag" style="margin-top:10px">Probar fuentes</button> <button class="btn" data-act="reset" style="margin-top:10px">Restablecer filtros</button></div>
 </aside>
 <script>
 /* Núcleo: catálogos de filtros, utilidades y adaptadores de museos.
@@ -377,6 +377,47 @@ const STYLE_EXTRA = {
   pop: { cat: 'Pop art paintings', wa: 'pop-art' },
   ukiyoe: { cat: 'Ukiyo-e', wa: 'ukiyo-e' }
 };
+
+/* Más estilos y escuelas. wd = nombre del movimiento en Wikidata (inglés); cat = categoría de Commons; wa = estilo de WikiArt. */
+[
+  ['byzantine', 'Bizantino e iconos', 'Byzantine icon', [400, 1600], 'Byzantine art', [], 'Byzantine icons', 'byzantine'],
+  ['gothic', 'Gótico', 'Gothic', [1200, 1480], 'Gothic art', ['Giotto', 'Duccio', 'Simone Martini', 'Cimabue', 'Lorenzetti', 'Gentile da Fabriano'], 'Gothic paintings', 'international-gothic'],
+  ['earlynl', 'Primitivos flamencos', 'Early Netherlandish', [1400, 1570], 'Early Netherlandish painting', ['Jan van Eyck', 'Rogier van der Weyden', 'Hans Memling', 'Hieronymus Bosch', 'Robert Campin', 'Hugo van der Goes', 'Dieric Bouts', 'Gerard David'], 'Early Netherlandish paintings', 'northern-renaissance'],
+  ['spanishgolden', 'Siglo de Oro español', 'Spanish Golden Age', [1580, 1700], 'Spanish Golden Age', ['Velázquez', 'Murillo', 'Zurbarán', 'Ribera', 'El Greco', 'Valdés Leal'], 'Spanish Baroque paintings', null],
+  ['academic', 'Arte académico', 'Academic art', [1800, 1910], 'Academic art', ['Bouguereau', 'Cabanel', 'Gérôme', 'Alma-Tadema', 'Leighton', 'Meissonier'], 'Academic paintings', 'academicism'],
+  ['orientalism', 'Orientalismo', 'Orientalism', [1800, 1910], 'Orientalism', ['Gérôme', 'Delacroix', 'Fromentin', 'John Frederick Lewis', 'Bridgman', 'Decamps'], 'Orientalist paintings', null],
+  ['neoimp', 'Puntillismo y neoimpresionismo', 'Neo-Impressionism', [1884, 1935], 'Neo-impressionism', ['Seurat', 'Signac', 'Henri-Edmond Cross', 'Maximilien Luce', 'Van Rysselberghe'], 'Neo-Impressionist paintings', 'neo-impressionism'],
+  ['nabis', 'Les Nabis', 'Nabis', [1888, 1905], 'Les Nabis', ['Vuillard', 'Bonnard', 'Maurice Denis', 'Sérusier', 'Vallotton', 'Ranson'], 'Nabis paintings', 'nabis'],
+  ['futurism', 'Futurismo', 'Futurism', [1909, 1944], 'Futurism', ['Boccioni', 'Giacomo Balla', 'Severini', 'Carlo Carrà', 'Russolo'], 'Futurist paintings', 'futurism'],
+  ['dada', 'Dadaísmo', 'Dada', [1916, 1930], 'Dada', ['Duchamp', 'Hannah Höch', 'Man Ray', 'Kurt Schwitters', 'Francis Picabia', 'Hans Arp'], 'Dada artworks', 'dada'],
+  ['constructivism', 'Constructivismo y suprematismo', 'Constructivism', [1913, 1935], 'Constructivism', ['Malevich', 'Rodchenko', 'El Lissitzky', 'Tatlin', 'Popova', 'Stepanova'], 'Constructivist artworks', 'constructivism'],
+  ['destijl', 'De Stijl', 'De Stijl', [1917, 1931], 'De Stijl', ['Mondrian', 'Theo van Doesburg', 'Rietveld', 'Bart van der Leck', 'Vilmos Huszár'], 'De Stijl', null],
+  ['bauhaus', 'Bauhaus', 'Bauhaus', [1919, 1935], 'Bauhaus', ['Kandinsky', 'Paul Klee', 'Albers', 'Moholy-Nagy', 'Oskar Schlemmer', 'Lyonel Feininger'], 'Bauhaus', null],
+  ['artdeco', 'Art déco', 'Art Deco', [1920, 1945], 'Art Deco', ['Tamara de Lempicka', 'Erté', 'Cassandre', 'Jean Dupas', 'Georges Barbier'], 'Art Deco paintings', 'art-deco'],
+  ['newobj', 'Nueva objetividad', 'New Objectivity', [1919, 1935], 'New Objectivity', ['Otto Dix', 'George Grosz', 'Christian Schad', 'Max Beckmann', 'Rudolf Schlichter'], 'New Objectivity paintings', null],
+  ['magicreal', 'Realismo mágico', 'Magic realism', [1920, 1965], 'Magic realism', ['Frida Kahlo', 'Remedios Varo', 'Leonora Carrington', 'Paul Delvaux', 'Alberto Savinio', 'Edward Hopper'], 'Magic realism paintings', 'magic-realism'],
+  ['muralism', 'Muralismo mexicano', 'Mexican muralism', [1920, 1975], 'Mexican muralism', ['Diego Rivera', 'José Clemente Orozco', 'David Alfaro Siqueiros', 'Rufino Tamayo', 'Roberto Montenegro'], 'Mexican muralism', null],
+  ['regionalism', 'Regionalismo americano', 'Regionalism', [1925, 1950], 'Regionalism', ['Grant Wood', 'Thomas Hart Benton', 'John Steuart Curry', 'Edward Hopper'], 'American Regionalism', 'regionalism'],
+  ['socialrealism', 'Realismo social', 'Social realism', [1925, 1965], 'Social realism', ['Ben Shahn', 'Jacob Lawrence', 'Käthe Kollwitz', 'Diego Rivera', 'Honoré Daumier'], 'Social realist paintings', 'social-realism'],
+  ['informel', 'Art informel y abstracción lírica', 'Art Informel', [1943, 1970], 'Art informel', ['Jean Dubuffet', 'Pierre Soulages', 'Hans Hartung', 'Wols', 'Georges Mathieu', 'Fautrier'], 'Art Informel', 'art-informel'],
+  ['colorfield', 'Campos de color', 'Color Field', [1948, 1980], 'Color field', ['Rothko', 'Barnett Newman', 'Helen Frankenthaler', 'Morris Louis', 'Kenneth Noland', 'Clyfford Still', 'Ellsworth Kelly'], 'Color Field paintings', 'color-field-painting'],
+  ['cobra', 'CoBrA', 'CoBrA', [1948, 1955], 'CoBrA', ['Karel Appel', 'Asger Jorn', 'Corneille', 'Constant', 'Pierre Alechinsky'], 'CoBrA', 'cobra'],
+  ['minimalism', 'Minimalismo', 'Minimalism', [1960, 1985], 'Minimalism', ['Donald Judd', 'Dan Flavin', 'Carl Andre', 'Sol LeWitt', 'Frank Stella', 'Agnes Martin'], 'Minimalist art', 'minimalism'],
+  ['opart', 'Op art y cinetismo', 'Op art', [1955, 1980], 'Op art', ['Vasarely', 'Bridget Riley', 'Jesús Rafael Soto', 'Carlos Cruz-Diez', 'Yaacov Agam'], 'Op art', 'op-art'],
+  ['photorealism', 'Fotorrealismo', 'Photorealism', [1965, 2000], 'Photorealism', ['Chuck Close', 'Richard Estes', 'Audrey Flack', 'Ralph Goings', 'Gerhard Richter'], 'Photorealist paintings', 'photorealism'],
+  ['neoexp', 'Neoexpresionismo', 'Neo-expressionism', [1975, 2000], 'Neo-expressionism', ['Basquiat', 'Anselm Kiefer', 'Georg Baselitz', 'Julian Schnabel', 'Francesco Clemente', 'Sandro Chia'], 'Neo-expressionist paintings', 'neo-expressionism'],
+  ['streetart', 'Arte urbano y grafiti', 'Street art', [1970, 2030], 'Street art', ['Keith Haring', 'Banksy', 'Basquiat', 'Shepard Fairey', 'Invader'], 'Street art', null],
+  ['naive', 'Arte naíf', 'Naïve art', [1880, 1985], 'Naïve art', ['Henri Rousseau', 'Grandma Moses', 'Séraphine Louis', 'Camille Bombois', 'Niko Pirosmani'], 'Naïve art paintings', 'naive-art-primitivism'],
+  ['latam', 'Arte latinoamericano moderno', 'Latin American modern art', [1900, 1995], null, ['Joaquín Torres-García', 'Tarsila do Amaral', 'Fernando Botero', 'Wifredo Lam', 'Roberto Matta', 'Rufino Tamayo', 'Xul Solar', 'Frida Kahlo', 'Remedios Varo', 'Carlos Mérida'], 'Latin American paintings', null],
+  ['chinese', 'Pintura china', 'Chinese painting', [900, 1950], 'Chinese painting', ['Qi Baishi', 'Zhang Daqian', 'Shen Zhou', 'Bada Shanren', 'Zhao Mengfu', 'Xu Beihong'], 'Chinese paintings', null],
+  ['mughal', 'Miniaturas indias y mogolas', 'Mughal painting', [1500, 1900], 'Mughal painting', [], 'Mughal paintings', null],
+  ['persian', 'Miniaturas persas', 'Persian miniature', [1200, 1800], 'Persian miniature', [], 'Persian miniatures', null],
+  ['nihonga', 'Pintura japonesa (Rinpa y Nihonga)', 'Japanese painting', [1600, 1950], 'Japanese painting', ['Ogata Kōrin', 'Itō Jakuchū', 'Hishida Shunsō', 'Yokoyama Taikan', 'Kawase Hasui'], 'Japanese paintings', null],
+  ['egyptian', 'Egipto antiguo', 'Ancient Egyptian', [-3000, -30], 'Ancient Egyptian art', [], 'Ancient Egyptian paintings', null],
+  ['roman', 'Frescos y mosaicos romanos', 'Roman fresco mosaic', [-500, 500], 'Roman art', [], 'Roman frescoes', null],
+  ['botanical', 'Ilustración botánica y naturaleza', 'botanical illustration', [1500, 1950], null, ['Pierre-Joseph Redouté', 'Maria Sibylla Merian', 'Ernst Haeckel', 'Georg Dionysius Ehret', 'John James Audubon'], 'Botanical illustrations', null]
+].forEach(([id, es, q, range, wd, artists, cat, wa]) => { if (STYLES.some(s => s.id === id)) return; STYLES.push({ id, es, q, range, wd, artists }); STYLE_EXTRA[id] = { cat, wa: wa || undefined }; });
+STYLES.sort((x, y) => x.range[0] - y.range[0] || x.range[1] - y.range[1]);
 STYLES.forEach(s => Object.assign(s, STYLE_EXTRA[s.id] || {}));
 
 const TYPES = [
@@ -396,7 +437,24 @@ const KEYWORDS = [
   { q: 'mythology', es: 'Mitología' }
 ];
 
-const ARTIST_SUGGESTIONS = ['Monet', 'Van Gogh', 'Rembrandt', 'Vermeer', 'Hokusai', 'Hiroshige', 'Turner', 'Cézanne', 'Renoir', 'Degas', 'Goya', 'Velázquez', 'Caravaggio', 'Klimt', 'Picasso', 'Kandinsky', 'Hopper', 'Whistler', 'Sargent', 'Friedrich', 'Constable', 'Gauguin', 'Seurat', 'Manet', 'Pissarro', 'Sisley', 'Matisse', 'Dalí', 'Miró', 'Mucha', 'Botticelli', 'Tiziano', 'El Greco', 'Rubens', 'Canaletto', 'Munch', 'Cassatt', 'Morisot', 'Sorolla', 'Zorn'];
+/* Los artistas más importantes, agrupados. Cada nombre se busca en todas las fuentes: datos abiertos de MoMA, NGA y Tate,
+   WikiArt (página del artista), Wikimedia Commons (categoría «Paintings by …»), Wikidata y los museos activos. */
+const ARTIST_GROUPS = [
+  { id: 'gothic', es: 'Edad Media y primitivos', names: ['Giotto', 'Duccio', 'Simone Martini', 'Fra Angelico', 'Jan van Eyck', 'Rogier van der Weyden', 'Hieronymus Bosch', 'Hans Memling', 'Pieter Bruegel the Elder', 'Piero della Francesca'] },
+  { id: 'renaissance', es: 'Renacimiento y manierismo', names: ['Leonardo da Vinci', 'Michelangelo', 'Raphael', 'Botticelli', 'Titian', 'Giorgione', 'Tintoretto', 'Paolo Veronese', 'Mantegna', 'Giovanni Bellini', 'Albrecht Dürer', 'Hans Holbein', 'Lucas Cranach', 'El Greco', 'Parmigianino', 'Correggio', 'Sofonisba Anguissola', 'Andrea del Sarto'] },
+  { id: 'baroque', es: 'Barroco y Siglo de Oro', names: ['Caravaggio', 'Artemisia Gentileschi', 'Rubens', 'Van Dyck', 'Rembrandt', 'Johannes Vermeer', 'Frans Hals', 'Velázquez', 'Murillo', 'Zurbarán', 'Ribera', 'Nicolas Poussin', 'Claude Lorrain', 'Georges de La Tour', 'Jacob van Ruisdael', 'Judith Leyster', 'Rachel Ruysch', 'Clara Peeters', 'Canaletto', 'Francesco Guardi'] },
+  { id: 'rococo', es: 'Rococó y neoclasicismo', names: ['Watteau', 'François Boucher', 'Fragonard', 'Chardin', 'Tiepolo', 'Gainsborough', 'Joshua Reynolds', 'Élisabeth Vigée Le Brun', 'Jacques-Louis David', 'Ingres', 'Angelica Kauffman', 'Canova', 'William Hogarth'] },
+  { id: 'romanticism', es: 'Romanticismo y realismo', names: ['Goya', 'Turner', 'John Constable', 'Caspar David Friedrich', 'Delacroix', 'Géricault', 'William Blake', 'Thomas Cole', 'Frederic Church', 'Albert Bierstadt', 'Courbet', 'Millet', 'Corot', 'Daumier', 'Rosa Bonheur', 'Winslow Homer', 'Thomas Eakins', 'Ilya Repin', 'Ivan Aivazovsky', 'Adolph Menzel'] },
+  { id: 'impressionism', es: 'Impresionismo y postimpresionismo', names: ['Claude Monet', 'Pierre-Auguste Renoir', 'Edgar Degas', 'Édouard Manet', 'Camille Pissarro', 'Alfred Sisley', 'Berthe Morisot', 'Mary Cassatt', 'Gustave Caillebotte', 'Vincent van Gogh', 'Paul Cézanne', 'Paul Gauguin', 'Georges Seurat', 'Henri de Toulouse-Lautrec', 'Paul Signac', 'Pierre Bonnard', 'Édouard Vuillard', 'John Singer Sargent', 'Joaquín Sorolla', 'James Abbott McNeill Whistler', 'Anders Zorn', 'Suzanne Valadon', 'Eva Gonzalès'] },
+  { id: 'symbolism', es: 'Simbolismo y modernismo', names: ['Gustave Moreau', 'Odilon Redon', 'Puvis de Chavannes', 'Arnold Böcklin', 'Gustav Klimt', 'Egon Schiele', 'Alphonse Mucha', 'Edvard Munch', 'Fernand Khnopff', 'Ferdinand Hodler', 'Aubrey Beardsley', 'Dante Gabriel Rossetti', 'John Everett Millais', 'Edward Burne-Jones', 'John William Waterhouse', 'Lawrence Alma-Tadema', 'Hilma af Klint', 'Akseli Gallen-Kallela', 'Ramon Casas', 'Santiago Rusiñol'] },
+  { id: 'cubism', es: 'Vanguardias del siglo XX', names: ['Pablo Picasso', 'Georges Braque', 'Juan Gris', 'Fernand Léger', 'Robert Delaunay', 'Sonia Delaunay', 'Henri Matisse', 'André Derain', 'Raoul Dufy', 'Wassily Kandinsky', 'Paul Klee', 'Franz Marc', 'August Macke', 'Ernst Ludwig Kirchner', 'Emil Nolde', 'Oskar Kokoschka', 'Max Beckmann', 'Otto Dix', 'Kazimir Malevich', 'Piet Mondrian', 'Marc Chagall', 'Amedeo Modigliani', 'Giorgio de Chirico', 'Umberto Boccioni', 'Marcel Duchamp', 'Tamara de Lempicka', 'Marie Laurencin', 'Gabriele Münter', 'Paula Modersohn-Becker', 'Natalia Goncharova', 'Josef Albers', 'Henri Rousseau', 'Chaïm Soutine'] },
+  { id: 'surrealism', es: 'Surrealismo y realismo mágico', names: ['Salvador Dalí', 'René Magritte', 'Joan Miró', 'Max Ernst', 'Yves Tanguy', 'Paul Delvaux', 'André Masson', 'Man Ray', 'Remedios Varo', 'Leonora Carrington', 'Frida Kahlo', 'Dorothea Tanning', 'Leonor Fini', 'Kay Sage', 'Roberto Matta', 'Wifredo Lam', 'Óscar Domínguez', 'Victor Brauner', 'Maruja Mallo', 'Toyen', 'Meret Oppenheim', 'Alice Rahon', 'Gunther Gerzso', 'Pierre Roy'] },
+  { id: 'abstractexp', es: 'Posguerra: expresionismo abstracto y pop', names: ['Jackson Pollock', 'Mark Rothko', 'Willem de Kooning', 'Franz Kline', 'Barnett Newman', 'Clyfford Still', 'Lee Krasner', 'Joan Mitchell', 'Helen Frankenthaler', 'Robert Motherwell', 'Cy Twombly', 'Jean Dubuffet', 'Pierre Soulages', 'Francis Bacon', 'Lucian Freud', 'Andy Warhol', 'Roy Lichtenstein', 'Jasper Johns', 'Robert Rauschenberg', 'David Hockney', 'Jean-Michel Basquiat', 'Keith Haring', 'Gerhard Richter', 'Anselm Kiefer', 'Yayoi Kusama', 'Louise Bourgeois', 'Agnes Martin', 'Ellsworth Kelly', 'Frank Stella', 'Bridget Riley', 'Victor Vasarely'] },
+  { id: 'americans', es: 'Estados Unidos', names: ['Edward Hopper', 'Georgia O\'Keeffe', 'Grant Wood', 'Thomas Hart Benton', 'Andrew Wyeth', 'Norman Rockwell', 'Jacob Lawrence', 'Stuart Davis', 'Charles Demuth', 'Arthur Dove', 'Marsden Hartley', 'John Singer Sargent', 'Mary Cassatt', 'Frederic Remington', 'George Bellows', 'Ben Shahn'] },
+  { id: 'latam', es: 'España y Latinoamérica', names: ['Diego Rivera', 'José Clemente Orozco', 'David Alfaro Siqueiros', 'Rufino Tamayo', 'Frida Kahlo', 'Remedios Varo', 'María Izquierdo', 'Carlos Mérida', 'Dr. Atl', 'José María Velasco', 'Fernando Botero', 'Joaquín Torres-García', 'Tarsila do Amaral', 'Candido Portinari', 'Xul Solar', 'Antonio Berni', 'Fernando de Szyszlo', 'Oswaldo Guayasamín', 'Armando Reverón', 'Joaquín Sorolla', 'Ignacio Zuloaga', 'Antoni Tàpies', 'Eduardo Chillida', 'Antonio López García', 'Julio Romero de Torres', 'Santiago Rusiñol'] },
+  { id: 'ukiyoe', es: 'Asia', names: ['Katsushika Hokusai', 'Utagawa Hiroshige', 'Kitagawa Utamaro', 'Utagawa Kuniyoshi', 'Toshusai Sharaku', 'Suzuki Harunobu', 'Kawase Hasui', 'Ogata Kōrin', 'Itō Jakuchū', 'Yayoi Kusama', 'Takashi Murakami', 'Qi Baishi', 'Zhang Daqian', 'Xu Beihong', 'Zhao Mengfu', 'Bada Shanren', 'Rabindranath Tagore', 'Raja Ravi Varma', 'Amrita Sher-Gil', 'Nandalal Bose'] }
+];
+const ARTIST_SUGGESTIONS = Array.from(new Set([].concat(...ARTIST_GROUPS.map(g => g.names)).concat(['Monet', 'Van Gogh', 'Rembrandt', 'Vermeer', 'Hokusai', 'Hiroshige', 'Turner', 'Cézanne', 'Renoir', 'Degas', 'Goya', 'Velázquez', 'Caravaggio', 'Klimt', 'Picasso', 'Kandinsky', 'Hopper', 'Whistler', 'Sargent', 'Friedrich', 'Constable', 'Gauguin', 'Seurat', 'Manet', 'Pissarro', 'Sisley', 'Matisse', 'Dalí', 'Miró', 'Mucha', 'Botticelli', 'Tiziano', 'El Greco', 'Rubens', 'Canaletto', 'Munch', 'Cassatt', 'Morisot', 'Sorolla', 'Zorn']))).sort((x, y) => x.localeCompare(y, 'es'));
 
 const ES_EN = { paisaje: 'landscape', paisajes: 'landscape', retrato: 'portrait', retratos: 'portrait', flores: 'flowers', flor: 'flower', mar: 'sea', marina: 'sea', jardin: 'garden', jardines: 'garden', ciudad: 'city', montana: 'mountains', montanas: 'mountains', invierno: 'winter', noche: 'night', animales: 'animals', caballo: 'horse', caballos: 'horse', gato: 'cat', gatos: 'cat', perro: 'dog', mujer: 'woman', madre: 'mother', barco: 'ship', barcos: 'ship', puente: 'bridge', rio: 'river', bosque: 'forest', cielo: 'sky', nieve: 'snow', frutas: 'fruit', danza: 'dance', bailarinas: 'dancers', musica: 'music', 'naturaleza muerta': 'still life', mitologia: 'mythology', paris: 'Paris', venecia: 'Venice', espana: 'Spain', japon: 'Japan', puerto: 'harbor', playa: 'beach', iglesia: 'church', catedral: 'cathedral', verano: 'summer', otono: 'autumn', primavera: 'spring' };
 function keywordToQuery(text) { const n = norm(text); return ES_EN[n] || text.trim(); }
@@ -796,7 +854,7 @@ const MUSEUMS = [
   { id: 'altepinakothek', es: 'Alte Pinakothek', city: 'Múnich', ids: [], labels: [['Alte Pinakothek', 'de'], ['Alte Pinakothek', 'en']] },
   { id: 'dresden', es: 'Pinacoteca de Dresde', city: 'Dresde', ids: [], labels: [['Gemäldegalerie Alte Meister', 'de'], ['Old Masters Picture Gallery', 'en']] },
   { id: 'nationalmuseum', es: 'Nationalmuseum', city: 'Estocolmo', ids: [], labels: [['Nationalmuseum', 'sv'], ['Nationalmuseum', 'en']] },
-  { id: 'nga', es: 'National Gallery of Art', city: 'Washington', ids: [], labels: [['National Gallery of Art', 'en']] },
+  { id: 'nga', es: 'National Gallery of Art', city: 'Washington', ids: [], direct: 'nga', labels: [['National Gallery of Art', 'en']] },
   { id: 'mfa', es: 'Museum of Fine Arts', city: 'Boston', ids: [], labels: [['Museum of Fine Arts, Boston', 'en'], ['Museum of Fine Arts', 'en']] },
   { id: 'frick', es: 'Frick Collection', city: 'Nueva York', ids: [], labels: [['Frick Collection', 'en'], ['The Frick Collection', 'en']] },
   { id: 'pompidou', es: 'Centre Pompidou', city: 'París', ids: [], labels: [['Centre Pompidou', 'fr'], ['Centre Pompidou', 'en'], ["Musée national d'art moderne", 'fr']] },
@@ -814,7 +872,7 @@ const MUSEUMS = [
   { id: 'lacma', es: 'LACMA', city: 'Los Ángeles', ids: [], labels: [['Los Angeles County Museum of Art', 'en']] },
   { id: 'pma', es: 'Philadelphia Museum of Art', city: 'Filadelfia', ids: [], labels: [['Philadelphia Museum of Art', 'en']] },
   { id: 'ngc', es: 'Galería Nacional de Canadá', city: 'Ottawa', ids: [], labels: [['National Gallery of Canada', 'en'], ['Musée des beaux-arts du Canada', 'fr']] },
-  { id: 'tate', es: 'Tate', city: 'Londres', ids: [], labels: [['Tate Britain', 'en'], ['Tate Modern', 'en'], ['Tate', 'en']], q: 'Tate' },
+  { id: 'tate', es: 'Tate', city: 'Londres', ids: [], direct: 'tate', labels: [['Tate Britain', 'en'], ['Tate Modern', 'en'], ['Tate', 'en']], q: 'Tate' },
   { id: 'britishmuseum', es: 'British Museum', city: 'Londres', ids: [], labels: [['British Museum', 'en']] },
   { id: 'reinasofia', es: 'Reina Sofía', city: 'Madrid', ids: [], labels: [['Museo Nacional Centro de Arte Reina Sofía', 'es'], ['Museo Reina Sofía', 'es'], ['Museo Nacional Centro de Arte Reina Sofía', 'en']] },
   { id: 'bilbao', es: 'Bellas Artes de Bilbao', city: 'Bilbao', ids: [], labels: [['Museo de Bellas Artes de Bilbao', 'es'], ['Bilbao Fine Arts Museum', 'en']] },
@@ -895,10 +953,8 @@ const MORE_MUSEUMS = [
   ['dalifl', 'Museo Dalí de San Petersburgo', 'San Petersburgo (Florida)', 'EE. UU.', 'surreal', ['Salvador Dalí Museum@en', 'Dalí Museum@en']],
   ['miro', 'Fundació Joan Miró', 'Barcelona', 'España', 'surreal', ['Fundació Joan Miró@ca', 'Joan Miró Foundation@en']],
   ['mnac', 'MNAC', 'Barcelona', 'España', 'surreal', ["Museu Nacional d'Art de Catalunya@ca", 'National Art Museum of Catalonia@en']],
-  ['picassobcn', 'Museo Picasso de Barcelona', 'Barcelona', 'España', 'surreal', ['Museu Picasso de Barcelona@ca', 'Museu Picasso@ca']],
   ['guggenheimbilbao', 'Guggenheim Bilbao', 'Bilbao', 'España', 'surreal', ['Guggenheim Museum Bilbao@en', 'Museo Guggenheim Bilbao@es']],
   ['mamparis', 'Museo de Arte Moderno de París', 'París', 'Francia', 'surreal', ["Musée d'Art moderne de Paris@fr", 'Museum of Modern Art of the City of Paris@en']],
-  ['maeght', 'Fundación Maeght', 'Saint-Paul-de-Vence', 'Francia', 'surreal', ['Fondation Maeght@fr']],
   ['grenoble', 'Museo de Grenoble', 'Grenoble', 'Francia', 'surreal', ['Musée de Grenoble@fr']],
   ['k20', 'K20 Düsseldorf', 'Düsseldorf', 'Alemania', 'surreal', ['Kunstsammlung Nordrhein-Westfalen@de', 'K20@de']],
   ['maxernst', 'Museo Max Ernst', 'Brühl', 'Alemania', 'surreal', ['Max Ernst Museum Brühl des LVR@de', 'Max Ernst Museum@en']],
@@ -912,6 +968,25 @@ const MORE_MUSEUMS = [
   ['moderna', 'Moderna Museet', 'Estocolmo', 'Suecia', 'surreal', ['Moderna Museet@sv', 'Moderna Museet@en']],
   ['louisiana', 'Louisiana Museum of Modern Art', 'Humlebæk', 'Dinamarca', 'surreal', ['Louisiana Museum of Modern Art@en', 'Louisiana Museum of Modern Art@da']],
   ['sngma', 'Scottish National Gallery of Modern Art', 'Edimburgo', 'Reino Unido', 'surreal', ['Scottish National Gallery of Modern Art@en']],
+  ['newfields', 'Newfields (Indianapolis Museum of Art)', 'Indianápolis', 'EE. UU.', 'surreal', ['Indianapolis Museum of Art@en', 'Newfields@en']],
+  ['picassomalaga', 'Museo Picasso Málaga', 'Málaga', 'España', 'artist', ['Museo Picasso Málaga@es']],
+  ['picassobcn', 'Museu Picasso de Barcelona', 'Barcelona', 'España', 'artist', ['Museu Picasso@ca', 'Museu Picasso@en']],
+  ['sorolla', 'Museo Sorolla', 'Madrid', 'España', 'artist', ['Museo Sorolla@es']],
+  ['romero', 'Museo Julio Romero de Torres', 'Córdoba', 'España', 'artist', ['Museo Julio Romero de Torres@es']],
+  ['botero', 'Museo Botero', 'Bogotá', 'Colombia', 'artist', ['Museo Botero@es']],
+  ['matisse', 'Musée Matisse', 'Niza', 'Francia', 'artist', ['Musée Matisse@fr']],
+  ['chagallnice', 'Musée national Marc Chagall', 'Niza', 'Francia', 'artist', ['Musée national Marc Chagall@fr']],
+  ['gmoreau', 'Musée Gustave Moreau', 'París', 'Francia', 'artist', ['Musée Gustave Moreau@fr']],
+  ['maeght', 'Fondation Maeght', 'Saint-Paul-de-Vence', 'Francia', 'artist surreal', ['Fondation Maeght@fr']],
+  ['kandinskymunich', 'Lenbachhaus (Der Blaue Reiter)', 'Múnich', 'Alemania', 'artist', ['Lenbachhaus@de', 'Städtische Galerie im Lenbachhaus@de']],
+  ['hiroshige', 'Museo Hiroshige y Hokusai (Sumida Hokusai)', 'Tokio', 'Japón', 'artist', ['Sumida Hokusai Museum@en']],
+  ['hundertwasser', 'Museo Hundertwasser (KunstHausWien)', 'Viena', 'Austria', 'artist', ['Kunst Haus Wien@de', 'Hundertwasser Museum@en']],
+  ['leopold', 'Museo Leopold (Klimt y Schiele)', 'Viena', 'Austria', 'artist', ['Leopold Museum@en']],
+  ['wyeth', 'Brandywine Museum (Wyeth)', 'Chadds Ford', 'EE. UU.', 'artist', ['Brandywine River Museum of Art@en']],
+  ['okeeffe', 'Museo Georgia O\'Keeffe', 'Santa Fe', 'EE. UU.', 'artist', ['Georgia O\'Keeffe Museum@en']],
+  ['warhol', 'The Andy Warhol Museum', 'Pittsburgh', 'EE. UU.', 'artist', ['Andy Warhol Museum@en']],
+  ['hirshhorn', 'Hirshhorn Museum', 'Washington', 'EE. UU.', 'surreal', ['Hirshhorn Museum and Sculpture Garden@en']],
+  ['pinacoteca', 'Pinacoteca de São Paulo', 'São Paulo', 'Brasil', '', ['Pinacoteca do Estado de São Paulo@pt', 'Pinacoteca of the State of São Paulo@en']],
   ['menil', 'Menil Collection', 'Houston', 'EE. UU.', 'surreal', ['Menil Collection@en', 'The Menil Collection@en']],
   ['mfah', 'Museum of Fine Arts, Houston', 'Houston', 'EE. UU.', 'surreal', ['Museum of Fine Arts, Houston@en']],
   ['sfmoma', 'SFMOMA', 'San Francisco', 'EE. UU.', 'surreal', ['San Francisco Museum of Modern Art@en']],
@@ -928,10 +1003,11 @@ const MORE_MUSEUMS = [
   ['momat', 'Museo Nacional de Arte Moderno de Tokio', 'Tokio', 'Japón', 'surreal', ['National Museum of Modern Art, Tokyo@en', 'MOMAT@en']],
   ['lam', 'Museo Nacional de Bellas Artes de Cuba', 'La Habana', 'Cuba', 'surreal', ['Museo Nacional de Bellas Artes de Cuba@es', 'National Museum of Fine Arts of Cuba@en']]
 ];
-const TAG_NAMES = { mx: 'México', be: 'Bélgica', surreal: 'surrealismo' };
-MORE_MUSEUMS.forEach(r => MUSEUMS.push({ id: r[0], es: r[1], city: r[2], country: r[3], tags: r[4].split(' '), ids: [], labels: r[5].map(x => { const k = x.lastIndexOf('@'); return [x.slice(0, k), x.slice(k + 1)]; }) }));
+const TAG_NAMES = { mx: 'México', be: 'Bélgica', surreal: 'surrealismo', artist: 'museos de un solo artista' };
+MORE_MUSEUMS.forEach(r => MUSEUMS.push({ id: r[0], es: r[1], city: r[2], country: r[3], tags: r[4].split(' ').filter(Boolean), ids: [], labels: r[5].map(x => { const k = x.lastIndexOf('@'); return [x.slice(0, k), x.slice(k + 1)]; }) }));
 // Los museos ya existentes que también tienen surrealismo o son de esos países
 const MORE_TAGS = { surreal: ['moma', 'guggenheim', 'peggy', 'pma', 'reinasofia', 'thyssen', 'boijmans', 'zurich', 'pompidou', 'tate', 'aic', 'lacma', 'picassoparis', 'ngc', 'ngv', 'basel', 'staedel', 'nga'], mx: ['soumaya'] };
+MORE_TAGS.artist = ['picassoparis', 'picassobcn', 'rodin', 'munch', 'miro', 'zpk', 'maeght', 'dali', 'vangogh', 'kroller', 'magritte', 'kahlo', 'olmedo', 'tamayo', 'anahuacalli', 'casaestudio', 'muraldiego'];
 Object.keys(MORE_TAGS).forEach(t => MORE_TAGS[t].forEach(id => { const m = MUSEUMS.find(x => x.id === id); if (m) m.tags = (m.tags || []).concat(t); }));
 MUSEUMS.forEach(m => { if (m.tags && m.tags.length && !DEFAULT_MUSEUMS.includes(m.id)) DEFAULT_MUSEUMS.push(m.id); });
 DEFAULT_MUSEUMS.forEach(id => { SOURCE_DEFAULTS['m:' + id] = true; });
@@ -967,7 +1043,7 @@ function wdParts(plan, opts) {
     parts.push(blocks.join(' UNION ') + ' ?item wdt:P195 ?coll.');
   } else if (!style && !artist && !plan.hintArtist) style = pick(STYLES);
   // Pocas obras tienen movimiento propio en Wikidata; muchos autores sí: se acepta cualquiera de los dos.
-  if (style) parts.push('?mv rdfs:label "' + sparqlEsc(style.wd) + '"@en. { ?item wdt:P135 ?mv. } UNION { ?item wdt:P170 ?cr0. ?cr0 wdt:P135 ?mv. }');
+  if (style && style.wd) parts.push('?mv rdfs:label "' + sparqlEsc(style.wd) + '"@en. { ?item wdt:P135 ?mv. } UNION { ?item wdt:P170 ?cr0. ?cr0 wdt:P135 ?mv. }');
   if (artist) parts.push('SERVICE wikibase:mwapi { bd:serviceParam wikibase:endpoint "www.wikidata.org"; bd:serviceParam wikibase:api "EntitySearch"; bd:serviceParam mwapi:search "' + sparqlEsc(artist) + '"; bd:serviceParam mwapi:language "en"; ?creator wikibase:apiOutputItem mwapi:item. } ?item wdt:P170 ?creator.');
   else parts.push('OPTIONAL { ?item wdt:P170 ?creator. }');
   parts.push(typeQ ? '?item wdt:P31 wd:' + typeQ + '.' : 'OPTIONAL { ?item wdt:P31 ?cls. }');
@@ -1123,8 +1199,11 @@ function commonsQueries(plan, f, m) {
     }
     return q;
   }
-  if (plan.artist) q.push('"' + plan.artist + '" ' + kind + (plan.keyword ? ' ' + plan.keyword : '') + tail);
-  else if (plan.style && plan.style.cat) {
+  if (plan.artist) {
+    const by = { painting: 'Paintings by ', drawing: 'Drawings by ', print: 'Prints by ', photograph: 'Photographs by ', sculpture: 'Sculptures by ' }[kind];
+    if (!plan.keyword) q.push('incategory:"' + by + plan.artist + '"' + tail);
+    q.push('"' + plan.artist + '" ' + kind + (plan.keyword ? ' ' + plan.keyword : '') + tail);
+  } else if (plan.style && plan.style.cat) {
     q.push('incategory:"' + plan.style.cat + '"' + (plan.keyword ? ' ' + plan.keyword : '') + tail);
     q.push((plan.style.q) + ' ' + kind + (plan.keyword ? ' ' + plan.keyword : '') + tail);
     if (plan.hintArtist) q.push('"' + plan.hintArtist + '" painting' + tail);
@@ -1181,16 +1260,26 @@ async function commonsSearch(queries, plan, ctx, m, label) {
 }
 
 /* WikiArt: catálogo grande de pintura clasificado por estilo (respuesta JSON de su propia web). */
+const wikiSlug = s => norm(s).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 async function wikiartFetch(plan, f, ctx) {
-  if ((f.artists && f.artists.length) || (f.keywords && f.keywords.length) || (f.types && f.types.length && !f.types.includes('painting'))) return [];
-  const st = plan.style && plan.style.wa ? plan.style : pick(STYLES.filter(x => x.wa));
-  const url = n => 'https://www.wikiart.org/en/paintings-by-style/' + st.wa + '?select=featured&json=2&layout=new&resultType=masonry&page=' + n;
+  if ((f.keywords && f.keywords.length) || (f.types && f.types.length && !f.types.includes('painting'))) return [];
+  let st, url;
+  if (plan.artist) {
+    const slug = wikiSlug(plan.artist);
+    st = { wa: 'artist:' + slug };
+    url = n => 'https://www.wikiart.org/en/' + slug + '/mode/all-paintings?json=2&page=' + n;
+  } else {
+    if (f.artists && f.artists.length) return [];
+    if (plan.style && !plan.style.wa) return [];
+    st = plan.style && plan.style.wa ? plan.style : pick(STYLES.filter(x => x.wa));
+    url = n => 'https://www.wikiart.org/en/paintings-by-style/' + st.wa + '?select=featured&json=2&layout=new&resultType=masonry&page=' + n;
+  }
   const first = await memo('wa:' + st.wa, () => getJSON(url(1)));
   const total = first.AllPaintingsCount || 0, size = first.PageSize || 60;
   const pages = Math.max(1, Math.min(Math.ceil(total / size), 40));
   const n = 1 + rand(pages);
   const j = n === 1 ? first : await getJSON(url(n));
-  return (j.Paintings || []).filter(p => p.image && p.title).map(p => mk({
+  return (Array.isArray(j) ? j : (j.Paintings || [])).filter(p => p.image && p.title).map(p => mk({
     src: 'wikiart', museum: 'WikiArt', id: p.id, title: p.title, artist: p.artistName, date: p.year,
     imgs: [p.image.replace(/!\w+\.jpg$/, ''), p.image], thumb: p.image + '!PinterestSmall.jpg',
     url: 'https://www.wikiart.org' + (p.paintingUrl || ''), w: p.width, h: p.height, type: 'painting',
@@ -1288,34 +1377,54 @@ async function resolveMuseum(name) {
 }
 const MUSEUM_DESC = /museum|museo|musée|museu|galler|galería|galerie|pinacoteca|collection|colección|art\b|arte\b/i;
 
-/* MoMA: sin API pública. Se usan los datos abiertos de MoMA (github.com/MuseumofModernArt/collection) convertidos en
-   trozos pequeños en data/moma/ (ver tools/moma-shards.py). Las imágenes son las de moma.org a 1024 px. */
-const MOMA_TYPE = { painting: 'painting', drawing: 'drawing', print: 'print', photo: 'photo', sculpture: 'sculpture' };
-const MOMA_RAW = 'https://raw.githubusercontent.com/Mrtana/screenart/main/data/moma/';
+/* Colecciones sin API pública, pero con datos abiertos: MoMA, National Gallery of Art y Tate. Los datos se convirtieron en trozos
+   pequeños en data/<museo>/ (ver tools/*-shards.py). Cada fila: [id, título, artista, año, clave de imagen, ...]. */
 const momaToken = id => btoa('[["f","' + id + '"],["p","convert","-resize 1024x1024\\u003e"]]').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-async function momaJSON(name) {
-  return memo('moma:' + name, async () => {
-    try { return await getJSON('data/moma/' + name, {}, 25000); }
-    catch (e) { return await getJSON(MOMA_RAW + name, {}, 25000); }
+const SHARDS = {
+  moma: {
+    museum: 'MoMA (Nueva York)', license: 'MoMA (obra con o sin derechos de autor)',
+    img: r => ['https://www.moma.org/media/' + momaToken(r[4]) + '.jpg?sha=' + r[5]], url: r => 'https://www.moma.org/collection/works/' + r[0]
+  },
+  nga: {
+    museum: 'National Gallery of Art (Washington)', license: 'NGA (acceso abierto)',
+    img: (r, hq) => ['https://api.nga.gov/iiif/' + r[4] + '/full/!' + (hq ? 3000 : 1600) + ',' + (hq ? 3000 : 1600) + '/0/default.jpg', 'https://api.nga.gov/iiif/' + r[4] + '/full/!1000,1000/0/default.jpg'],
+    url: r => 'https://www.nga.gov/artworks/' + r[0]
+  },
+  tate: {
+    museum: 'Tate (Reino Unido)', license: 'Tate (obra con o sin derechos de autor)',
+    img: r => ['https://www.tate.org.uk/art/images/work/' + r[4] + '_10.jpg', 'https://www.tate.org.uk/art/images/work/' + r[4] + '_9.jpg', 'https://www.tate.org.uk/art/images/work/' + r[4] + '_8.jpg'],
+    url: r => 'https://www.tate.org.uk/art/artworks/' + r[5]
+  }
+};
+const SHARD_RAW = 'https://raw.githubusercontent.com/Mrtana/screenart/main/data/';
+async function shardJSON(key, name) {
+  return memo('shard:' + key + '/' + name, async () => {
+    try { return await getJSON('data/' + key + '/' + name, {}, 25000); }
+    catch (e) { return await getJSON(SHARD_RAW + key + '/' + name, {}, 25000); }
   });
 }
-async function momaFetch(plan, f, ctx) {
-  const type = MOMA_TYPE[plan.type] || 'painting';
-  const index = await momaJSON('index.json');
+const nameHas = (hay, who) => { const h = norm(hay); return who.split(/\s+/).every(t => h.includes(t)); };
+async function shardFetch(key, plan, ctx) {
+  const S = SHARDS[key];
+  const type = plan.type || 'painting';
+  const index = await shardJSON(key, 'index.json');
   let parts = index[type] || [];
   if (plan.range) parts = parts.filter(p => p.y1 == null || (p.y1 >= plan.range[0] && p.y0 <= plan.range[1]));
   if (!parts.length) return [];
-  const part = pick(parts);
-  const rows = await momaJSON(part.f);
   const who = plan.artist ? norm(plan.artist) : null, kw = plan.keyword ? norm(plan.keyword) : null;
-  let hits = rows.filter(r => (!plan.range || r[3] == null || (r[3] >= plan.range[0] && r[3] <= plan.range[1])) && (!who || norm(r[2]).includes(who)) && (!kw || norm(r[1]).includes(kw)));
+  /* sin artista ni palabra: un trozo al azar; con ellos hay que mirar todos los del tipo */
+  const chosen = who || kw ? parts.slice(0, 16) : [pick(parts)];
+  const rows = [].concat(...await Promise.all(chosen.map(p => shardJSON(key, p.f))));
+  let hits = rows.filter(r => (!plan.range || r[3] == null || (r[3] >= plan.range[0] && r[3] <= plan.range[1])) && (!who || nameHas(r[2], who)) && (!kw || norm(r[1]).includes(kw)));
   if (plan.range) hits = hits.filter(r => r[3] != null);
   return sampleN(hits, 40).map(r => mk({
-    src: 'moma', museum: 'MoMA (Nueva York)', id: r[0], title: r[1], artist: r[2], date: r[3] == null ? '' : String(r[3]), year: r[3],
-    imgs: ['https://www.moma.org/media/' + momaToken(r[4]) + '.jpg?sha=' + r[5]], url: 'https://www.moma.org/collection/works/' + r[0],
-    type, pd: null, license: 'MoMA (obra con o sin derechos de autor)'
+    src: key, museum: S.museum, id: r[0], title: r[1], artist: r[2], date: r[3] == null ? '' : String(r[3]), year: r[3],
+    imgs: S.img(r, ctx && ctx.hq), url: S.url(r), type, pd: null, license: S.license
   }));
 }
+const momaFetch = (plan, f, ctx) => shardFetch('moma', plan, ctx);
+const ngaFetch = (plan, f, ctx) => shardFetch('nga', plan, ctx);
+const tateFetch = (plan, f, ctx) => shardFetch('tate', plan, ctx);
 
 /* Princeton (DPUL): catálogo en formato JSON de Blacklight y imágenes IIIF. No está comprobado desde un navegador real:
    si el servidor no permite la consulta, «Probar fuentes» lo mostrará. */
@@ -1350,7 +1459,7 @@ async function dpulFetch(plan, f, ctx) {
 
 const GENERIC = ['landscape', 'portrait', 'flowers', 'sea', 'garden', 'still life', 'river', 'mountains', 'figure', 'city', 'harbor', 'winter', 'horse', 'woman', 'sky', 'forest', 'village', 'ship', 'night', 'mother'];
 
-DIRECT.moma = momaFetch; DIRECT.met = metFetch; DIRECT.aic = aicFetch; DIRECT.cma = cmaFetch; DIRECT.rijks = rijksFetch; DIRECT.vam = vamFetch; DIRECT.smk = smkFetch; DIRECT.mia = miaFetch; DIRECT.si = siFetch; DIRECT.harvard = harvardFetch;
+DIRECT.moma = momaFetch; DIRECT.nga = ngaFetch; DIRECT.tate = tateFetch; DIRECT.met = metFetch; DIRECT.aic = aicFetch; DIRECT.cma = cmaFetch; DIRECT.rijks = rijksFetch; DIRECT.vam = vamFetch; DIRECT.smk = smkFetch; DIRECT.mia = miaFetch; DIRECT.si = siFetch; DIRECT.harvard = harvardFetch;
 const MUSEUM_SOURCES = [];
 MUSEUMS.forEach(m => { const src = museumSource(m); SOURCE_LIST.push(src); MUSEUM_SOURCES.push(src); });
 
@@ -1371,9 +1480,9 @@ async function runSource(src, f, ctx) {
 
 const api = {
   rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
-  ERAS, STYLES, TYPES, KEYWORDS, MUSEUMS, DEFAULT_MUSEUMS, MUSEUM_SOURCES, ARTIST_SUGGESTIONS, keywordToQuery,
+  ERAS, STYLES, TYPES, KEYWORDS, MUSEUMS, DEFAULT_MUSEUMS, MUSEUM_SOURCES, ARTIST_SUGGESTIONS, ARTIST_GROUPS, keywordToQuery,
   defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC, museumIdsByTag,
-  adapters: { momaFetch, dpulFetch, commonsSpecial, wikidataMuseum, wikipediaFetch, commonsFetch, wikiartFetch, metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }
+  adapters: { momaFetch, ngaFetch, tateFetch, shardFetch, dpulFetch, commonsSpecial, wikidataMuseum, wikipediaFetch, commonsFetch, wikiartFetch, metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }
 };
 if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.ArtCore = api;
 })(typeof self !== 'undefined' ? self : globalThis);
@@ -1404,7 +1513,7 @@ const S = {
   keys: Object.assign({ europeana: 'api2demo', si: 'DEMO_KEY', harvard: '' }, lsGet('keys', {})),
   favs: lsGet('favs', []),
   pool: [], seen: new Set(), seenKey: new Set(), hist: [], hi: -1,
-  paused: false, menu: false, epoch: 0, refilling: 0, adv: false, advAt: 0, flight: new Map(), cool: {}, streak: {}, warned: false, recycleAfter: 6000, mfilter: '', detail: {}, acc: null,
+  paused: false, menu: false, epoch: 0, refilling: 0, adv: false, advAt: 0, flight: new Map(), cool: {}, streak: {}, warned: false, recycleAfter: 6000, artGroup: 'impressionism', mfilter: '', detail: {}, acc: null,
   status: {}, counts: {}, layer: 0, nextP: null, nextEpoch: -1,
   timer: null, capT: null, idleT: null, waiters: [], current: null, shown: 0
 };
@@ -1744,6 +1853,11 @@ const PRESETS = [
   { es: 'Paisajes', patch: { keywords: ['landscape'], types: ['painting'] } },
   { es: 'Retratos', patch: { keywords: ['portrait'], types: ['painting'] } },
   { es: 'París', patch: { keywords: ['Paris'] } },
+  { es: 'Remedios Varo', patch: { artists: ['Remedios Varo'] } },
+  { es: 'Surrealistas de Latinoamérica', patch: { artists: ['Remedios Varo', 'Leonora Carrington', 'Frida Kahlo', 'Wifredo Lam', 'Roberto Matta', 'Maruja Mallo', 'Alice Rahon', 'Óscar Domínguez'] } },
+  { es: 'Mujeres artistas', patch: { artists: ['Artemisia Gentileschi', 'Sofonisba Anguissola', 'Judith Leyster', 'Rachel Ruysch', 'Clara Peeters', 'Angelica Kauffman', 'Élisabeth Vigée Le Brun', 'Rosa Bonheur', 'Berthe Morisot', 'Mary Cassatt', 'Suzanne Valadon', 'Hilma af Klint', 'Paula Modersohn-Becker', 'Gabriele Münter', 'Tamara de Lempicka', 'Marie Laurencin', 'Georgia O\'Keeffe', 'Frida Kahlo', 'Remedios Varo', 'Leonora Carrington', 'Lee Krasner', 'Joan Mitchell', 'Helen Frankenthaler', 'Louise Bourgeois', 'Yayoi Kusama', 'Agnes Martin'] } },
+  { es: 'Los grandes maestros (cientos de artistas)', patch: { artists: [].concat(...C.ARTIST_GROUPS.map(g => g.names)).filter((n, i, a) => a.indexOf(n) === i) } },
+  { es: 'Museos de un solo artista', only: C.museumIdsByTag('artist'), patch: {} },
   { es: 'Museos de México', only: C.museumIdsByTag('mx'), patch: {} },
   { es: 'Museos de Bélgica', only: C.museumIdsByTag('be'), patch: {} },
   { es: 'Surrealismo en museos', only: C.museumIdsByTag('surreal').concat(['m:open']), patch: { styles: ['surrealism'] } },
@@ -1763,7 +1877,8 @@ const R = {
   styles: () => C.STYLES.map(s => chip('style', s.id, s.es, S.f.styles.includes(s.id))).join(''),
   types: () => C.TYPES.map(t => chip('type', t.id, t.es, S.f.types.includes(t.id))).join(''),
   artists: () => S.f.artists.map(a => chip('rm-artist', a, a, true, 'rm')).join('') || '<span class="hint" style="font-size:14px;color:var(--muted)">Ninguno. Se muestran todos los artistas.</span>',
-  artistsug: () => C.ARTIST_SUGGESTIONS.filter(a => !S.f.artists.includes(a)).slice(0, 14).map(a => chip('add-sug', a, a, false)).join(''),
+  artgroup: () => opts(C.ARTIST_GROUPS.map(g => [g.id, g.es + ' (' + g.names.length + ')']), S.artGroup),
+  artistsug: () => ((C.ARTIST_GROUPS.find(g => g.id === S.artGroup) || C.ARTIST_GROUPS[0]).names).filter(a => !S.f.artists.some(x => C.norm(x) === C.norm(a))).map(a => chip('add-sug', a, a, false)).join('') || '<span class="hint" style="font-size:14px;color:var(--muted)">Ya elegiste todos los de este grupo.</span>',
   kws: () => C.KEYWORDS.map(k => chip('kw', k.q, k.es, S.f.keywords.includes(k.q))).join('') +
     S.f.keywords.filter(q => !C.KEYWORDS.some(k => k.q === q)).map(q => chip('kw', q, q, true, 'rm')).join(''),
   orient: () => opts(ORIENT, S.f.orientation),
@@ -1773,7 +1888,7 @@ const R = {
   opts: () => chip('opt', 'kb', 'Zoom lento', S.st.kenburns) + chip('opt', 'hq', 'Imágenes en alta calidad', S.st.quality === 'high') +
     chip('opt', 'pd', 'Solo dominio público', S.f.soloPD) + chip('opt', 'favs', 'Solo mis favoritas (' + S.favs.length + ')', S.f.onlyFavs)
 };
-const BOX = { presets: 'c-presets', eras: 'c-eras', styles: 'c-styles', types: 'c-types', artists: 'c-artists', artistsug: 'c-artist-sug', kws: 'c-kws', orient: 'c-orient', mode: 'c-mode', interval: 'c-interval', caption: 'c-caption', opts: 'c-opts' };
+const BOX = { presets: 'c-presets', eras: 'c-eras', styles: 'c-styles', types: 'c-types', artists: 'c-artists', artgroup: 'c-artgroup', artistsug: 'c-artist-sug', kws: 'c-kws', orient: 'c-orient', mode: 'c-mode', interval: 'c-interval', caption: 'c-caption', opts: 'c-opts' };
 
 function srcNote(s) {
   const st = S.status[s.id], base = s.place + ' · ' + s.note;
@@ -1865,6 +1980,7 @@ function onAct(act, id) {
     case 'orient': f.orientation = id; render('orient'); applyChange(); break;
     case 'add-artist': addArtist($('#artistIn').value); $('#artistIn').value = ''; break;
     case 'add-sug': addArtist(id); break;
+    case 'artgroup': S.artGroup = id; render('artistsug'); break;
     case 'rm-artist': f.artists = f.artists.filter(a => a !== id); render('artists'); render('artistsug'); applyChange(); break;
     case 'add-kw': addKeyword($('#kwIn').value); $('#kwIn').value = ''; break;
     case 'mode': S.st.mode = id; applyLook(); saveAll(); render('mode'); break;
@@ -1932,7 +2048,7 @@ document.addEventListener('keydown', e => {
   else if (k === 'i' || k === 'I') { const c = $('#caption'); c.classList.toggle('show'); clearTimeout(S.capT); }
   else if (k === 'l' || k === 'L') toggleFav();
 });
-[['presets', 'preset'], ['orient', 'orient'], ['mode', 'mode'], ['interval', 'interval'], ['caption', 'caption']].forEach(([box, act]) => {
+[['presets', 'preset'], ['artgroup', 'artgroup'], ['orient', 'orient'], ['mode', 'mode'], ['interval', 'interval'], ['caption', 'caption']].forEach(([box, act]) => {
   $('#' + BOX[box]).addEventListener('change', e => {
     const v = e.target.value;
     if (act === 'preset') { if (v === '') return; onAct('preset', v); e.target.value = ''; return; }
