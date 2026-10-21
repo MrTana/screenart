@@ -51,7 +51,7 @@ const idx = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/moma/index.
   assert.ok(ng.length > 5 && /^https:\/\/api\.nga\.gov\/iiif\/[0-9a-f-]{36}\/full\/!1600,1600\/0\/default\.jpg$/.test(ng[0].imgs[0]) && ng[0].imgs.length === 2, 'NGA ' + ng[0].imgs);
   assert.ok(/^https:\/\/www\.nga\.gov\/artworks\/\d+$/.test(ng[0].url));
   const ta = await C.adapters.tateFetch(plan, C.defaultFilters(), ctx);
-  assert.ok(ta.length > 5 && /^https:\/\/www\.tate\.org\.uk\/art\/images\/work\/\w\/\w+\/\w+_10\.jpg$/.test(ta[0].imgs[0]) && ta[0].imgs.length === 3, 'Tate ' + ta[0].imgs);
+  assert.ok(ta.length > 5 && /^https:\/\/media\.tate\.org\.uk\/art\/images\/work\/\w\/\w+\/\w+_10\.jpg$/.test(ta[0].imgs[0]) && ta[0].imgs.length === 3, 'Tate ' + ta[0].imgs);
   assert.ok(/^https:\/\/www\.tate\.org\.uk\/art\/artworks\/[\w-]+$/.test(ta[0].url));
   // con artista se revisan todos los trozos: «Van Gogh» aparece en MoMA y en NGA aunque estén en trozos distintos
   const pg = Object.assign({}, plan, { artist: 'Vincent van Gogh' });

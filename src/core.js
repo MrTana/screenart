@@ -362,6 +362,18 @@ async function metFetch(plan, f, ctx) {
 }
 
 const AIC_TYPE = { painting: 'Painting', drawing: 'Drawing and Watercolor', print: 'Print', photo: 'Photograph', sculpture: 'Sculpture', decorative: 'Ceramics' };
+/* Las fichas sueltas (/artworks/{id}) sí responden con CORS aunque los listados no: se prueban identificadores al azar
+   (la mitad existen y buena parte tiene imagen) y se filtra por época, tipo y texto. */
+async function aicProbe(plan, ctx) {
+  const ids = Array.from({ length: 36 }, () => 1 + rand(240000));
+  const want = [plan.artist || plan.hintArtist, plan.keyword].filter(Boolean).map(norm);
+  const out = await mapLimit(ids, 8, async id => { try { return (await getJSON('https://api.artic.edu/api/v1/artworks/' + id, {}, 12000)).data; } catch (e) { return null; } });
+  const list = out.filter(Boolean);
+  const text = o => norm([o.title, o.artist_title, o.style_title, o.subject_titles && o.subject_titles.join(' ')].join(' '));
+  const hits = list.filter(o => !want.length || want.some(w => text(o).includes(w)));
+  if (!list.length && out.every(x => x === null)) { const e = new TypeError('Failed to fetch'); throw e; }
+  return hits;
+}
 async function aicFetch(plan, f, ctx) {
   const url = 'https://api.artic.edu/api/v1/artworks/search';
   const text = [plan.style && plan.style.q, plan.artist || plan.hintArtist, plan.keyword].filter(Boolean).join(' ');
@@ -370,7 +382,9 @@ async function aicFetch(plan, f, ctx) {
   const gp = new URLSearchParams({ limit: '100' });
   if (text) gp.set('q', text);
   else gp.set('q', pick(GENERIC));
-  const j = await memo('aic:' + gp, () => getJSON(url + '?' + gp, {}, 25000));
+  let j;
+  try { j = await memo('aic:' + gp, () => getJSON(url + '?' + gp, {}, 25000)); }
+  catch (e) { if (!(e instanceof TypeError)) throw e; j = { data: await aicProbe(plan, ctx) }; }
   const lo = plan.range ? plan.range[0] : -Infinity, hi = plan.range ? plan.range[1] : Infinity, tw = AIC_TYPE[plan.type] ? norm(AIC_TYPE[plan.type]) : null;
   const data = sampleN((j.data || []).filter(o => o.image_id && (o.date_start == null || (o.date_start >= lo && o.date_start <= hi)) && (!tw || !o.artwork_type_title || norm(o.artwork_type_title).includes(tw))), 24);
   const iiif = (j.config && j.config.iiif_url) || 'https://www.artic.edu/iiif/2';
@@ -1162,7 +1176,7 @@ const SHARDS = {
   },
   tate: {
     museum: 'Tate (Reino Unido)', license: 'Tate (obra con o sin derechos de autor)',
-    img: r => ['https://www.tate.org.uk/art/images/work/' + r[4] + '_10.jpg', 'https://www.tate.org.uk/art/images/work/' + r[4] + '_9.jpg', 'https://www.tate.org.uk/art/images/work/' + r[4] + '_8.jpg'],
+    img: r => ['https://media.tate.org.uk/art/images/work/' + r[4] + '_10.jpg', 'https://media.tate.org.uk/art/images/work/' + r[4] + '_9.jpg', 'https://media.tate.org.uk/art/images/work/' + r[4] + '_8.jpg'],
     url: r => 'https://www.tate.org.uk/art/artworks/' + r[5]
   }
 };
