@@ -11,6 +11,8 @@ assert.ok(man.icons.some(i => i.sizes === '512x512' && i.purpose === 'any') && m
 assert.deepStrictEqual(png('icons/apple-touch-icon.png'), [180, 180]); assert.deepStrictEqual(png('icons/favicon-32.png'), [32, 32]);
 ['rel="manifest" href="manifest.webmanifest"', 'rel="apple-touch-icon"', 'name="theme-color"', 'apple-mobile-web-app-capable', "serviceWorker.register('sw.js')"].forEach(x => assert.ok(html.includes(x), 'index.html sin ' + x));
 
+assert.ok(/no-cache/.test(fs.readFileSync(root + '/_headers', 'utf8')), '_headers sin no-cache');
+assert.ok(/Versión [0-9a-f]{10} · /.test(html) && html.includes('data-act="update"'), 'versión y botón de actualizar');
 const sw = fs.readFileSync(root + '/sw.js', 'utf8'); assert.ok(!sw.includes('__VERSION__'), 'versión estampada');
 const listeners = {}, store = new Map(); let deleted = [];
 const cache = { addAll: async () => {}, put: async (k, v) => { store.set(typeof k === 'string' ? k : k.url, v); }, match: async k => store.get(typeof k === 'string' ? k : k.url) };

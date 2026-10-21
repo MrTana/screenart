@@ -456,6 +456,7 @@ function onAct(act, id) {
     case 'acc': toggleAcc(id); break;
     case 'diag': diagnose(); break;
     case 'install': installApp(); break;
+    case 'update': forceUpdate(); break;
     case 'diag-close': $('#diag').hidden = true; diagRun++; break;
     case 'prev': prev(); break;
     case 'next': next(); break;
@@ -566,6 +567,15 @@ let lock = null;
 async function keepAwake() { try { if ('wakeLock' in navigator) lock = await navigator.wakeLock.request('screen'); } catch (e) { /* no disponible */ } }
 
 /* ───────── app instalable (PWA) ───────── */
+/* Borra copias guardadas y service worker, y recarga la página desde internet. */
+async function forceUpdate() {
+  toast('Buscando la versión más reciente…');
+  try {
+    if ('serviceWorker' in navigator) { const regs = await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r => r.unregister())); }
+    if (window.caches) { const keys = await caches.keys(); await Promise.all(keys.map(k => caches.delete(k))); }
+  } catch (e) { /* se recarga igualmente */ }
+  location.replace(location.pathname + '?r=' + Date.now());
+}
 let installEv = null;
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEv = e; $('#installBtn').hidden = false; });
 window.addEventListener('appinstalled', () => { installEv = null; $('#installBtn').hidden = true; toast('App instalada'); });

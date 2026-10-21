@@ -94,6 +94,7 @@ body.active #menuBtn,#menuBtn:focus-visible{opacity:1}
 .dhead{display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;background:var(--panel);padding:8px 0 12px;z-index:2;border-bottom:1px solid var(--line)}
 .bar{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 4px}
 [hidden]{display:none!important}
+.ver{display:inline-block;margin-top:8px;font-size:12px;color:var(--muted);letter-spacing:.04em}
 .btn{background:var(--chip);border:1px solid var(--line);border-radius:6px;padding:.55em .95em;font-weight:500;min-height:44px}
 .btn:hover{border-color:#44473f}
 .btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
@@ -228,7 +229,7 @@ details.adv label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut
       <p class="hint">Se guardan solo en este navegador. Con una clave puedes activar esas fuentes.</p>
     </div>
   </section>
-  <div class="foot">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><button class="btn pri" id="installBtn" data-act="install" style="margin-top:10px" hidden>Instalar la app</button> <button class="btn" data-act="diag" style="margin-top:10px">Probar fuentes</button> <button class="btn" data-act="reset" style="margin-top:10px">Restablecer filtros</button></div>
+  <div class="foot">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 6a4ef1662e · 2026-10-21 15:11 UTC</span><br><button class="btn" data-act="update" style="margin-top:10px">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" style="margin-top:10px" hidden>Instalar la app</button> <button class="btn" data-act="diag" style="margin-top:10px">Probar fuentes</button> <button class="btn" data-act="reset" style="margin-top:10px">Restablecer filtros</button></div>
 </aside>
 <script>
 /* Núcleo: catálogos de filtros, utilidades y adaptadores de museos.
@@ -1761,6 +1762,7 @@ function onAct(act, id) {
     case 'acc': toggleAcc(id); break;
     case 'diag': diagnose(); break;
     case 'install': installApp(); break;
+    case 'update': forceUpdate(); break;
     case 'diag-close': $('#diag').hidden = true; diagRun++; break;
     case 'prev': prev(); break;
     case 'next': next(); break;
@@ -1871,6 +1873,15 @@ let lock = null;
 async function keepAwake() { try { if ('wakeLock' in navigator) lock = await navigator.wakeLock.request('screen'); } catch (e) { /* no disponible */ } }
 
 /* ───────── app instalable (PWA) ───────── */
+/* Borra copias guardadas y service worker, y recarga la página desde internet. */
+async function forceUpdate() {
+  toast('Buscando la versión más reciente…');
+  try {
+    if ('serviceWorker' in navigator) { const regs = await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r => r.unregister())); }
+    if (window.caches) { const keys = await caches.keys(); await Promise.all(keys.map(k => caches.delete(k))); }
+  } catch (e) { /* se recarga igualmente */ }
+  location.replace(location.pathname + '?r=' + Date.now());
+}
 let installEv = null;
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEv = e; $('#installBtn').hidden = false; });
 window.addEventListener('appinstalled', () => { installEv = null; $('#installBtn').hidden = true; toast('App instalada'); });
