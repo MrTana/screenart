@@ -103,7 +103,7 @@ section.sec .hint{margin:8px 0 0;font-size:14px;color:var(--muted)}
 .dot.ok{background:var(--ok)}.dot.loading{background:var(--warn);animation:pulse 1s infinite}.dot.error{background:var(--bad)}.dot.empty{background:var(--warn)}
 @keyframes pulse{50%{opacity:.3}}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-input[type=text],input[type=number],input[type=password]{background:var(--chip);border:1px solid var(--line);border-radius:6px;padding:.55em .8em;min-height:44px;min-width:0;flex:1}
+input[type=text],input[type=search],input[type=number],input[type=password]{background:var(--chip);border:1px solid var(--line);border-radius:6px;padding:.55em .8em;min-height:44px;min-width:0;flex:1}
 input[type=number]{max-width:130px;flex:none}
 details.adv{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
 details.adv summary{cursor:pointer;color:var(--muted);font-size:14px;letter-spacing:.06em;min-height:36px}
@@ -137,10 +137,14 @@ details.adv label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut
   </div>
 
   <section class="sec"><h2>Colecciones rápidas</h2><div class="chips" id="c-presets"></div></section>
-  <section class="sec"><h2>Museos y fuentes</h2><div class="srcs" id="c-srcs"></div></section>
-  <section class="sec"><h2>Museos famosos</h2><div class="srcs" id="c-msrcs"></div>
-    <div class="row" style="margin-top:10px"><button class="btn" data-act="mus-all">Marcar todos</button><button class="btn" data-act="mus-none">Quitar todos</button></div>
-    <p class="hint">Cada museo tiene su propia consulta a Wikidata y entran todas sus obras con imagen: pinturas, dibujos, esculturas y objetos. En cada ronda se consultan 4 de los marcados.</p></section>
+  <section class="sec"><h2>Museos</h2>
+    <p class="hint" style="margin-top:0">Cada museo se busca a la vez en su API directa (si la tiene), Wikidata, Wikimedia Commons y Wikipedia. «Colecciones abiertas» añade WikiArt y Europeana, que no distinguen museos.</p>
+    <div class="row"><input type="search" id="museumFilter" placeholder="Filtrar la lista (ej. París, Prado, moderno)" autocomplete="off"></div>
+    <div class="srcs" id="c-msrcs" style="margin-top:10px"></div>
+    <div class="row" style="margin-top:10px"><button class="btn" data-act="mus-all">Marcar los de la lista</button><button class="btn" data-act="mus-none">Quitar los de la lista</button></div>
+    <div class="row" style="margin-top:10px"><input type="text" id="museumIn" placeholder="Añadir otro museo por su nombre" autocomplete="off"><button class="btn" data-act="add-museum">Añadir</button></div>
+    <p class="hint" id="museumMsg"></p>
+  </section>
   <section class="sec"><h2>Época</h2><div class="chips" id="c-eras"></div>
     <div class="row" style="margin-top:10px"><input type="number" id="yFrom" placeholder="Desde (año)" inputmode="numeric"><input type="number" id="yTo" placeholder="Hasta (año)" inputmode="numeric"></div></section>
   <section class="sec"><h2>Estilo o movimiento</h2><div class="chips" id="c-styles"></div></section>

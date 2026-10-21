@@ -19,6 +19,12 @@ const fx = {
   rijksObj: { id: 'https://id.rijksmuseum.nl/200100988', identified_by: [{ type: 'Name', content: 'Misty Sea', language: [{ id: 'http://vocab.getty.edu/aat/300388277' }] }], produced_by: { timespan: { identified_by: [{ content: '1899' }], begin_of_the_begin: '1899-01-01T00:00:00Z' }, part: [{ carried_out_by: [{ notation: [{ '@language': 'en', '@value': 'Jan Toorop' }] }] }] }, shows: [{ id: 'https://id.rijksmuseum.nl/202100988' }], classified_as: [{ notation: [{ '@language': 'en', '@value': 'painting' }] }] },
   rijksVis: { digitally_shown_by: [{ id: 'https://id.rijksmuseum.nl/5008910398567010810098' }] },
   rijksDig: { access_point: [{ id: 'https://iiif.micr.io/RFwqO' }] },
+  wpPages: [
+    { pageid: 5, title: 'Water Lilies (Monet)', description: '1906 painting by Claude Monet', original: { source: 'https://upload.wikimedia.org/x/Nympheas.jpg', width: 3000, height: 2000 }, thumbnail: { source: 'https://upload.wikimedia.org/t/1600px-N.jpg', width: 1600, height: 1067 } },
+    { pageid: 6, title: "Musée d'Orsay", description: 'art museum in Paris', original: { source: 'https://upload.wikimedia.org/x/Orsay.jpg', width: 3000, height: 2000 } },
+    { pageid: 7, title: 'Un político', description: 'French politician', original: { source: 'https://upload.wikimedia.org/x/P.jpg', width: 3000, height: 2000 } },
+    { pageid: 8, title: 'Sin imagen', description: 'painting by Nobody' }
+  ],
   commonsPages: [
     { pageid: 11, title: 'File:La persistencia de la memoria.jpg', imageinfo: [{ thumburl: 'https://upload.wikimedia.org/thumb/a/1800px-m.jpg', url: 'https://upload.wikimedia.org/a/m.jpg', descriptionurl: 'https://commons.wikimedia.org/wiki/File:m.jpg', width: 3000, height: 2000, mime: 'image/jpeg', extmetadata: { ObjectName: { value: 'The Persistence of Memory' }, Artist: { value: '<a href="x">Salvador Dalí</a>' }, DateTimeOriginal: { value: '1931' }, LicenseShortName: { value: 'Public domain' } } }] },
     { pageid: 12, title: 'File:Tiny.jpg', imageinfo: [{ thumburl: 'https://upload.wikimedia.org/t.jpg', url: 'https://upload.wikimedia.org/t.jpg', width: 200, height: 100, mime: 'image/jpeg', extmetadata: {} }] },
@@ -49,6 +55,14 @@ globalThis.fetch = async (url, init) => {
   if (url.includes('data.rijksmuseum.nl/200100988')) return J(fx.rijksObj);
   if (url.includes('data.rijksmuseum.nl/202100988')) return J(fx.rijksVis);
   if (url.includes('data.rijksmuseum.nl/5008910398567010810098')) return J(fx.rijksDig);
+  if (url.includes('www.wikidata.org/w/api.php')) {
+    const term = decodeURIComponent(url.split('search=')[1].split('&')[0]);
+    return J({ search: /^zzz/.test(term) ? [] : [{ id: 'Q999', label: term, description: 'museo de arte en Ciudad' }, { id: 'Q1000', label: term + ' (desambiguación)', description: 'página de desambiguación' }] });
+  }
+  if (url.includes('en.wikipedia.org/w/api.php')) {
+    if (url.includes('list=search')) return J({ query: { searchinfo: { totalhits: 77 } } });
+    return J({ query: { pages: fx.wpPages } });
+  }
   if (url.includes('commons.wikimedia.org/w/api.php')) {
     const u = new URL(url), sr = decodeURIComponent(u.searchParams.get('srsearch') || u.searchParams.get('gsrsearch') || '');
     commonsLog.push(sr);
@@ -100,12 +114,13 @@ globalThis.fetch = async (url, init) => {
   const ctx = { hq: false, keys: { europeana: 'k', si: 'k', harvard: 'k' } };
   const plan = { style: C.STYLES.find(s => s.id === 'impressionism'), range: [1860, 1925], artist: null, keyword: null, type: 'painting', hintArtist: 'Monet' };
   for (const s of C.SOURCE_LIST) {
-    if (s.id === 'si' || s.id === 'harvard') continue;
+    if (s.id === 'm:si' || s.id === 'm:harvard') continue;
     const list = await s.fetch(plan, C.defaultFilters(), ctx);
     assert.ok(list.length >= 1, s.id + ' sin resultados');
     const w = list[0];
     assert.ok(w.uid && w.imgs.length && /^https:/.test(w.imgs[0]), s.id + ' img: ' + w.imgs[0]);
     assert.ok(w.title && w.museum, s.id + ' ficha');
+    if (!s.museum.direct) continue;
     console.log(s.id.padEnd(9), '|', w.title.slice(0, 32).padEnd(32), '|', (w.artist || '-').padEnd(16), '|', w.year, '|', w.type, '|', w.imgs[0].slice(0, 70));
   }
   // derechos: sin anyRights solo dominio público, con anyRights entra todo
@@ -132,13 +147,15 @@ globalThis.fetch = async (url, init) => {
   const louvre = museumSrcs.find(x => x.id === 'm:louvre');
   const f1 = C.defaultFilters();
   sparqlLog.length = 0;
-  const ws = await C.runSource(louvre, f1, anyCtx);
+  let ws = await C.runSource(louvre, f1, anyCtx);
   const sel = sparqlLog.filter(q => !/COUNT\(/.test(q)).pop();
   assert.ok(/wd:Q19675/.test(sel) && /"Musée du Louvre"@fr/.test(sel), 'Louvre: código y nombre');
   assert.ok(/UNION/.test(sel) && /P6500/.test(sel), 'incluye imágenes de obras con derechos');
   assert.ok(!/wdt:P31 wd:/.test(sel) && /OPTIONAL \{ \?item wdt:P31 \?cls/.test(sel), 'sin restringir el tipo de obra');
   assert.ok(!/YEAR\(\?inc\) <= 1930/.test(sel), 'sin filtro de dominio público');
-  assert.strictEqual(ws.length, 3, 'filas: se descartan tif y webm -> ' + ws.length);
+  const wsAll = ws; ws = ws.filter(w => w.src === 'wiki');
+  assert.strictEqual(ws.length, 3, 'filas de Wikidata: se descartan tif y webm -> ' + ws.length);
+  assert.ok(wsAll.some(w => w.src === 'commons') && wsAll.some(w => w.src === 'wikipedia'), 'el Louvre también trae Commons y Wikipedia');
   const gio = ws.find(w => w.title === 'La Gioconda'); assert.strictEqual(gio.type, 'painting'); assert.ok(gio.museum === 'Louvre (París)');
   assert.ok(gio.imgs[0].startsWith('https://commons.wikimedia.org/wiki/Special:FilePath/Mona%20Lisa.jpg?width='), gio.imgs[0]);
   assert.strictEqual(ws.find(w => w.title === 'Venus de Milo').type, 'sculpture');
@@ -160,20 +177,51 @@ globalThis.fetch = async (url, init) => {
   assert.ok(sparqlMax <= 2, 'concurrencia SPARQL: ' + sparqlMax);
   console.log('museos   |', museumSrcs.length, 'fuentes, Louvre ->', ws.map(w => w.title).join(', '), '| máx. consultas simultáneas:', sparqlMax);
 
+
+  // Un museo, varias fuentes
+  const orsay = museumSrcs.find(x => x.id === 'm:orsay'); const rp = {}; commonsLog.length = 0;
+  const fo = C.defaultFilters();
+  const ow = await C.runSource(orsay, fo, Object.assign({}, anyCtx, { report: (n, c, e) => { rp[n] = e ? 'x' : c; } }));
+  assert.deepStrictEqual(Object.keys(rp).sort(), ['Commons', 'Wikidata', 'Wikipedia'], 'Orsay: ' + JSON.stringify(rp));
+  assert.ok(commonsLog.some(x => x.includes("Musée d'Orsay")), 'Commons busca por el nombre del museo');
+  const wpw = ow.find(w => w.src === 'wikipedia'); assert.ok(wpw && wpw.title === 'Water Lilies (Monet)' && wpw.artist === 'Claude Monet' && wpw.year === 1906 && wpw.museum === 'Orsay', 'Wikipedia: ' + JSON.stringify(wpw));
+  assert.ok(!ow.some(w => w.title === "Musée d'Orsay" || w.title === 'Un político' || w.title === 'Sin imagen'), 'Wikipedia descarta el museo, personas y artículos sin imagen');
+  const met = museumSrcs.find(x => x.id === 'm:met'); const rpm = {};
+  const mw = await C.runSource(met, fo, Object.assign({}, anyCtx, { report: (n, c) => { rpm[n] = c; } }));
+  assert.ok(rpm.Directa >= 1 && mw.some(w => w.src === 'met') && mw.some(w => w.src === 'wiki'), 'Met: directa + Wikidata ' + JSON.stringify(rpm));
+  // si falla la directa o no hay clave, el museo sigue con las demás fuentes
+  const hv = museumSrcs.find(x => x.id === 'm:harvard'); const rph = {};
+  const hw = await C.runSource(hv, fo, Object.assign({}, anyCtx, { keys: { harvard: '' }, report: (n, c, e) => { rph[n] = e ? 'x' : c; } }));
+  assert.strictEqual(rph.Directa, 'x'); assert.ok(hw.length >= 1, 'Harvard sin clave sigue con Wikidata y Commons');
+  // si todo falla, el error llega arriba
+  const realFetch = globalThis.fetch; globalThis.fetch = async () => { throw new TypeError('Failed to fetch'); };
+  try { await C.runSource(museumSrcs.find(x => x.id === 'm:lyon'), C.defaultFilters(), anyCtx); assert.fail('debía fallar'); } catch (e) { assert.ok(e instanceof TypeError, 'error de red visible'); }
+  globalThis.fetch = realFetch;
+  // colecciones abiertas
+  const op = museumSrcs.find(x => x.id === 'm:open'); const rpo = {}; const fsx = C.defaultFilters(); fsx.styles = ['surrealism'];
+  await C.runSource(op, fsx, Object.assign({}, anyCtx, { keys: { europeana: 'k' }, report: (n, c, e) => { rpo[n] = e ? 'x' : c; } }));
+  assert.deepStrictEqual(Object.keys(rpo).sort(), ['Commons', 'Europeana', 'WikiArt', 'Wikidata'], JSON.stringify(rpo));
+  // museos añadidos por nombre
+  const rm = await C.resolveMuseum('Museo de Ejemplo'); assert.strictEqual(rm.ids[0], 'Q999'); assert.strictEqual(rm.id, 'cQ999');
+  const cs = C.addMuseum(rm); assert.ok(C.SOURCE_LIST.includes(cs) && cs.id === 'm:cQ999'); assert.strictEqual(C.addMuseum(rm), cs, 'no se duplica');
+  sparqlLog.length = 0; await C.runSource(cs, fo, anyCtx);
+  assert.ok(/wd:Q999/.test(sparqlLog.filter(q => !/COUNT\(/.test(q)).pop()), 'museo añadido: se busca por su código');
+  try { await C.resolveMuseum('zzz no existe'); assert.fail('debía fallar'); } catch (e) { assert.ok(/No encuentro/.test(e.message)); }
+  console.log('museos   | varias fuentes por museo, añadir por nombre y errores: OK (' + C.SOURCE_LIST.length + ' museos)');
   // Surrealismo: Commons por categoría, con respaldo por texto
   const sur = C.STYLES.find(x => x.id === 'surrealism'); assert.strictEqual(sur.cat, 'Surrealist paintings'); assert.strictEqual(sur.wa, 'surrealism');
   const fs = C.defaultFilters(); fs.styles = ['surrealism'];
   commonsLog.length = 0;
-  const cm = await C.runSource(C.SOURCE_LIST.find(x => x.id === 'commons'), fs, anyCtx);
+  const cm = await C.adapters.commonsFetch(C.makePlan(fs), fs, anyCtx);
   assert.ok(commonsLog.some(x => x.includes('incategory:"Surrealist paintings"')), 'Commons: usa la categoría');
   assert.deepStrictEqual(cm.map(w => w.title), ['The Persistence of Memory', 'Golconda'], 'se descartan miniaturas y pdf');
   assert.strictEqual(cm[0].artist, 'Salvador Dalí'); assert.strictEqual(cm[0].year, 1931); assert.strictEqual(cm[0].pd, true); assert.strictEqual(cm[1].pd, false); assert.strictEqual(cm[1].year, 1953);
   assert.ok(cm.every(w => C.accept(w, fs)), 'accept deja pasar el Surrealismo');
   commonsEmpty = ['incategory:']; commonsLog.length = 0;
   const fs2 = C.defaultFilters(); fs2.styles = ['surrealism']; fs2.keywords = ['landscape'];
-  const cm2 = await C.runSource(C.SOURCE_LIST.find(x => x.id === 'commons'), fs2, anyCtx); commonsEmpty = [];
+  const cm2 = await C.adapters.commonsFetch(C.makePlan(fs2), fs2, anyCtx); commonsEmpty = [];
   assert.ok(cm2.length === 2 && commonsLog.some(x => /^Surrealism \w+ landscape/.test(x)), 'Commons: sin categoría usa el texto');
-  const wa = await C.runSource(C.SOURCE_LIST.find(x => x.id === 'wikiart'), fs, anyCtx);
+  const wa = await C.adapters.wikiartFetch(C.makePlan(fs), fs, anyCtx);
   assert.ok(wa.length === 1 && wa[0].year === 1911 && wa[0].url === 'https://www.wikiart.org/en/marc-chagall/the-big-wheel' && wa[0].imgs[0].endsWith('.jpg'), 'WikiArt');
   const fa = C.defaultFilters(); fa.artists = ['Dalí']; assert.deepStrictEqual(await C.adapters.wikiartFetch(C.makePlan(fa), fa, anyCtx), [], 'WikiArt no sirve para artistas');
   // Wikidata: el movimiento vale por la obra o por su autor, y las obras sin fecha entran
@@ -191,14 +239,14 @@ globalThis.fetch = async (url, init) => {
   assert.strictEqual((await C.runSource(fake, fe, anyCtx)).length, 0); assert.ok(seenPlans.every(p => p.range), 'con época elegida no se quita el rango');
   console.log('surrealismo | Commons', cm.length, '· WikiArt', wa.length, '· SPARQL con autor y sin fecha: OK');
   // runSource con relajación
-  const r = await C.runSource(C.SOURCE_LIST[0], C.defaultFilters(), ctx);
+  const r = await C.runSource(C.SOURCE_LIST.find(x => x.id === 'm:met'), C.defaultFilters(), ctx);
   assert.ok(r.length);
   // Smithsonian y Harvard: respuesta mínima
   fx.si = { response: { rowCount: 3, rows: [{ content: { descriptiveNonRepeating: { title: { content: 'Sunset' }, record_ID: 'saam_1', data_source: 'Smithsonian American Art Museum', record_link: 'https://x', online_media: { media: [{ type: 'Images', content: 'https://ids.si.edu/ids/deliveryService?id=SAAM-1', usage: { access: 'CC0' } }] } }, freetext: { name: [{ content: 'Church, Frederic Edwin' }], date: [{ content: '1860' }] } } }] } };
   fx.hv = { info: { totalrecords: 4 }, records: [{ id: 9, title: 'Study', people: [{ displayname: 'Winslow Homer' }], dated: '1880', datebegin: 1880, dateend: 1880, primaryimageurl: 'https://nrs.harvard.edu/urn-3:HUAM:1', classification: 'Paintings', url: 'https://harvardartmuseums.org/collections/object/9' }] };
   const prev = globalThis.fetch;
   globalThis.fetch = async (u, i) => { u = String(u); if (u.includes('api.si.edu')) return J(fx.si); if (u.includes('harvardartmuseums')) return J(fx.hv); return prev(u, i); };
-  for (const id of ['si', 'harvard']) { const l = await C.SOURCE_LIST.find(x => x.id === id).fetch(plan, C.defaultFilters(), ctx); assert.ok(l.length === 1, id); console.log(id.padEnd(9), '|', l[0].title, '|', l[0].artist, '|', l[0].imgs[0]); }
+  for (const id of ['si', 'harvard']) { const l = await C.adapters[id + 'Fetch'](plan, C.defaultFilters(), ctx); assert.ok(l.length === 1, id); console.log(id.padEnd(9), '|', l[0].title, '|', l[0].artist, '|', l[0].imgs[0]); }
   // clave ausente
   try { await C.adapters.harvardFetch(plan, {}, { keys: {} }); assert.fail('debía fallar'); } catch (e) { assert.ok(e.noKey); }
   console.log('Peticiones de ejemplo:'); [0, 1, 3].forEach(i => console.log(' ', calls[i].slice(0, 150)));

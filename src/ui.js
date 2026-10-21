@@ -22,12 +22,14 @@ const S = {
   keys: Object.assign({ europeana: 'api2demo', si: 'DEMO_KEY', harvard: '' }, lsGet('keys', {})),
   favs: lsGet('favs', []),
   pool: [], seen: new Set(), seenKey: new Set(), hist: [], hi: -1,
-  paused: false, menu: false, epoch: 0, refilling: 0, adv: false, advAt: 0, flight: new Map(), cool: {}, streak: {}, warned: false, recycleAfter: 6000,
+  paused: false, menu: false, epoch: 0, refilling: 0, adv: false, advAt: 0, flight: new Map(), cool: {}, streak: {}, warned: false, recycleAfter: 6000, mfilter: '', detail: {},
   status: {}, counts: {}, layer: 0, nextP: null, nextEpoch: -1,
   timer: null, capT: null, idleT: null, waiters: [], current: null, shown: 0
 };
 function saveAll() { lsSet('f', S.f); lsSet('st', S.st); lsSet('keys', S.keys); lsSet('favs', S.favs.slice(0, 300)); }
 
+S.custom = lsGet('custom', []);
+S.custom.forEach(m => { try { C.addMuseum(m); } catch (e) { /* museo dañado */ } });
 const slides = [$('#slideA'), $('#slideB')];
 const wkey = w => C.norm(w.title) + '|' + C.norm(w.artist);
 
@@ -75,10 +77,8 @@ function refill() {
   const enabled = C.SOURCE_LIST.filter(s => f.sources[s.id]);
   if (!enabled.length) { if (!S.warned) { S.warned = true; toast('Activa al menos un museo'); } return; }
   const ready = enabled.filter(s => !S.flight.has(s.id) && (S.cool[s.id] || 0) <= now);
-  // Wikidata aguanta pocas consultas a la vez: nunca más de 3 museos en marcha.
-  const busyMus = Array.from(S.flight.keys()).filter(id => id.indexOf('m:') === 0).length;
-  const srcs = ready.filter(s => s.group !== 'museum').concat(C.sampleN(ready.filter(s => s.group === 'museum'), Math.max(0, 3 - busyMus)));
-  srcs.forEach(s => launch(s, epoch));
+  // Cada museo lanza varias consultas (y Wikidata aguanta pocas a la vez): nunca más de 4 museos en marcha.
+  C.sampleN(ready, Math.max(0, 4 - S.flight.size)).forEach(s => launch(s, epoch));
 }
 
 async function launch(s, epoch) {
@@ -86,7 +86,9 @@ async function launch(s, epoch) {
   S.flight.set(s.id, epoch); S.refilling++; busy(); setStatus(s.id, 'loading');
   let added = 0, fail = null;
   try {
-    let list = await C.runSource(s, f, ctx());
+    const d = S.detail[s.id] = {};
+    const cx = Object.assign(ctx(), { report: (name, n, err) => { d[name] = err ? '✖ ' + errText(err) : n; } });
+    let list = await C.runSource(s, f, cx);
     if (epoch === S.epoch) {
       list = list.filter(w => C.accept(w, f) && !S.seen.has(w.uid) && !S.seenKey.has(wkey(w)) && !S.pool.some(x => x.uid === w.uid));
       added = list.length;
@@ -287,18 +289,19 @@ async function diagnose() {
   const srcs = C.SOURCE_LIST.filter(s => f.sources[s.id]);
   const lines = {};
   const draw = (done) => {
-    out.textContent = 'Filtros: ' + describeFilters() + '\n' + (done ? 'Listo.' : 'Probando ' + srcs.length + ' fuentes (los museos de Wikidata tardan; puede llevar un par de minutos)…') + '\n\n' +
+    out.textContent = 'Filtros: ' + describeFilters() + '\n' + (done ? 'Listo.' : 'Probando ' + srcs.length + ' museos (Wikidata tarda; puede llevar un par de minutos)…') + '\n\n' +
       srcs.map(s => lines[s.id] || ('… ' + s.name)).join('\n');
   };
   draw(false);
   await C.mapLimit(srcs, 4, async s => {
     const t0 = Date.now(); let line;
     try {
-      const list = await C.runSource(s, f, ctx());
+      const d = {};
+      const list = await C.runSource(s, f, Object.assign(ctx(), { report: (n, c, err) => { d[n] = err ? '✖ ' + errText(err) : c; } }));
       const ok = list.filter(w => C.accept(w, f));
       let img = '';
       if (ok.length) { const r = await loadImage(C.shuffle(ok.slice())[0].imgs); img = r ? ' · imagen carga bien (' + r.w + '×' + r.h + ')' : ' · la imagen NO carga (bloqueada o rota)'; }
-      line = (ok.length ? '✔ ' : '✖ ') + s.name + ': ' + list.length + ' obras, ' + ok.length + ' válidas con tus filtros' + img + (ok[0] ? ' · «' + ok[0].title.slice(0, 50) + '»' : '') + ' · ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s';
+      line = (ok.length ? '✔ ' : '✖ ') + s.name + ': ' + list.length + ' obras, ' + ok.length + ' válidas con tus filtros' + img + (ok[0] ? ' · «' + ok[0].title.slice(0, 50) + '»' : '') + ' · ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s\n     ' + Object.keys(d).map(k => k + ': ' + d[k]).join(' · ');
     } catch (e) { line = '✖ ' + s.name + ': ERROR ' + errText(e) + ' · ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s'; }
     if (run !== diagRun) return;
     lines[s.id] = line; draw(false);
@@ -361,19 +364,32 @@ const BOX = { presets: 'c-presets', eras: 'c-eras', styles: 'c-styles', types: '
 function srcNote(s) {
   const st = S.status[s.id], base = s.place + ' · ' + s.note;
   if (!st) return base;
-  if (st.state === 'error') return s.name + ' no responde: ' + st.msg;
+  if (st.state === 'error') return s.name + ' no responde: ' + st.msg + (S.detail[s.id] ? ' · ' + Object.keys(S.detail[s.id]).map(k => k + ' ' + S.detail[s.id][k]).join(' · ') : '');
   if (st.state === 'nokey') return 'Añade una clave en «Claves de API»';
-  if (st.state === 'ok') return s.place + ' · ' + (S.counts[s.id] || 0) + ' obras cargadas';
+  const det = S.detail[s.id] ? ' · ' + Object.keys(S.detail[s.id]).map(k => k + ' ' + S.detail[s.id][k]).join(' · ') : '';
+  if (st.state === 'ok') return s.place + ' · ' + (S.counts[s.id] || 0) + ' obras cargadas' + det;
   if (st.state === 'loading') return s.place + ' · buscando…';
-  if (st.state === 'empty') return s.place + ' · sin resultados con estos filtros';
+  if (st.state === 'empty') return s.place + ' · sin resultados con estos filtros' + det;
   return base;
 }
 function srcRow(s) {
   return '<button class="src" data-act="src" data-id="' + esc(s.id) + '" aria-pressed="' + !!S.f.sources[s.id] + '"><span class="box"></span><span class="nm"><b>' + esc(s.name) + '</b><span data-sn="' + esc(s.id) + '">' + esc(srcNote(s)) + '</span></span><span class="dot ' + ((S.status[s.id] && S.status[s.id].state) || '') + '" data-dot="' + esc(s.id) + '"></span></button>';
 }
+function visibleMuseums() { const q = C.norm(S.mfilter); return C.SOURCE_LIST.filter(s => !q || C.norm(s.name + ' ' + s.place).includes(q)); }
 function renderSrcs() {
-  $('#c-srcs').innerHTML = C.SOURCE_LIST.filter(s => s.group !== 'museum').map(srcRow).join('');
-  $('#c-msrcs').innerHTML = C.SOURCE_LIST.filter(s => s.group === 'museum').map(srcRow).join('');
+  $('#c-msrcs').innerHTML = visibleMuseums().map(srcRow).join('') || '<p class="hint">Ningún museo coincide. Puedes añadirlo con su nombre aquí abajo.</p>';
+}
+async function addMuseumByName() {
+  const el = $('#museumIn'), msg = $('#museumMsg'), name = el.value.trim();
+  if (!name) return;
+  msg.textContent = 'Buscando «' + name + '» en Wikidata…';
+  try {
+    const m = await C.resolveMuseum(name), src = C.addMuseum(m);
+    S.custom = S.custom.filter(x => x.id !== m.id).concat([m]); lsSet('custom', S.custom);
+    S.f.sources[src.id] = true; S.mfilter = ''; $('#museumFilter').value = ''; el.value = '';
+    msg.textContent = 'Añadido: ' + m.es + ' (' + m.city + ')';
+    renderSrcs(); applyChange();
+  } catch (e) { msg.textContent = e && e.message && !e.status ? e.message : 'No pude buscar el museo: ' + errText(e); }
 }
 function updateSrc(id) {
   const s = C.SOURCE_LIST.find(x => x.id === id), dot = document.querySelector('[data-dot="' + id + '"]'), sn = document.querySelector('[data-sn="' + id + '"]');
@@ -422,7 +438,8 @@ function onAct(act, id) {
       renderAll(); applyChange(); break;
     }
     case 'src': f.sources[id] = !f.sources[id]; render('srcs'); applyChange(); break;
-    case 'mus-all': case 'mus-none': C.SOURCE_LIST.filter(x => x.group === 'museum').forEach(x => { f.sources[x.id] = act === 'mus-all'; }); render('srcs'); applyChange(); break;
+    case 'mus-all': case 'mus-none': visibleMuseums().forEach(x => { f.sources[x.id] = act === 'mus-all'; }); render('srcs'); applyChange(); break;
+    case 'add-museum': addMuseumByName(); break;
     case 'era': toggleArr(f.eras, id); f.yearFrom = f.yearTo = ''; $('#yFrom').value = $('#yTo').value = ''; render('eras'); applyChange(); break;
     case 'style': toggleArr(f.styles, id); render('styles'); applyChange(); break;
     case 'type': toggleArr(f.types, id); render('types'); applyChange(); break;
@@ -464,7 +481,7 @@ document.addEventListener('keydown', e => {
   activity();
   const tag = (e.target.tagName || '').toLowerCase(), typing = tag === 'input' || tag === 'textarea';
   if (typing) {
-    if (e.key === 'Enter') { if (e.target.id === 'artistIn') { addArtist(e.target.value); e.target.value = ''; } if (e.target.id === 'kwIn') { addKeyword(e.target.value); e.target.value = ''; } }
+    if (e.key === 'Enter') { if (e.target.id === 'artistIn') { addArtist(e.target.value); e.target.value = ''; } if (e.target.id === 'kwIn') { addKeyword(e.target.value); e.target.value = ''; } if (e.target.id === 'museumIn') addMuseumByName(); }
     if (e.key === 'Escape') e.target.blur();
     return;
   }
@@ -479,6 +496,7 @@ document.addEventListener('keydown', e => {
   else if (k === 'i' || k === 'I') { const c = $('#caption'); c.classList.toggle('show'); clearTimeout(S.capT); }
   else if (k === 'l' || k === 'L') toggleFav();
 });
+$('#museumFilter').addEventListener('input', e => { S.mfilter = e.target.value; renderSrcs(); });
 $('#yFrom').addEventListener('change', e => { S.f.yearFrom = e.target.value; S.f.eras = []; render('eras'); applyChange(); });
 $('#yTo').addEventListener('change', e => { S.f.yearTo = e.target.value; S.f.eras = []; render('eras'); applyChange(); });
 ['europeana', 'si', 'harvard'].forEach(k => {

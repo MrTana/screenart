@@ -103,7 +103,7 @@ section.sec .hint{margin:8px 0 0;font-size:14px;color:var(--muted)}
 .dot.ok{background:var(--ok)}.dot.loading{background:var(--warn);animation:pulse 1s infinite}.dot.error{background:var(--bad)}.dot.empty{background:var(--warn)}
 @keyframes pulse{50%{opacity:.3}}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-input[type=text],input[type=number],input[type=password]{background:var(--chip);border:1px solid var(--line);border-radius:6px;padding:.55em .8em;min-height:44px;min-width:0;flex:1}
+input[type=text],input[type=search],input[type=number],input[type=password]{background:var(--chip);border:1px solid var(--line);border-radius:6px;padding:.55em .8em;min-height:44px;min-width:0;flex:1}
 input[type=number]{max-width:130px;flex:none}
 details.adv{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
 details.adv summary{cursor:pointer;color:var(--muted);font-size:14px;letter-spacing:.06em;min-height:36px}
@@ -137,10 +137,14 @@ details.adv label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut
   </div>
 
   <section class="sec"><h2>Colecciones rápidas</h2><div class="chips" id="c-presets"></div></section>
-  <section class="sec"><h2>Museos y fuentes</h2><div class="srcs" id="c-srcs"></div></section>
-  <section class="sec"><h2>Museos famosos</h2><div class="srcs" id="c-msrcs"></div>
-    <div class="row" style="margin-top:10px"><button class="btn" data-act="mus-all">Marcar todos</button><button class="btn" data-act="mus-none">Quitar todos</button></div>
-    <p class="hint">Cada museo tiene su propia consulta a Wikidata y entran todas sus obras con imagen: pinturas, dibujos, esculturas y objetos. En cada ronda se consultan 4 de los marcados.</p></section>
+  <section class="sec"><h2>Museos</h2>
+    <p class="hint" style="margin-top:0">Cada museo se busca a la vez en su API directa (si la tiene), Wikidata, Wikimedia Commons y Wikipedia. «Colecciones abiertas» añade WikiArt y Europeana, que no distinguen museos.</p>
+    <div class="row"><input type="search" id="museumFilter" placeholder="Filtrar la lista (ej. París, Prado, moderno)" autocomplete="off"></div>
+    <div class="srcs" id="c-msrcs" style="margin-top:10px"></div>
+    <div class="row" style="margin-top:10px"><button class="btn" data-act="mus-all">Marcar los de la lista</button><button class="btn" data-act="mus-none">Quitar los de la lista</button></div>
+    <div class="row" style="margin-top:10px"><input type="text" id="museumIn" placeholder="Añadir otro museo por su nombre" autocomplete="off"><button class="btn" data-act="add-museum">Añadir</button></div>
+    <p class="hint" id="museumMsg"></p>
+  </section>
   <section class="sec"><h2>Época</h2><div class="chips" id="c-eras"></div>
     <div class="row" style="margin-top:10px"><input type="number" id="yFrom" placeholder="Desde (año)" inputmode="numeric"><input type="number" id="yTo" placeholder="Hasta (año)" inputmode="numeric"></div></section>
   <section class="sec"><h2>Estilo o movimiento</h2><div class="chips" id="c-styles"></div></section>
@@ -328,8 +332,9 @@ const ES_EN = { paisaje: 'landscape', paisajes: 'landscape', retrato: 'portrait'
 function keywordToQuery(text) { const n = norm(text); return ES_EN[n] || text.trim(); }
 
 /* ───────── filtros ───────── */
-const DEFAULT_MUSEUMS = ['louvre', 'orsay', 'versailles', 'orangerie', 'marmottan', 'petitpalais', 'carnavalet', 'prado', 'thyssen', 'uffizi', 'hermitage', 'nationalgallery', 'vangogh', 'mauritshuis', 'kunsthistorisches'];
-const SOURCE_DEFAULTS = { met: true, aic: true, cma: true, rijks: true, vam: true, smk: true, mia: true, wiki: true, commons: true, wikiart: true, europeana: false, si: false, harvard: false };
+const DEFAULT_MUSEUMS = ['louvre', 'orsay', 'versailles', 'orangerie', 'marmottan', 'petitpalais', 'carnavalet', 'prado', 'thyssen', 'uffizi', 'hermitage', 'nationalgallery', 'vangogh', 'mauritshuis', 'kunsthistorisches',
+  'met', 'aic', 'cma', 'rijks', 'vam', 'smk', 'mia', 'open'];
+const SOURCE_DEFAULTS = {};
 DEFAULT_MUSEUMS.forEach(id => { SOURCE_DEFAULTS['m:' + id] = true; });
 
 function defaultFilters() {
@@ -665,6 +670,16 @@ const WD_NAME = { Q3305213: 'painting', Q93184: 'drawing', Q11060274: 'print', Q
 /* Museos famosos. Se localizan por el nombre de su ficha en Wikidata (no por código), y las obras
    se buscan con "colección = ese museo" más imagen en Commons. */
 const MUSEUMS = [
+  { id: 'met', es: 'The Met', city: 'Nueva York', ids: [], direct: 'met', labels: [['Metropolitan Museum of Art', 'en'], ['The Metropolitan Museum of Art', 'en']], q: 'Metropolitan Museum of Art' },
+  { id: 'aic', es: 'Art Institute of Chicago', city: 'Chicago', ids: [], direct: 'aic', labels: [['Art Institute of Chicago', 'en']] },
+  { id: 'cma', es: 'Cleveland Museum of Art', city: 'Cleveland', ids: [], direct: 'cma', labels: [['Cleveland Museum of Art', 'en']] },
+  { id: 'rijks', es: 'Rijksmuseum', city: 'Ámsterdam', ids: [], direct: 'rijks', labels: [['Rijksmuseum', 'en'], ['Rijksmuseum', 'nl']] },
+  { id: 'vam', es: 'Victoria and Albert Museum', city: 'Londres', ids: [], direct: 'vam', labels: [['Victoria and Albert Museum', 'en']] },
+  { id: 'smk', es: 'SMK (Copenhague)', city: 'Copenhague', ids: [], direct: 'smk', labels: [['Statens Museum for Kunst', 'en'], ['Statens Museum for Kunst', 'da']] },
+  { id: 'mia', es: 'Minneapolis Institute of Art', city: 'Minneapolis', ids: [], direct: 'mia', labels: [['Minneapolis Institute of Art', 'en']] },
+  { id: 'si', es: 'Smithsonian (SAAM, Freer, Hirshhorn, NPG)', city: 'Washington', ids: [], direct: 'si', labels: [['Smithsonian American Art Museum', 'en'], ['Freer Gallery of Art', 'en'], ['Hirshhorn Museum and Sculpture Garden', 'en']], q: 'Smithsonian American Art Museum', needsKey: 'si' },
+  { id: 'harvard', es: 'Harvard Art Museums', city: 'Cambridge (EE. UU.)', ids: [], direct: 'harvard', labels: [['Harvard Art Museums', 'en']], needsKey: 'harvard' },
+  { id: 'open', es: 'Colecciones abiertas', city: 'WikiArt, Commons, Wikidata y Europeana', ids: [], open: true, labels: [], q: '', note: 'No distinguen museos: se mezclan con cualquier museo' },
   { id: 'louvre', es: 'Louvre', city: 'París', ids: ['Q19675'], labels: [['Louvre', 'en'], ['Musée du Louvre', 'fr'], ['Louvre Museum', 'en']] },
   { id: 'orsay', es: 'Orsay', city: 'París', ids: ['Q23402'], labels: [["Musée d'Orsay", 'fr'], ["Musée d'Orsay", 'en'], ['Orsay Museum', 'en']] },
   { id: 'versailles', es: 'Versalles', city: 'Versalles', ids: ['Q2946'], labels: [['Palace of Versailles', 'en'], ['Château de Versailles', 'fr'], ['Musée national des châteaux de Versailles et de Trianon', 'fr']] },
@@ -691,7 +706,47 @@ const MUSEUMS = [
   { id: 'nationalmuseum', es: 'Nationalmuseum', city: 'Estocolmo', ids: [], labels: [['Nationalmuseum', 'sv'], ['Nationalmuseum', 'en']] },
   { id: 'nga', es: 'National Gallery of Art', city: 'Washington', ids: [], labels: [['National Gallery of Art', 'en']] },
   { id: 'mfa', es: 'Museum of Fine Arts', city: 'Boston', ids: [], labels: [['Museum of Fine Arts, Boston', 'en'], ['Museum of Fine Arts', 'en']] },
-  { id: 'frick', es: 'Frick Collection', city: 'Nueva York', ids: [], labels: [['Frick Collection', 'en'], ['The Frick Collection', 'en']] }
+  { id: 'frick', es: 'Frick Collection', city: 'Nueva York', ids: [], labels: [['Frick Collection', 'en'], ['The Frick Collection', 'en']] },
+  { id: 'pompidou', es: 'Centre Pompidou', city: 'París', ids: [], labels: [['Centre Pompidou', 'fr'], ['Centre Pompidou', 'en'], ["Musée national d'art moderne", 'fr']] },
+  { id: 'rodin', es: 'Musée Rodin', city: 'París', ids: [], labels: [['Musée Rodin', 'fr'], ['Rodin Museum', 'en']] },
+  { id: 'picassoparis', es: 'Museo Picasso de París', city: 'París', ids: [], labels: [['Musée national Picasso-Paris', 'fr'], ['Musée Picasso', 'fr']] },
+  { id: 'jacquemart', es: 'Jacquemart-André', city: 'París', ids: [], labels: [['Musée Jacquemart-André', 'fr'], ['Musée Jacquemart-André', 'en']] },
+  { id: 'guimet', es: 'Musée Guimet', city: 'París', ids: [], labels: [['Musée Guimet', 'fr'], ['Guimet Museum', 'en']] },
+  { id: 'lille', es: 'Bellas Artes de Lille', city: 'Lille', ids: [], labels: [['Palais des Beaux-Arts de Lille', 'fr']] },
+  { id: 'fabre', es: 'Museo Fabre', city: 'Montpellier', ids: [], labels: [['Musée Fabre', 'fr'], ['Musée Fabre', 'en']] },
+  { id: 'rouen', es: 'Bellas Artes de Ruan', city: 'Ruan', ids: [], labels: [['Musée des Beaux-Arts de Rouen', 'fr']] },
+  { id: 'moma', es: 'MoMA', city: 'Nueva York', ids: [], labels: [['Museum of Modern Art', 'en'], ['Museum of Modern Art', 'es']] },
+  { id: 'guggenheim', es: 'Guggenheim Nueva York', city: 'Nueva York', ids: [], labels: [['Solomon R. Guggenheim Museum', 'en'], ['Guggenheim Museum', 'en']] },
+  { id: 'whitney', es: 'Whitney', city: 'Nueva York', ids: [], labels: [['Whitney Museum of American Art', 'en']] },
+  { id: 'getty', es: 'J. Paul Getty Museum', city: 'Los Ángeles', ids: [], labels: [['J. Paul Getty Museum', 'en'], ['Getty Center', 'en']] },
+  { id: 'lacma', es: 'LACMA', city: 'Los Ángeles', ids: [], labels: [['Los Angeles County Museum of Art', 'en']] },
+  { id: 'pma', es: 'Philadelphia Museum of Art', city: 'Filadelfia', ids: [], labels: [['Philadelphia Museum of Art', 'en']] },
+  { id: 'ngc', es: 'Galería Nacional de Canadá', city: 'Ottawa', ids: [], labels: [['National Gallery of Canada', 'en'], ['Musée des beaux-arts du Canada', 'fr']] },
+  { id: 'tate', es: 'Tate', city: 'Londres', ids: [], labels: [['Tate Britain', 'en'], ['Tate Modern', 'en'], ['Tate', 'en']], q: 'Tate' },
+  { id: 'britishmuseum', es: 'British Museum', city: 'Londres', ids: [], labels: [['British Museum', 'en']] },
+  { id: 'reinasofia', es: 'Reina Sofía', city: 'Madrid', ids: [], labels: [['Museo Nacional Centro de Arte Reina Sofía', 'es'], ['Museo Reina Sofía', 'es'], ['Museo Nacional Centro de Arte Reina Sofía', 'en']] },
+  { id: 'bilbao', es: 'Bellas Artes de Bilbao', city: 'Bilbao', ids: [], labels: [['Museo de Bellas Artes de Bilbao', 'es'], ['Bilbao Fine Arts Museum', 'en']] },
+  { id: 'gulbenkian', es: 'Gulbenkian', city: 'Lisboa', ids: [], labels: [['Calouste Gulbenkian Museum', 'en'], ['Museu Calouste Gulbenkian', 'pt']] },
+  { id: 'borghese', es: 'Galería Borghese', city: 'Roma', ids: [], labels: [['Galleria Borghese', 'it'], ['Galleria Borghese', 'en']] },
+  { id: 'accademia', es: 'Gallerie dell’Accademia', city: 'Venecia', ids: [], labels: [["Gallerie dell'Accademia", 'it'], ["Gallerie dell'Accademia", 'en']] },
+  { id: 'peggy', es: 'Colección Peggy Guggenheim', city: 'Venecia', ids: [], labels: [['Peggy Guggenheim Collection', 'en'], ['Collezione Peggy Guggenheim', 'it']] },
+  { id: 'staedel', es: 'Städel', city: 'Fráncfort', ids: [], labels: [['Städel Museum', 'de'], ['Städel Museum', 'en']] },
+  { id: 'zurich', es: 'Kunsthaus Zürich', city: 'Zúrich', ids: [], labels: [['Kunsthaus Zürich', 'de'], ['Kunsthaus Zürich', 'en']] },
+  { id: 'basel', es: 'Kunstmuseum Basel', city: 'Basilea', ids: [], labels: [['Kunstmuseum Basel', 'de'], ['Kunstmuseum Basel', 'en']] },
+  { id: 'albertina', es: 'Albertina', city: 'Viena', ids: [], labels: [['Albertina', 'de'], ['Albertina', 'en']] },
+  { id: 'munch', es: 'Museo Munch', city: 'Oslo', ids: [], labels: [['Munch Museum', 'en'], ['Munchmuseet', 'no']] },
+  { id: 'ateneum', es: 'Ateneum', city: 'Helsinki', ids: [], labels: [['Ateneum', 'fi'], ['Ateneum', 'en']] },
+  { id: 'boijmans', es: 'Boijmans Van Beuningen', city: 'Róterdam', ids: [], labels: [['Museum Boijmans Van Beuningen', 'nl'], ['Museum Boijmans Van Beuningen', 'en']] },
+  { id: 'kroller', es: 'Kröller-Müller', city: 'Otterlo', ids: [], labels: [['Kröller-Müller Museum', 'nl'], ['Kröller-Müller Museum', 'en']] },
+  { id: 'pushkin', es: 'Museo Pushkin', city: 'Moscú', ids: [], labels: [['Pushkin State Museum of Fine Arts', 'en'], ['Pushkin Museum', 'en']] },
+  { id: 'tokyo', es: 'Museo Nacional de Tokio', city: 'Tokio', ids: [], labels: [['Tokyo National Museum', 'en'], ['Tokyo National Museum', 'ja']] },
+  { id: 'soumaya', es: 'Museo Soumaya', city: 'Ciudad de México', ids: [], labels: [['Museo Soumaya', 'es'], ['Museo Soumaya', 'en']] },
+  { id: 'masp', es: 'MASP', city: 'São Paulo', ids: [], labels: [['Museu de Arte de São Paulo', 'pt'], ['São Paulo Museum of Art', 'en']] },
+  { id: 'mnba', es: 'Bellas Artes de Buenos Aires', city: 'Buenos Aires', ids: [], labels: [['Museo Nacional de Bellas Artes', 'es']] },
+  { id: 'ngv', es: 'National Gallery of Victoria', city: 'Melbourne', ids: [], labels: [['National Gallery of Victoria', 'en']] },
+  { id: 'agnsw', es: 'Art Gallery of New South Wales', city: 'Sídney', ids: [], labels: [['Art Gallery of New South Wales', 'en']] },
+  { id: 'scotland', es: 'National Galleries of Scotland', city: 'Edimburgo', ids: [], labels: [['Scottish National Gallery', 'en'], ['National Galleries of Scotland', 'en']] },
+  { id: 'irelandng', es: 'Galería Nacional de Irlanda', city: 'Dublín', ids: [], labels: [['National Gallery of Ireland', 'en']] },
 ];
 
 /* Máximo 2 consultas a Wikidata a la vez: el servicio corta a quien abusa. */
@@ -777,7 +832,7 @@ async function wikiFetch(plan, f, ctx) {
 }
 
 /* Un Wikidata por museo: todas las obras de su colección que tengan imagen. */
-async function museumFetch(m, plan, f, ctx) {
+async function wikidataMuseum(m, plan, f, ctx) {
   const any = !!ctx.anyRights;
   const { parts, typeQ } = wdParts(plan, { museum: m, anyRights: any, byType: !!(f.types && f.types.length) });
   const countQ = 'SELECT (COUNT(DISTINCT ?item) AS ?n) WHERE { ' + parts.join(' ') + ' }';
@@ -863,12 +918,23 @@ async function harvardFetch(plan, f, ctx) {
 
 /* Wikimedia Commons: búsqueda de archivos por categoría o texto (estilo, artista, tema). */
 const stripTags = h => String(h == null ? '' : h).replace(/<[^>]*>/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#0?39;/g, "'").replace(/\s+/g, ' ').trim();
+const NOT_ART = /facade|façade|fachada|interior|exterior|entrance|entrada|building|edificio|bâtiment|\bhall\b|staircase|escalier|escalera|exhibition|exposition|panorama|street|\bmap\b|plan of|poster|logo|visitors|queue|ticket|banner|sign\b/i;
 const COMMONS_KIND = { painting: 'painting', drawing: 'drawing', print: 'print', photo: 'photograph', sculpture: 'sculpture' };
-function commonsQueries(plan, f) {
-  const artist = plan.artist || plan.hintArtist;
+const COMMONS_CAT = { painting: 'Paintings', drawing: 'Drawings', print: 'Prints', photograph: 'Photographs', sculpture: 'Sculptures' };
+function commonsQueries(plan, f, m) {
   const q = [];
   const kind = COMMONS_KIND[plan.type] || 'painting';
   const tail = ' filetype:bitmap';
+  if (m) {
+    const name = '"' + m.q + '"', kw = plan.keyword ? ' ' + plan.keyword : '';
+    if (plan.artist) q.push(name + ' "' + plan.artist + '"' + kw + tail);
+    else {
+      if (!plan.style && !kw) q.push('incategory:"' + COMMONS_CAT[kind] + ' in the ' + m.q + '"' + tail);
+      if (plan.style) q.push(name + ' ' + plan.style.q + ' ' + kind + kw + tail);
+      q.push(name + ' ' + kind + kw + tail);
+    }
+    return q;
+  }
   if (plan.artist) q.push('"' + plan.artist + '" ' + kind + (plan.keyword ? ' ' + plan.keyword : '') + tail);
   else if (plan.style && plan.style.cat) {
     q.push('incategory:"' + plan.style.cat + '"' + (plan.keyword ? ' ' + plan.keyword : '') + tail);
@@ -878,11 +944,11 @@ function commonsQueries(plan, f) {
   else q.push((plan.keyword || pick(GENERIC)) + ' ' + kind + ' museum' + tail);
   return q;
 }
-async function commonsFetch(plan, f, ctx) {
+async function commonsFetch(plan, f, ctx, m) {
   const API = 'https://commons.wikimedia.org/w/api.php?format=json&formatversion=2&origin=*&action=query';
   const W = ctx.hq ? 3000 : 1800;
   let pages = [];
-  for (const q of commonsQueries(plan, f)) {
+  for (const q of commonsQueries(plan, f, m)) {
     const total = await memo('cm:' + q, async () => {
       const j = await getJSON(API + '&list=search&srnamespace=6&srlimit=1&srprop=&srinfo=totalhits&srsearch=' + encodeURIComponent(q));
       return (j.query && j.query.searchinfo && j.query.searchinfo.totalhits) || 0;
@@ -903,9 +969,10 @@ async function commonsFetch(plan, f, ctx) {
     const lic = val('LicenseShortName');
     const name = String(p.title || '').replace(/^File:/, '').replace(/\.[a-z]+$/i, '').replace(/_/g, ' ');
     const title = val('ObjectName') || name;
+    if (m && NOT_ART.test(name)) return null;
     const date = val('DateTimeOriginal');
     return mk({
-      src: 'commons', museum: 'Wikimedia Commons', id: p.pageid || p.title,
+      src: 'commons', museum: m ? m.es : 'Wikimedia Commons', id: p.pageid || p.title,
       title, artist: flipName(val('Artist')).slice(0, 80), date: date.slice(0, 40), year: parseYear(date),
       imgs: [ii.thumburl, ii.url], thumb: ii.thumburl, url: ii.descriptionurl || ('https://commons.wikimedia.org/wiki/' + encodeURIComponent(p.title || '')),
       w: ii.width, h: ii.height, type: classifyType(title) || (plan.type === 'painting' ? 'painting' : null),
@@ -932,30 +999,101 @@ async function wikiartFetch(plan, f, ctx) {
   }));
 }
 
+/* Wikipedia: artículos de obras que citan al museo; la imagen principal del artículo es la obra. */
+const ART_DESC = /painting|sculpture|drawing|print\b|artwork|triptych|fresco|portrait|photograph|statue|relief|mural|watercolou?r|engraving|etching|lithograph|pastel|oil on|panel|altarpiece|still life|landscape/i;
+async function wikipediaFetch(plan, f, ctx, m) {
+  if (!m || !m.q) return [];
+  const API = 'https://en.wikipedia.org/w/api.php?format=json&formatversion=2&origin=*&action=query';
+  const kind = COMMONS_KIND[plan.type] || 'painting', kw = plan.keyword ? ' ' + plan.keyword : '';
+  const qs = [];
+  if (plan.artist) qs.push('"' + m.q + '" "' + plan.artist + '"' + kw);
+  else { if (plan.style) qs.push('"' + m.q + '" ' + plan.style.q + ' ' + kind + kw); qs.push('"' + m.q + '" ' + kind + kw); }
+  let pages = [];
+  for (const q of qs) {
+    const total = await memo('wp:' + q, async () => {
+      const j = await getJSON(API + '&list=search&srnamespace=0&srlimit=1&srprop=&srinfo=totalhits&srsearch=' + encodeURIComponent(q));
+      return (j.query && j.query.searchinfo && j.query.searchinfo.totalhits) || 0;
+    });
+    if (!total) continue;
+    const off = rand(Math.max(1, Math.min(total - 30, 900)));
+    const j = await getJSON(API + '&generator=search&gsrnamespace=0&gsrlimit=30&gsroffset=' + off + '&gsrsearch=' + encodeURIComponent(q) +
+      '&prop=pageimages|description&piprop=original|thumbnail&pithumbsize=' + (ctx.hq ? 2800 : 1600));
+    pages = (j.query && j.query.pages) || [];
+    if (pages.length) break;
+  }
+  if (!Array.isArray(pages)) pages = Object.keys(pages).map(k => pages[k]);
+  return pages.map(p => {
+    const o = p.original, t = p.thumbnail, desc = p.description || '';
+    if (!o || !ART_DESC.test(desc) || (o.width || 0) < 700 || (o.height || 0) < 500) return null;
+    if (!/\.(jpe?g|png|webp|gif)$/i.test(o.source)) return null;
+    if (norm(p.title).includes(norm(m.q))) return null;
+    const by = /\bby ([^,;(]{3,60})/i.exec(desc);
+    return mk({
+      src: 'wikipedia', museum: m.es, id: p.pageid, title: p.title, artist: by ? by[1].trim() : '', date: desc.slice(0, 40), year: parseYear(desc),
+      imgs: [t && t.source, o.source], thumb: (t && t.source) || o.source, url: 'https://en.wikipedia.org/?curid=' + p.pageid,
+      w: o.width, h: o.height, type: classifyType(desc), pd: null, license: 'Wikipedia (imagen del artículo)'
+    });
+  }).filter(Boolean);
+}
+
+/* Un museo = varias fuentes a la vez: su API directa (si tiene), Wikidata, Commons y Wikipedia.
+   Las «colecciones abiertas» juntan WikiArt, Commons por estilo, Wikidata por movimiento y Europeana. */
+const DIRECT = {};
+function finishMuseum(m) { if (!m.q) m.q = (m.labels[0] || [''])[0]; return m; }
+async function museumFetch(m, plan, f, ctx) {
+  const rep = (name, n, err) => { if (ctx.report) ctx.report(name, n, err); };
+  const jobs = [];
+  if (m.open) {
+    jobs.push(['WikiArt', () => wikiartFetch(plan, f, ctx)], ['Commons', () => commonsFetch(plan, f, ctx)], ['Wikidata', () => wikiFetch(plan, f, ctx)]);
+    if (ctx.keys && ctx.keys.europeana) jobs.push(['Europeana', () => europeanaFetch(plan, f, ctx)]);
+  } else {
+    if (m.direct && DIRECT[m.direct]) jobs.push(['Directa', () => DIRECT[m.direct](plan, f, ctx)]);
+    jobs.push(['Wikidata', () => wikidataMuseum(m, plan, f, ctx)], ['Commons', () => commonsFetch(plan, f, ctx, m)], ['Wikipedia', () => wikipediaFetch(plan, f, ctx, m)]);
+  }
+  const res = await Promise.allSettled(jobs.map(j => j[1]()));
+  const out = [], seen = new Set(); let firstErr = null;
+  res.forEach((r, i) => {
+    if (r.status === 'rejected') { rep(jobs[i][0], 0, r.reason); if (!firstErr || firstErr.noKey) firstErr = r.reason; return; }
+    rep(jobs[i][0], r.value.length);
+    r.value.forEach(w => { const k = norm(w.title) + '|' + norm(w.artist); if (!seen.has(k)) { seen.add(k); out.push(w); } });
+  });
+  if (!out.length && firstErr && res.every(r => r.status === 'rejected')) throw firstErr;
+  return out;
+}
+
+function museumSource(m) {
+  finishMuseum(m);
+  return { id: 'm:' + m.id, group: 'museum', name: m.es, place: m.city, museum: m, fetch: (plan, f, ctx) => museumFetch(m, plan, f, ctx),
+    note: m.note || ((m.direct ? 'Directa · ' : '') + 'Wikidata · Commons · Wikipedia') };
+}
+/* Museos añadidos por el usuario: se busca el museo en Wikidata por su nombre. */
+const SOURCE_LIST = [];
+function addMuseum(m) {
+  if (MUSEUMS.some(x => x.id === m.id)) return SOURCE_LIST.find(x => x.id === 'm:' + m.id);
+  MUSEUMS.push(m);
+  const src = museumSource(m); SOURCE_LIST.push(src); MUSEUM_SOURCES.push(src);
+  return src;
+}
+async function resolveMuseum(name) {
+  const text = String(name || '').trim();
+  if (text.length < 3) throw new Error('Escribe el nombre del museo');
+  const found = [];
+  for (const lang of ['es', 'en']) {
+    const j = await getJSON('https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json&origin=*&type=item&limit=8&language=' + lang + '&uselang=' + lang + '&search=' + encodeURIComponent(text));
+    (j.search || []).forEach(r => { if (!found.some(x => x.id === r.id)) found.push(r); });
+    if (found.some(r => MUSEUM_DESC.test(r.description || ''))) break;
+  }
+  const hit = found.find(r => MUSEUM_DESC.test(r.description || '')) || found[0];
+  if (!hit) throw new Error('No encuentro ese museo en Wikidata');
+  return { id: 'c' + hit.id, es: hit.label || text, city: (hit.description || 'Museo añadido').slice(0, 50), ids: [hit.id], labels: [[hit.label || text, 'es'], [hit.label || text, 'en']], q: hit.label || text, custom: true };
+}
+const MUSEUM_DESC = /museum|museo|musée|museu|galler|galería|galerie|pinacoteca|collection|colección|art\b|arte\b/i;
+
 const GENERIC = ['landscape', 'portrait', 'flowers', 'sea', 'garden', 'still life', 'river', 'mountains', 'figure', 'city', 'harbor', 'winter', 'horse', 'woman', 'sky', 'forest', 'village', 'ship', 'night', 'mother'];
 
-const SOURCE_LIST = [
-  { id: 'met', name: 'The Met', place: 'Nueva York', fetch: metFetch, note: 'Más de 400.000 obras de dominio público' },
-  { id: 'aic', name: 'Art Institute of Chicago', place: 'Chicago', fetch: aicFetch, note: 'Impresionistas y modernos' },
-  { id: 'cma', name: 'Cleveland Museum of Art', place: 'Cleveland', fetch: cmaFetch, note: 'Obras en CC0, imágenes grandes' },
-  { id: 'rijks', name: 'Rijksmuseum', place: 'Ámsterdam', fetch: rijksFetch, note: 'Maestros holandeses (experimental)' },
-  { id: 'vam', name: 'Victoria and Albert Museum', place: 'Londres', fetch: vamFetch, note: 'Uso no comercial' },
-  { id: 'smk', name: 'SMK', place: 'Copenhague', fetch: smkFetch, note: 'Arte nórdico y europeo' },
-  { id: 'mia', name: 'Minneapolis Institute of Art', place: 'Minneapolis', fetch: miaFetch, note: 'Dominio público' },
-  { id: 'wiki', name: 'Wikidata y Commons (por movimiento)', place: 'Todo el mundo', fetch: wikiFetch, note: 'Filtra bien por movimiento artístico' },
-  { id: 'commons', name: 'Wikimedia Commons (búsqueda)', place: 'Todo el mundo', fetch: commonsFetch, note: 'Busca por estilo, artista o tema' },
-  { id: 'wikiart', name: 'WikiArt (por estilo)', place: 'Todo el mundo', fetch: wikiartFetch, note: 'Muchas obras por estilo (experimental)' },
-  { id: 'europeana', name: 'Europeana', place: 'Europa', fetch: europeanaFetch, note: 'Calidad variable. Necesita clave', key: 'europeana', keyUrl: 'https://pro.europeana.eu/pages/get-api' },
-  { id: 'si', name: 'Smithsonian', place: 'Washington', fetch: siFetch, note: 'Necesita clave gratuita', key: 'si', keyUrl: 'https://api.data.gov/signup/' },
-  { id: 'harvard', name: 'Harvard Art Museums', place: 'Cambridge (EE. UU.)', fetch: harvardFetch, note: 'Necesita clave gratuita', key: 'harvard', keyUrl: 'https://harvardartmuseums.org/collections/api' }
-];
-
-/* Un Wikidata por museo, cada uno con su propia fila en el menú. */
-const MUSEUM_SOURCES = MUSEUMS.map(m => ({
-  id: 'm:' + m.id, group: 'museum', name: m.es, place: m.city, fetch: (plan, f, ctx) => museumFetch(m, plan, f, ctx),
-  note: 'Wikidata' + (m.ids.length ? ' ' + m.ids[0] : '') + ' · todas las obras con imagen'
-}));
-MUSEUM_SOURCES.forEach(x => SOURCE_LIST.push(x));
+DIRECT.met = metFetch; DIRECT.aic = aicFetch; DIRECT.cma = cmaFetch; DIRECT.rijks = rijksFetch; DIRECT.vam = vamFetch; DIRECT.smk = smkFetch; DIRECT.mia = miaFetch; DIRECT.si = siFetch; DIRECT.harvard = harvardFetch;
+const MUSEUM_SOURCES = [];
+MUSEUMS.forEach(m => { const src = museumSource(m); SOURCE_LIST.push(src); MUSEUM_SOURCES.push(src); });
 
 /* Ejecuta una fuente: consulta concreta y, si no hay resultados, versiones cada vez más relajadas. */
 async function runSource(src, f, ctx) {
@@ -975,8 +1113,8 @@ async function runSource(src, f, ctx) {
 const api = {
   rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
   ERAS, STYLES, TYPES, KEYWORDS, MUSEUMS, DEFAULT_MUSEUMS, MUSEUM_SOURCES, ARTIST_SUGGESTIONS, keywordToQuery,
-  defaultFilters, allowedRanges, makePlan, accept, mk, SOURCE_LIST, SOURCE_DEFAULTS, runSource,
-  adapters: { commonsFetch, wikiartFetch, metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }
+  defaultFilters, allowedRanges, makePlan, accept, mk, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC,
+  adapters: { wikidataMuseum, wikipediaFetch, commonsFetch, wikiartFetch, metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }
 };
 if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.ArtCore = api;
 })(typeof self !== 'undefined' ? self : globalThis);
@@ -1007,12 +1145,14 @@ const S = {
   keys: Object.assign({ europeana: 'api2demo', si: 'DEMO_KEY', harvard: '' }, lsGet('keys', {})),
   favs: lsGet('favs', []),
   pool: [], seen: new Set(), seenKey: new Set(), hist: [], hi: -1,
-  paused: false, menu: false, epoch: 0, refilling: 0, adv: false, advAt: 0, flight: new Map(), cool: {}, streak: {}, warned: false, recycleAfter: 6000,
+  paused: false, menu: false, epoch: 0, refilling: 0, adv: false, advAt: 0, flight: new Map(), cool: {}, streak: {}, warned: false, recycleAfter: 6000, mfilter: '', detail: {},
   status: {}, counts: {}, layer: 0, nextP: null, nextEpoch: -1,
   timer: null, capT: null, idleT: null, waiters: [], current: null, shown: 0
 };
 function saveAll() { lsSet('f', S.f); lsSet('st', S.st); lsSet('keys', S.keys); lsSet('favs', S.favs.slice(0, 300)); }
 
+S.custom = lsGet('custom', []);
+S.custom.forEach(m => { try { C.addMuseum(m); } catch (e) { /* museo dañado */ } });
 const slides = [$('#slideA'), $('#slideB')];
 const wkey = w => C.norm(w.title) + '|' + C.norm(w.artist);
 
@@ -1060,10 +1200,8 @@ function refill() {
   const enabled = C.SOURCE_LIST.filter(s => f.sources[s.id]);
   if (!enabled.length) { if (!S.warned) { S.warned = true; toast('Activa al menos un museo'); } return; }
   const ready = enabled.filter(s => !S.flight.has(s.id) && (S.cool[s.id] || 0) <= now);
-  // Wikidata aguanta pocas consultas a la vez: nunca más de 3 museos en marcha.
-  const busyMus = Array.from(S.flight.keys()).filter(id => id.indexOf('m:') === 0).length;
-  const srcs = ready.filter(s => s.group !== 'museum').concat(C.sampleN(ready.filter(s => s.group === 'museum'), Math.max(0, 3 - busyMus)));
-  srcs.forEach(s => launch(s, epoch));
+  // Cada museo lanza varias consultas (y Wikidata aguanta pocas a la vez): nunca más de 4 museos en marcha.
+  C.sampleN(ready, Math.max(0, 4 - S.flight.size)).forEach(s => launch(s, epoch));
 }
 
 async function launch(s, epoch) {
@@ -1071,7 +1209,9 @@ async function launch(s, epoch) {
   S.flight.set(s.id, epoch); S.refilling++; busy(); setStatus(s.id, 'loading');
   let added = 0, fail = null;
   try {
-    let list = await C.runSource(s, f, ctx());
+    const d = S.detail[s.id] = {};
+    const cx = Object.assign(ctx(), { report: (name, n, err) => { d[name] = err ? '✖ ' + errText(err) : n; } });
+    let list = await C.runSource(s, f, cx);
     if (epoch === S.epoch) {
       list = list.filter(w => C.accept(w, f) && !S.seen.has(w.uid) && !S.seenKey.has(wkey(w)) && !S.pool.some(x => x.uid === w.uid));
       added = list.length;
@@ -1272,18 +1412,19 @@ async function diagnose() {
   const srcs = C.SOURCE_LIST.filter(s => f.sources[s.id]);
   const lines = {};
   const draw = (done) => {
-    out.textContent = 'Filtros: ' + describeFilters() + '\n' + (done ? 'Listo.' : 'Probando ' + srcs.length + ' fuentes (los museos de Wikidata tardan; puede llevar un par de minutos)…') + '\n\n' +
+    out.textContent = 'Filtros: ' + describeFilters() + '\n' + (done ? 'Listo.' : 'Probando ' + srcs.length + ' museos (Wikidata tarda; puede llevar un par de minutos)…') + '\n\n' +
       srcs.map(s => lines[s.id] || ('… ' + s.name)).join('\n');
   };
   draw(false);
   await C.mapLimit(srcs, 4, async s => {
     const t0 = Date.now(); let line;
     try {
-      const list = await C.runSource(s, f, ctx());
+      const d = {};
+      const list = await C.runSource(s, f, Object.assign(ctx(), { report: (n, c, err) => { d[n] = err ? '✖ ' + errText(err) : c; } }));
       const ok = list.filter(w => C.accept(w, f));
       let img = '';
       if (ok.length) { const r = await loadImage(C.shuffle(ok.slice())[0].imgs); img = r ? ' · imagen carga bien (' + r.w + '×' + r.h + ')' : ' · la imagen NO carga (bloqueada o rota)'; }
-      line = (ok.length ? '✔ ' : '✖ ') + s.name + ': ' + list.length + ' obras, ' + ok.length + ' válidas con tus filtros' + img + (ok[0] ? ' · «' + ok[0].title.slice(0, 50) + '»' : '') + ' · ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s';
+      line = (ok.length ? '✔ ' : '✖ ') + s.name + ': ' + list.length + ' obras, ' + ok.length + ' válidas con tus filtros' + img + (ok[0] ? ' · «' + ok[0].title.slice(0, 50) + '»' : '') + ' · ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s\n     ' + Object.keys(d).map(k => k + ': ' + d[k]).join(' · ');
     } catch (e) { line = '✖ ' + s.name + ': ERROR ' + errText(e) + ' · ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s'; }
     if (run !== diagRun) return;
     lines[s.id] = line; draw(false);
@@ -1346,19 +1487,32 @@ const BOX = { presets: 'c-presets', eras: 'c-eras', styles: 'c-styles', types: '
 function srcNote(s) {
   const st = S.status[s.id], base = s.place + ' · ' + s.note;
   if (!st) return base;
-  if (st.state === 'error') return s.name + ' no responde: ' + st.msg;
+  if (st.state === 'error') return s.name + ' no responde: ' + st.msg + (S.detail[s.id] ? ' · ' + Object.keys(S.detail[s.id]).map(k => k + ' ' + S.detail[s.id][k]).join(' · ') : '');
   if (st.state === 'nokey') return 'Añade una clave en «Claves de API»';
-  if (st.state === 'ok') return s.place + ' · ' + (S.counts[s.id] || 0) + ' obras cargadas';
+  const det = S.detail[s.id] ? ' · ' + Object.keys(S.detail[s.id]).map(k => k + ' ' + S.detail[s.id][k]).join(' · ') : '';
+  if (st.state === 'ok') return s.place + ' · ' + (S.counts[s.id] || 0) + ' obras cargadas' + det;
   if (st.state === 'loading') return s.place + ' · buscando…';
-  if (st.state === 'empty') return s.place + ' · sin resultados con estos filtros';
+  if (st.state === 'empty') return s.place + ' · sin resultados con estos filtros' + det;
   return base;
 }
 function srcRow(s) {
   return '<button class="src" data-act="src" data-id="' + esc(s.id) + '" aria-pressed="' + !!S.f.sources[s.id] + '"><span class="box"></span><span class="nm"><b>' + esc(s.name) + '</b><span data-sn="' + esc(s.id) + '">' + esc(srcNote(s)) + '</span></span><span class="dot ' + ((S.status[s.id] && S.status[s.id].state) || '') + '" data-dot="' + esc(s.id) + '"></span></button>';
 }
+function visibleMuseums() { const q = C.norm(S.mfilter); return C.SOURCE_LIST.filter(s => !q || C.norm(s.name + ' ' + s.place).includes(q)); }
 function renderSrcs() {
-  $('#c-srcs').innerHTML = C.SOURCE_LIST.filter(s => s.group !== 'museum').map(srcRow).join('');
-  $('#c-msrcs').innerHTML = C.SOURCE_LIST.filter(s => s.group === 'museum').map(srcRow).join('');
+  $('#c-msrcs').innerHTML = visibleMuseums().map(srcRow).join('') || '<p class="hint">Ningún museo coincide. Puedes añadirlo con su nombre aquí abajo.</p>';
+}
+async function addMuseumByName() {
+  const el = $('#museumIn'), msg = $('#museumMsg'), name = el.value.trim();
+  if (!name) return;
+  msg.textContent = 'Buscando «' + name + '» en Wikidata…';
+  try {
+    const m = await C.resolveMuseum(name), src = C.addMuseum(m);
+    S.custom = S.custom.filter(x => x.id !== m.id).concat([m]); lsSet('custom', S.custom);
+    S.f.sources[src.id] = true; S.mfilter = ''; $('#museumFilter').value = ''; el.value = '';
+    msg.textContent = 'Añadido: ' + m.es + ' (' + m.city + ')';
+    renderSrcs(); applyChange();
+  } catch (e) { msg.textContent = e && e.message && !e.status ? e.message : 'No pude buscar el museo: ' + errText(e); }
 }
 function updateSrc(id) {
   const s = C.SOURCE_LIST.find(x => x.id === id), dot = document.querySelector('[data-dot="' + id + '"]'), sn = document.querySelector('[data-sn="' + id + '"]');
@@ -1407,7 +1561,8 @@ function onAct(act, id) {
       renderAll(); applyChange(); break;
     }
     case 'src': f.sources[id] = !f.sources[id]; render('srcs'); applyChange(); break;
-    case 'mus-all': case 'mus-none': C.SOURCE_LIST.filter(x => x.group === 'museum').forEach(x => { f.sources[x.id] = act === 'mus-all'; }); render('srcs'); applyChange(); break;
+    case 'mus-all': case 'mus-none': visibleMuseums().forEach(x => { f.sources[x.id] = act === 'mus-all'; }); render('srcs'); applyChange(); break;
+    case 'add-museum': addMuseumByName(); break;
     case 'era': toggleArr(f.eras, id); f.yearFrom = f.yearTo = ''; $('#yFrom').value = $('#yTo').value = ''; render('eras'); applyChange(); break;
     case 'style': toggleArr(f.styles, id); render('styles'); applyChange(); break;
     case 'type': toggleArr(f.types, id); render('types'); applyChange(); break;
@@ -1449,7 +1604,7 @@ document.addEventListener('keydown', e => {
   activity();
   const tag = (e.target.tagName || '').toLowerCase(), typing = tag === 'input' || tag === 'textarea';
   if (typing) {
-    if (e.key === 'Enter') { if (e.target.id === 'artistIn') { addArtist(e.target.value); e.target.value = ''; } if (e.target.id === 'kwIn') { addKeyword(e.target.value); e.target.value = ''; } }
+    if (e.key === 'Enter') { if (e.target.id === 'artistIn') { addArtist(e.target.value); e.target.value = ''; } if (e.target.id === 'kwIn') { addKeyword(e.target.value); e.target.value = ''; } if (e.target.id === 'museumIn') addMuseumByName(); }
     if (e.key === 'Escape') e.target.blur();
     return;
   }
@@ -1464,6 +1619,7 @@ document.addEventListener('keydown', e => {
   else if (k === 'i' || k === 'I') { const c = $('#caption'); c.classList.toggle('show'); clearTimeout(S.capT); }
   else if (k === 'l' || k === 'L') toggleFav();
 });
+$('#museumFilter').addEventListener('input', e => { S.mfilter = e.target.value; renderSrcs(); });
 $('#yFrom').addEventListener('change', e => { S.f.yearFrom = e.target.value; S.f.eras = []; render('eras'); applyChange(); });
 $('#yTo').addEventListener('change', e => { S.f.yearTo = e.target.value; S.f.eras = []; render('eras'); applyChange(); });
 ['europeana', 'si', 'harvard'].forEach(k => {

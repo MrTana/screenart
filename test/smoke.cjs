@@ -11,6 +11,7 @@ w.fetch = async (url, init) => {
   url = String(url);
   if (url.includes('metmuseum') && url.includes('/search')) return J({ objectIDs: [1, 2, 3] });
   if (url.includes('metmuseum') && url.includes('/objects/')) { const id = +url.split('/').pop(); return J({ objectID: id, isPublicDomain: true, primaryImage: 'https://img/met' + id + '.jpg', primaryImageSmall: 'https://img/met' + id + 's.jpg', title: 'Obra ' + id, artistDisplayName: 'Claude Monet', objectDate: '1880', objectBeginDate: 1880, objectEndDate: 1880, classification: 'Paintings', objectURL: 'https://m/' + id }); }
+  if (url.includes('www.wikidata.org/w/api.php')) return J({ search: [{ id: 'Q4242', label: 'Museo de Prueba', description: 'museo de arte' }] });
   throw new TypeError('Failed to fetch');
 };
 w.Image = function () { const o = { set src(v) { this._s = v; setTimeout(() => { o.naturalWidth = 1600; o.naturalHeight = 1000; o.onload && o.onload(); }, 5); }, get src() { return this._s; } }; return o; };
@@ -27,7 +28,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   A.openMenu();
   const d = w.document; function d0(){return d;}
   console.log('filas de museos:', d0().querySelectorAll('#c-msrcs .src').length, '| activas:', d0().querySelectorAll('#c-msrcs .src[aria-pressed=true]').length);
-  console.log('menu abierto:', !d.getElementById('drawer').hidden, '| chips estilos:', d.querySelectorAll('#c-styles .chip').length, '| museos:', d.querySelectorAll('#c-srcs .src').length);
+  console.log('menu abierto:', !d.getElementById('drawer').hidden, '| chips estilos:', d.querySelectorAll('#c-styles .chip').length, '| filas:', d.querySelectorAll('#c-msrcs .src').length, '| sección antigua:', !!d.getElementById('c-srcs'));
   // clic en estilo Impresionismo y en una fuente
   d.querySelector('#c-styles [data-id=impressionism]').click();
   d.querySelector('#c-presets [data-id="2"]').click(); // Maestros holandeses
@@ -42,6 +43,12 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   d.querySelector('#c-msrcs [data-id="m:louvre"]').click(); console.log('Louvre desmarcado:', !S.f.sources['m:louvre'], '| museos activos:', on());
   d.querySelector('[data-act=mus-none]').click(); console.log('ninguno:', on());
   d.querySelector('[data-act=mus-all]').click(); console.log('todos:', on());
+  const flt = d.getElementById('museumFilter'); flt.value = 'París'; flt.dispatchEvent(new w.Event('input'));
+  console.log('filtro París ->', d.querySelectorAll('#c-msrcs .src').length, 'filas');
+  d.querySelector('[data-act=mus-none]').click(); console.log('quitar los de la lista ->', on(), 'museos activos');
+  flt.value = ''; flt.dispatchEvent(new w.Event('input'));
+  d.getElementById('museumIn').value = 'Museo de Prueba'; d.querySelector('[data-act=add-museum]').click(); await wait(300);
+  console.log('museo añadido:', d.getElementById('museumMsg').textContent, '| guardado:', S.custom.length, '| activo:', !!S.f.sources['m:cQ4242'], '| en lista:', /Museo de Prueba/.test(d.getElementById('c-msrcs').textContent));
   const pi = Array.from(d.querySelectorAll('#c-presets .chip')).findIndex(c => c.textContent === 'Museos de París'); d.querySelectorAll('#c-presets .chip')[pi].click();
   console.log('preset Museos de París -> fuentes activas:', Object.keys(S.f.sources).filter(k => S.f.sources[k]).join(','), );
   A.closeMenu();
