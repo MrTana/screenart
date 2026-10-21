@@ -78,6 +78,7 @@ Al abrir la galería en una pantalla grande aparece un **código QR** en la esqu
 - El móvil queda emparejado por un código aleatorio que la TV guarda en su navegador; puedes añadir la página del mando a la pantalla de inicio del móvil y seguirá funcionando mientras la TV no cambie de código.
 - La comunicación pasa por el canal público de [ntfy.sh](https://ntfy.sh) (sin cuentas ni servidor propio): solo viajan órdenes, filtros y el título de la obra, nunca claves de API. Con el límite gratuito de unos 250 mensajes al día por conexión, la TV solo avisa de cada obra nueva mientras hay un móvil conectado (como mucho una cada 8 segundos). Para usar tu propio servidor ntfy, añade `?relay=https://tu-servidor` en ambas direcciones.
 - **Fondo:** negro por defecto; en el menú (también desde el mando), «Fondo» permite volver al blanco.
+- **Todo el menú en el móvil:** además de los filtros, el mando tiene «Probar fuentes» (se ejecuta en la TV y el informe llega al móvil), «Restablecer filtros», las claves de API (se envían a la TV por el mismo canal) e «Instalar la app».
 - **Actualizar:** al final del mando hay «Buscar actualización»: la TV borra su copia guardada y recarga la última versión, y el móvil se actualiza después. Muestra la versión de cada uno.
 - Pruebas: `test/remote.cjs` simula TV y móvil.
 

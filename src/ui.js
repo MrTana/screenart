@@ -305,9 +305,9 @@ function describeFilters() {
   return parts.length ? parts.join(' · ') : 'sin filtros';
 }
 let diagRun = 0;
-async function diagnose() {
+async function diagnose(quiet) {
   const run = ++diagRun, f = S.f, box = $('#diag'), out = $('#diagOut');
-  box.hidden = false;
+  box.hidden = !!quiet; // desde el mando la TV no tapa la obra: el informe viaja al móvil
   const srcs = C.SOURCE_LIST.filter(s => f.sources[s.id]);
   const lines = {};
   const draw = (done) => {
@@ -483,6 +483,7 @@ function addKeyword(text) { const q = C.keywordToQuery(text || ''); if (!q || S.
 function onAct(act, id) {
   const f = S.f;
   if (REMOTE && (act === 'prev' || act === 'next' || act === 'play' || act === 'fav')) { remoteCmd(act); return; }
+  if (REMOTE && act === 'diag') { remoteDiag(); return; }
   switch (act) {
     case 'close': if (!REMOTE) closeMenu(); break;
     case 'qr': showPair(true); closeMenu(); break;
@@ -684,7 +685,7 @@ function relayListen(fn) {
 
 /* — lado TV — */
 function buildVer() { const v = document.querySelector('.ver'); const m = v && /Versión\s+(\w+)/.exec(v.textContent); return m ? m[1] : ''; }
-function tvState() { return { t: 'state', f: S.f, st: S.st, custom: S.custom, paused: S.paused, now: tvNow(), ver: buildVer() }; }
+function tvState() { return { t: 'state', f: S.f, st: S.st, custom: S.custom, paused: S.paused, now: tvNow(), ver: buildVer(), keyset: { europeana: !!S.keys.europeana, si: !!S.keys.si, harvard: !!S.keys.harvard } }; }
 function tvNow() {
   const w = S.current; if (!w) return null;
   return { uid: w.uid, title: w.title, artist: w.artist, date: w.date, museum: w.museum, thumb: w.thumb || w.url, fav: isFav(w), paused: S.paused };
@@ -707,6 +708,7 @@ function tvHandle(m) {
   if (m.t === 'cmd') {
     RC.forceNow = true;
     if (m.c === 'update') { forceUpdate(); return; }
+    if (m.c === 'diag') { RC.forceNow = false; diagnose(true).then(() => relaySend({ t: 'diag', text: $('#diagOut').textContent.slice(0, 40000) })); return; }
     if (m.c === 'next') next(); else if (m.c === 'prev') prev(); else if (m.c === 'play') togglePlay(); else if (m.c === 'fav') toggleFav();
     return;
   }
@@ -715,8 +717,10 @@ function tvHandle(m) {
     (m.custom || []).forEach(c => { if (c && c.id && !S.custom.some(x => x.id === c.id)) { try { C.addMuseum(c); S.custom.push(c); lsSet('custom', S.custom); } catch (e) { /* museo dañado */ } } });
     S.f = normFilters(m.f);
     if (m.st && typeof m.st === 'object') S.st = Object.assign(S.st, m.st);
+    let keyChanged = false;
+    ['europeana', 'si', 'harvard'].forEach(k => { const v = m.keys && typeof m.keys[k] === 'string' ? m.keys[k].trim() : ''; if (v && v !== S.keys[k]) { S.keys[k] = v; keyChanged = true; } });
     applyLook();
-    if (JSON.stringify(S.f) !== before) applyChange(); else { saveAll(); schedule(); }
+    if (keyChanged || JSON.stringify(S.f) !== before) applyChange(); else { saveAll(); schedule(); }
     if (S.menu) renderAll();
     toast('Ajustes cambiados desde el móvil');
     relaySend(tvState());
@@ -748,6 +752,14 @@ function remoteNow(n) {
   const im = $('#rcImg'); if (n.thumb && im.dataset.u !== n.thumb) { im.dataset.u = n.thumb; im.src = n.thumb; }
   $('#playBtn').textContent = S.paused ? 'Reanudar' : 'Pausar'; updateFavBtn();
 }
+function remoteKeys(ks) {
+  ['europeana', 'si', 'harvard'].forEach(k => { const el = $('#k-' + k); el.value = ''; el.placeholder = ks && ks[k] ? '•••••• guardada en la TV (escribe para cambiarla)' : 'sin clave en la TV'; });
+}
+function remoteDiag() {
+  if (!RC.gotState) { toast('Todavía no hay conexión con la TV'); return; }
+  $('#diagOut').textContent = 'Probando las fuentes desde la TV… puede llevar un par de minutos. El informe aparecerá aquí.'; $('#diag').hidden = false;
+  relaySend({ t: 'cmd', c: 'diag' });
+}
 function remoteVer(tvVer) { $('#rcver').textContent = 'Versión de la TV: ' + (tvVer || '—') + ' · de este móvil: ' + (buildVer() || '—'); }
 function remoteUpdate() {
   if (!RC.gotState) { toast('Todavía no hay conexión con la TV'); return; }
@@ -769,8 +781,9 @@ function remoteHandle(m) {
     RC.gotState = true; clearTimeout(RC.helloT);
     (m.custom || []).forEach(c => { try { if (c && c.id) { C.addMuseum(c); if (!S.custom.some(x => x.id === c.id)) S.custom.push(c); } } catch (e) { /* museo dañado */ } });
     S.f = normFilters(m.f); if (m.st) S.st = Object.assign(S.st, m.st);
-    renderAll(); remoteNow(m.now); remoteVer(m.ver);
+    renderAll(); remoteNow(m.now); remoteVer(m.ver); remoteKeys(m.keyset);
     remoteStat('Conectado a la TV. Lo que cambies aquí se aplica en la pantalla.', true, false);
+  } else if (m.t === 'diag') { $('#diagOut').textContent = m.text || ''; $('#diag').hidden = false;
   } else if (m.t === 'now') { remoteNow(m.now); if (!RC.gotState) remoteHello(true); }
 }
 function remoteCmd(c) {
@@ -781,11 +794,12 @@ function remoteCmd(c) {
 function remoteSetSoon() {
   if (!REMOTE) return;
   clearTimeout(RC.setT);
-  RC.setT = setTimeout(() => { relaySend({ t: 'set', f: S.f, st: S.st, custom: S.custom }); toast('Enviado a la TV'); }, 900);
+  RC.setT = setTimeout(() => { relaySend({ t: 'set', f: S.f, st: S.st, custom: S.custom, keys: S.keys }); toast('Enviado a la TV'); }, 900);
 }
 function initRemote() {
   RC.code = REMOTE; lsSet('rc', REMOTE);
   document.body.classList.add('rc');
+  S.keys = { europeana: '', si: '', harvard: '' };
   S.menu = true; applyLook(); renderAll();
   $('#rcinfo').hidden = false; $('#rcfoot').hidden = false; $('#drawer').hidden = false; remoteVer('');
   document.title = 'Mando · Galería de arte';

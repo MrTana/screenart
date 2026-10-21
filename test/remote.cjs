@@ -71,6 +71,18 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   assert.deepStrictEqual(Array.from(tvA.S.f.styles), ['impressionism'], 'filtro de estilo aplicado en la TV');
   assert.strictEqual(tvA.S.st.interval, 60, 'intervalo aplicado en la TV');
   assert.ok(tvA.S.epoch > e0, 'la TV relanzó la búsqueda');
+  // clave de API desde el móvil
+  const ke = p.getElementById('k-europeana'); ke.value = 'clave-prueba-é'; ke.dispatchEvent(new ph.Event('change'));
+  await wait(1700);
+  assert.strictEqual(tvA.S.keys.europeana, 'clave-prueba-é', 'la clave llega a la TV');
+  // «Probar fuentes» se ejecuta en la TV y el informe vuelve al móvil
+  Object.keys(tvA.S.f.sources).forEach(k => { tvA.S.f.sources[k] = k === 'm:met'; });
+  ph.ArtApp.onAct('diag');
+  assert.ok(!p.getElementById('diag').hidden, 'el móvil abre el informe');
+  assert.ok(tv.document.getElementById('diag').hidden, 'la TV no se tapa con el informe');
+  for (let i = 0; i < 40 && !/Filtros:/.test(p.getElementById('diagOut').textContent); i++) await wait(250);
+  assert.ok(/Filtros:/.test(p.getElementById('diagOut').textContent) && /Metropolitan|Met/.test(p.getElementById('diagOut').textContent), 'informe de la TV en el móvil: ' + p.getElementById('diagOut').textContent.slice(0, 120));
+  assert.ok(p.querySelector('.foot [data-act=reset]') && !p.getElementById('drawer').querySelector('[data-acc=claves]').hidden, 'el móvil conserva restablecer y claves');
   // nombres con tildes viajan bien
   assert.ok(posts > 4, 'mensajes enviados: ' + posts);
 
