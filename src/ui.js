@@ -398,10 +398,10 @@ const PRESETS = [
   { es: 'Grandes museos de Europa', only: ['m:louvre', 'm:orsay', 'm:prado', 'm:uffizi', 'm:hermitage', 'm:nationalgallery', 'm:vangogh', 'm:mauritshuis', 'm:kunsthistorisches', 'm:versailles'], patch: {} }
 ];
 const ORIENT = [['any', 'Cualquiera'], ['landscape', 'Horizontal'], ['portrait', 'Vertical'], ['square', 'Cuadrada']];
-const MODES = [['gallery', 'Blanco, obra lo más ancha'], ['frame', 'Con marco'], ['fill', 'Llenar (recorta)']];
+const MODES = [['gallery', 'Obra completa'], ['frame', 'Con marco'], ['fill', 'Llenar (recorta)']];
 const INTERVALS = [[10, '10 s'], [15, '15 s'], [30, '30 s'], [60, '1 min'], [300, '5 min'], [900, '15 min'], [3600, '1 h']];
 const BGS = [['black', 'Negro'], ['white', 'Blanco']];
-const CAPTIONS = [['auto', 'Al cambiar de obra (25 % del tiempo)'], ['always', 'Siempre visible'], ['never', 'Oculta']];
+const CAPTIONS = [['auto', 'Al inicio de cada obra'], ['always', 'Siempre visible'], ['never', 'Oculta']];
 
 const chip = (act, id, label, on, cls) => '<button class="chip' + (cls ? ' ' + cls : '') + '" data-act="' + act + '" data-id="' + esc(id) + '" aria-pressed="' + !!on + '">' + esc(label) + '</button>';
 const opts = (list, cur) => list.map(o => '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(cur) ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join('');

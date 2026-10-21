@@ -57,6 +57,10 @@ Es un proyecto de uso personal, así que por defecto se usan todas las imágenes
 
 Abre el menú y pulsa **Probar fuentes** (también sale en la pantalla de carga cuando no hay obras). Muestra, para cada fuente activa con tus filtros, cuántas obras devuelve, cuántas pasan el filtro, si la imagen carga y el error si lo hay. La cola ya no se rinde: si una fuente falla o viene vacía, descansa unos segundos y vuelve a intentarlo, y si se agotan las obras nuevas repite las ya vistas.
 
+## Diseño
+
+El menú, el mando y los avisos siguen **Material Design 3** (tema oscuro): roles de color M3, tipografía Roboto, botones rellenos, tonales y con contorno con iconos, chips de filtro con marca de selección, campos con contorno y etiqueta flotante, secciones plegables como tarjetas, botón de menú extendido, panel lateral modal con velo, avisos tipo snackbar, estados de pulsación y foco visibles, y objetivos táctiles de al menos 48 px. La obra y su ficha conservan el estilo de galería.
+
 ## No quiero ver
 
 La sección **No quiero ver** del menú quita temas sin limitar los demás: retratos y autorretratos, naturalezas muertas, flores, paisajes, marinas, ciudades, desnudos, religión, mitología, animales, batallas y escenas con personas. Se descartan las obras cuyo título encaja con el tema (en español, inglés, francés, italiano, alemán y neerlandés), y también puedes añadir tus propias palabras (por ejemplo «caballos»). Se conserva al cambiar de colección rápida y no afecta a las favoritas.
