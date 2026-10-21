@@ -370,10 +370,6 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
     <button class="acch" data-act="acc" data-id="estilo" aria-expanded="false"><span class="at">Estilo o movimiento</span><span class="as" data-sum="estilo"></span><span class="ac">›</span></button>
     <div class="accb"><div class="chips" id="c-styles"></div></div>
   </section>
-  <section class="acc" data-acc="tipo">
-    <button class="acch" data-act="acc" data-id="tipo" aria-expanded="false"><span class="at">Tipo de obra</span><span class="as" data-sum="tipo"></span><span class="ac">›</span></button>
-    <div class="accb"><div class="chips" id="c-types"></div><p class="hint">Sin elegir ninguno se muestra pintura, dibujo, grabado, fotografía y escultura.</p></div>
-  </section>
   <section class="acc" data-acc="artistas">
     <button class="acch" data-act="acc" data-id="artistas" aria-expanded="false"><span class="at">Artistas</span><span class="as" data-sum="artistas"></span><span class="ac">›</span></button>
     <div class="accb"><div class="chips" id="c-artists"></div>
@@ -410,7 +406,7 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
     <button class="acch" data-act="acc" data-id="skin" aria-expanded="false"><span class="at">Skin</span><span class="as" data-sum="skin"></span><span class="ac">›</span></button>
     <div class="accb"><label class="fld"><span>Aspecto de la interfaz</span><select id="c-skin"></select></label><p class="hint">Material Design 3 y Material 3 Expressive, en claro y oscuro. Solo cambia el menú, el mando y los avisos; la obra y su ficha no cambian.</p></div>
   </section>
-  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión fc5b7093bd · 2026-10-21 22:45 UTC</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
+  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 4255cf2538 · 2026-10-21 23:03 UTC</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
   <div id="rcfoot" hidden><button class="btn pri" data-act="rc-update">Buscar actualización</button><p id="rcver"></p></div>
 <div id="tvConnect"><button class="btn pri" data-act="tv-connect">Conectar a la TV</button><div class="row" id="tvRow" hidden><input type="text" id="tvCode" placeholder="Código de la TV (ej. abcd-efgh-jkmn)" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn pri" data-act="tv-go">Abrir mando</button></div><p class="hint" id="tvMsg">El código sale bajo el QR en la pantalla de la TV.</p></div>
 </aside>
@@ -497,8 +493,9 @@ function classifyType(text) {
   if (!t) return null;
   if (/photograph|daguerre|albumen|gelatin silver|fotograf|chromogenic/.test(t)) return 'photo';
   if (/\bprints?\b|etching|engraving|lithograph|woodcut|woodblock|aquatint|mezzotint|screenprint|serigraph|grabado|ukiyo|grafik|drypoint/.test(t)) return 'print';
-  if (/sculpt|escultur|\bbust\b|statue|\brelief\b|bronze|marble|skulptur|terracotta/.test(t)) return 'sculpture';
-  if (/ceramic|porcelain|\bvase\b|textile|tapestry|\bglass\b|furniture|jewel|silver|enamel|earthenware|fabric|\bfan\b|costume|metalwork/.test(t)) return 'decorative';
+  if (/tapestr|tapiz|tapisserie|gobelin|wandteppich|wandkleed/.test(t)) return 'tapestry';
+  if (/sculpt|escultur|estatua|busto|\bbust\b|statue|statuette|figurine|\btorso\b|sarcophag|\bstele\b|kouros|\brelief\b|bronze|marble|skulptur|terracotta/.test(t)) return 'sculpture';
+  if (/ceramic|porcelain|\bvase\b|textile|\bglass\b|furniture|jewel|silver|enamel|earthenware|fabric|\bfan\b|costume|metalwork/.test(t)) return 'decorative';
   if (/painting|\boil\b|tempera|acrylic|canvas|\bpanel\b|fresco|gouache|maleri|olieverf|pintura/.test(t)) return 'painting';
   if (/drawing|watercolo|pastel|charcoal|\bink\b|sketch|tegning|chalk|graphite|pencil|dibujo/.test(t)) return 'drawing';
   return null;
@@ -617,6 +614,7 @@ const TYPES = [
   { id: 'drawing', es: 'Dibujo y acuarela' },
   { id: 'print', es: 'Grabado y estampa' },
   { id: 'photo', es: 'Fotografía' },
+  { id: 'tapestry', es: 'Tapiz' },
   { id: 'sculpture', es: 'Escultura' },
   { id: 'decorative', es: 'Artes decorativas' }
 ];
@@ -702,7 +700,8 @@ function allowedRanges(f) {
 }
 const intersect = (a, b) => { const lo = Math.max(a[0], b[0]), hi = Math.min(a[1], b[1]); return lo <= hi ? [lo, hi] : null; };
 
-const DEFAULT_TYPE_BAG = ['painting', 'painting', 'painting', 'drawing', 'print', 'photo', 'sculpture'];
+/* La app es para ver cuadros, dibujos, estampas, grabados, tapices y fotografías; nunca objetos en 3D. */
+const DEFAULT_TYPE_BAG = ['painting', 'painting', 'painting', 'drawing', 'print', 'photo'];
 
 /* Un plan es una consulta concreta (un estilo, un artista, un tema, un tipo, un rango). */
 function makePlan(f) {
@@ -739,7 +738,7 @@ function accept(w, f) {
     if (!f.artists.some(n => norm(n).split(/\s+/).every(t => a.includes(t)))) return false;
   }
   if (f.types && f.types.length) { if (w.type && !f.types.includes(w.type)) return false; }
-  else if (w.type === 'decorative') return false;
+  else if (w.type === 'decorative' || w.type === 'sculpture') return false;
   if (f.orientation && f.orientation !== 'any' && w.w && w.h) {
     const r = w.w / w.h;
     if (f.orientation === 'landscape' && r < 1.15) return false;
@@ -1724,6 +1723,7 @@ function normFilters(s) {
   const f = Object.assign(d, s);
   f.sources = Object.assign({}, dsrc, s.sources || {});
   ['eras', 'styles', 'types', 'artists', 'keywords', 'exclude', 'noWords'].forEach(k => { if (!Array.isArray(f[k])) f[k] = []; });
+  f.types = []; // ya no hay selector de tipo: nunca se filtra por él (las esculturas y objetos 3D se descartan siempre)
   return f;
 }
 const S = {
@@ -2004,7 +2004,6 @@ function describeFilters() {
   if (f.styles.length) parts.push('estilo: ' + nm(C.STYLES, f.styles));
   if (f.eras.length) parts.push('época: ' + nm(C.ERAS, f.eras));
   if (f.yearFrom || f.yearTo) parts.push('años: ' + (f.yearFrom || '…') + ' a ' + (f.yearTo || '…'));
-  if (f.types.length) parts.push('tipo: ' + nm(C.TYPES, f.types));
   if (f.artists.length) parts.push('artistas: ' + f.artists.join(', '));
   if (f.keywords.length) parts.push('tema: ' + f.keywords.join(', '));
   if (f.exclude.length || f.noWords.length) parts.push('sin: ' + f.exclude.concat(f.noWords).join(', '));
@@ -2062,7 +2061,6 @@ function accSummary(id) {
     case 'museos': { const n = C.SOURCE_LIST.filter(s => f.sources[s.id]).length; return n + ' de ' + C.SOURCE_LIST.length + ' activos'; }
     case 'epoca': return f.yearFrom || f.yearTo ? (f.yearFrom || '…') + ' a ' + (f.yearTo || '…') : f.eras.length ? j(names(C.ERAS, f.eras)) : 'Todas las épocas';
     case 'estilo': return f.styles.length ? j(names(C.STYLES, f.styles)) : 'Todos los estilos';
-    case 'tipo': return f.types.length ? j(names(C.TYPES, f.types)) : 'Todos los tipos';
     case 'artistas': return f.artists.length ? j(f.artists) : 'Todos los artistas';
     case 'skin': return (SKINS.find(x => x[0] === S.st.skin) || SKINS[0])[1];
     case 'noquiero': { const n = f.exclude.map(id => (C.EXCLUDES.find(x => x.id === id) || { es: id }).es).concat(f.noWords); return n.length ? j(n) : 'Nada excluido'; }
@@ -2086,13 +2084,13 @@ function toggleAcc(id) {
 const PRESETS = [
   { es: 'Todo el arte', patch: {} },
   { es: 'Impresionismo', patch: { styles: ['impressionism', 'postimpressionism'] } },
-  { es: 'Maestros holandeses', patch: { styles: ['dutch'], types: ['painting'] } },
+  { es: 'Maestros holandeses', patch: { styles: ['dutch'] } },
   { es: 'Japón: ukiyo-e', patch: { styles: ['ukiyoe'] } },
-  { es: 'Barroco', patch: { styles: ['baroque'], types: ['painting'] } },
-  { es: 'Arte moderno', patch: { eras: ['mod'], types: ['painting'] } },
-  { es: 'Siglo XIX', patch: { eras: ['s19a', 's19b'], types: ['painting'] } },
-  { es: 'Paisajes', patch: { keywords: ['landscape'], types: ['painting'] } },
-  { es: 'Retratos', patch: { keywords: ['portrait'], types: ['painting'] } },
+  { es: 'Barroco', patch: { styles: ['baroque'] } },
+  { es: 'Arte moderno', patch: { eras: ['mod'] } },
+  { es: 'Siglo XIX', patch: { eras: ['s19a', 's19b'] } },
+  { es: 'Paisajes', patch: { keywords: ['landscape'] } },
+  { es: 'Retratos', patch: { keywords: ['portrait'] } },
   { es: 'París', patch: { keywords: ['Paris'] } },
   { es: 'Remedios Varo', patch: { artists: ['Remedios Varo'] } },
   { es: 'Surrealistas de Latinoamérica', patch: { artists: ['Remedios Varo', 'Leonora Carrington', 'Frida Kahlo', 'Wifredo Lam', 'Roberto Matta', 'Maruja Mallo', 'Alice Rahon', 'Óscar Domínguez'] } },
@@ -2118,7 +2116,6 @@ const R = {
   presets: () => '<option value="">Elegir una colección…</option>' + PRESETS.map((p, i) => '<option value="' + i + '">' + esc(p.es) + '</option>').join(''),
   eras: () => C.ERAS.map(e => chip('era', e.id, e.es, S.f.eras.includes(e.id))).join(''),
   styles: () => C.STYLES.map(s => chip('style', s.id, s.es, S.f.styles.includes(s.id))).join(''),
-  types: () => C.TYPES.map(t => chip('type', t.id, t.es, S.f.types.includes(t.id))).join(''),
   artists: () => S.f.artists.map(a => chip('rm-artist', a, a, true, 'rm')).join('') || '<span class="hint" style="font-size:14px;color:var(--muted)">Ninguno. Se muestran todos los artistas.</span>',
   artgroup: () => opts(C.ARTIST_GROUPS.map(g => [g.id, g.es + ' (' + g.names.length + ')']), S.artGroup),
   artistsug: () => ((C.ARTIST_GROUPS.find(g => g.id === S.artGroup) || C.ARTIST_GROUPS[0]).names).filter(a => !S.f.artists.some(x => C.norm(x) === C.norm(a))).map(a => chip('add-sug', a, a, false)).join('') || '<span class="hint" style="font-size:14px;color:var(--muted)">Ya elegiste todos los de este grupo.</span>',
@@ -2134,7 +2131,7 @@ const R = {
   opts: () => chip('opt', 'kb', 'Zoom lento', S.st.kenburns) + chip('opt', 'hq', 'Imágenes en alta calidad', S.st.quality === 'high') +
     chip('opt', 'pd', 'Solo dominio público', S.f.soloPD) + chip('opt', 'favs', 'Solo mis favoritas (' + S.favs.length + ')', S.f.onlyFavs)
 };
-const BOX = { presets: 'c-presets', eras: 'c-eras', styles: 'c-styles', types: 'c-types', artists: 'c-artists', artgroup: 'c-artgroup', artistsug: 'c-artist-sug', kws: 'c-kws', excl: 'c-excl', exwords: 'c-exwords', orient: 'c-orient', mode: 'c-mode', interval: 'c-interval', caption: 'c-caption', skin: 'c-skin', opts: 'c-opts' };
+const BOX = { presets: 'c-presets', eras: 'c-eras', styles: 'c-styles', artists: 'c-artists', artgroup: 'c-artgroup', artistsug: 'c-artist-sug', kws: 'c-kws', excl: 'c-excl', exwords: 'c-exwords', orient: 'c-orient', mode: 'c-mode', interval: 'c-interval', caption: 'c-caption', skin: 'c-skin', opts: 'c-opts' };
 
 function srcNote(s) {
   const st = S.status[s.id], base = s.place + ' · ' + s.note;
@@ -2251,7 +2248,6 @@ function onAct(act, id) {
     case 'add-museum': addMuseumByName(); break;
     case 'era': toggleArr(f.eras, id); f.yearFrom = f.yearTo = ''; $('#yFrom').value = $('#yTo').value = ''; render('eras'); applyChange(); break;
     case 'style': toggleArr(f.styles, id); render('styles'); applyChange(); break;
-    case 'type': toggleArr(f.types, id); render('types'); applyChange(); break;
     case 'kw': toggleArr(f.keywords, id); render('kws'); applyChange(); break;
     case 'orient': f.orientation = id; render('orient'); applyChange(); break;
     case 'add-artist': addArtist($('#artistIn').value); $('#artistIn').value = ''; break;

@@ -51,7 +51,7 @@ Es un proyecto de uso personal, así que por defecto se usan todas las imágenes
 
 ## Filtros
 
-Época (o años exactos), estilo o movimiento (23), tipo de obra, artistas, tema, formato horizontal o vertical, solo dominio público y favoritas. Los filtros de época, estilo y artista de los museos famosos dependen de que Wikidata tenga fecha y autor de cada obra. Hay colecciones rápidas como Impresionismo, Maestros holandeses, Museos de París o Grandes museos de Europa.
+Época (o años exactos), estilo o movimiento (23), artistas, tema, formato horizontal o vertical, solo dominio público y favoritas. Los filtros de época, estilo y artista de los museos famosos dependen de que Wikidata tenga fecha y autor de cada obra. La app es para ver pinturas, dibujos, estampas, grabados, tapices y fotografías: no hay selector de tipo y las esculturas, los muebles y otros objetos en 3D se descartan siempre. Hay colecciones rápidas como Impresionismo, Maestros holandeses, Museos de París o Grandes museos de Europa.
 
 ## Si las imágenes no cambian o un estilo sale vacío
 

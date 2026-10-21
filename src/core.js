@@ -76,8 +76,9 @@ function classifyType(text) {
   if (!t) return null;
   if (/photograph|daguerre|albumen|gelatin silver|fotograf|chromogenic/.test(t)) return 'photo';
   if (/\bprints?\b|etching|engraving|lithograph|woodcut|woodblock|aquatint|mezzotint|screenprint|serigraph|grabado|ukiyo|grafik|drypoint/.test(t)) return 'print';
-  if (/sculpt|escultur|\bbust\b|statue|\brelief\b|bronze|marble|skulptur|terracotta/.test(t)) return 'sculpture';
-  if (/ceramic|porcelain|\bvase\b|textile|tapestry|\bglass\b|furniture|jewel|silver|enamel|earthenware|fabric|\bfan\b|costume|metalwork/.test(t)) return 'decorative';
+  if (/tapestr|tapiz|tapisserie|gobelin|wandteppich|wandkleed/.test(t)) return 'tapestry';
+  if (/sculpt|escultur|estatua|busto|\bbust\b|statue|statuette|figurine|\btorso\b|sarcophag|\bstele\b|kouros|\brelief\b|bronze|marble|skulptur|terracotta/.test(t)) return 'sculpture';
+  if (/ceramic|porcelain|\bvase\b|textile|\bglass\b|furniture|jewel|silver|enamel|earthenware|fabric|\bfan\b|costume|metalwork/.test(t)) return 'decorative';
   if (/painting|\boil\b|tempera|acrylic|canvas|\bpanel\b|fresco|gouache|maleri|olieverf|pintura/.test(t)) return 'painting';
   if (/drawing|watercolo|pastel|charcoal|\bink\b|sketch|tegning|chalk|graphite|pencil|dibujo/.test(t)) return 'drawing';
   return null;
@@ -196,6 +197,7 @@ const TYPES = [
   { id: 'drawing', es: 'Dibujo y acuarela' },
   { id: 'print', es: 'Grabado y estampa' },
   { id: 'photo', es: 'Fotografía' },
+  { id: 'tapestry', es: 'Tapiz' },
   { id: 'sculpture', es: 'Escultura' },
   { id: 'decorative', es: 'Artes decorativas' }
 ];
@@ -281,7 +283,8 @@ function allowedRanges(f) {
 }
 const intersect = (a, b) => { const lo = Math.max(a[0], b[0]), hi = Math.min(a[1], b[1]); return lo <= hi ? [lo, hi] : null; };
 
-const DEFAULT_TYPE_BAG = ['painting', 'painting', 'painting', 'drawing', 'print', 'photo', 'sculpture'];
+/* La app es para ver cuadros, dibujos, estampas, grabados, tapices y fotografías; nunca objetos en 3D. */
+const DEFAULT_TYPE_BAG = ['painting', 'painting', 'painting', 'drawing', 'print', 'photo'];
 
 /* Un plan es una consulta concreta (un estilo, un artista, un tema, un tipo, un rango). */
 function makePlan(f) {
@@ -318,7 +321,7 @@ function accept(w, f) {
     if (!f.artists.some(n => norm(n).split(/\s+/).every(t => a.includes(t)))) return false;
   }
   if (f.types && f.types.length) { if (w.type && !f.types.includes(w.type)) return false; }
-  else if (w.type === 'decorative') return false;
+  else if (w.type === 'decorative' || w.type === 'sculpture') return false;
   if (f.orientation && f.orientation !== 'any' && w.w && w.h) {
     const r = w.w / w.h;
     if (f.orientation === 'landscape' && r < 1.15) return false;

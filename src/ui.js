@@ -19,6 +19,7 @@ function normFilters(s) {
   const f = Object.assign(d, s);
   f.sources = Object.assign({}, dsrc, s.sources || {});
   ['eras', 'styles', 'types', 'artists', 'keywords', 'exclude', 'noWords'].forEach(k => { if (!Array.isArray(f[k])) f[k] = []; });
+  f.types = []; // ya no hay selector de tipo: nunca se filtra por él (las esculturas y objetos 3D se descartan siempre)
   return f;
 }
 const S = {
@@ -299,7 +300,6 @@ function describeFilters() {
   if (f.styles.length) parts.push('estilo: ' + nm(C.STYLES, f.styles));
   if (f.eras.length) parts.push('época: ' + nm(C.ERAS, f.eras));
   if (f.yearFrom || f.yearTo) parts.push('años: ' + (f.yearFrom || '…') + ' a ' + (f.yearTo || '…'));
-  if (f.types.length) parts.push('tipo: ' + nm(C.TYPES, f.types));
   if (f.artists.length) parts.push('artistas: ' + f.artists.join(', '));
   if (f.keywords.length) parts.push('tema: ' + f.keywords.join(', '));
   if (f.exclude.length || f.noWords.length) parts.push('sin: ' + f.exclude.concat(f.noWords).join(', '));
@@ -357,7 +357,6 @@ function accSummary(id) {
     case 'museos': { const n = C.SOURCE_LIST.filter(s => f.sources[s.id]).length; return n + ' de ' + C.SOURCE_LIST.length + ' activos'; }
     case 'epoca': return f.yearFrom || f.yearTo ? (f.yearFrom || '…') + ' a ' + (f.yearTo || '…') : f.eras.length ? j(names(C.ERAS, f.eras)) : 'Todas las épocas';
     case 'estilo': return f.styles.length ? j(names(C.STYLES, f.styles)) : 'Todos los estilos';
-    case 'tipo': return f.types.length ? j(names(C.TYPES, f.types)) : 'Todos los tipos';
     case 'artistas': return f.artists.length ? j(f.artists) : 'Todos los artistas';
     case 'skin': return (SKINS.find(x => x[0] === S.st.skin) || SKINS[0])[1];
     case 'noquiero': { const n = f.exclude.map(id => (C.EXCLUDES.find(x => x.id === id) || { es: id }).es).concat(f.noWords); return n.length ? j(n) : 'Nada excluido'; }
@@ -381,13 +380,13 @@ function toggleAcc(id) {
 const PRESETS = [
   { es: 'Todo el arte', patch: {} },
   { es: 'Impresionismo', patch: { styles: ['impressionism', 'postimpressionism'] } },
-  { es: 'Maestros holandeses', patch: { styles: ['dutch'], types: ['painting'] } },
+  { es: 'Maestros holandeses', patch: { styles: ['dutch'] } },
   { es: 'Japón: ukiyo-e', patch: { styles: ['ukiyoe'] } },
-  { es: 'Barroco', patch: { styles: ['baroque'], types: ['painting'] } },
-  { es: 'Arte moderno', patch: { eras: ['mod'], types: ['painting'] } },
-  { es: 'Siglo XIX', patch: { eras: ['s19a', 's19b'], types: ['painting'] } },
-  { es: 'Paisajes', patch: { keywords: ['landscape'], types: ['painting'] } },
-  { es: 'Retratos', patch: { keywords: ['portrait'], types: ['painting'] } },
+  { es: 'Barroco', patch: { styles: ['baroque'] } },
+  { es: 'Arte moderno', patch: { eras: ['mod'] } },
+  { es: 'Siglo XIX', patch: { eras: ['s19a', 's19b'] } },
+  { es: 'Paisajes', patch: { keywords: ['landscape'] } },
+  { es: 'Retratos', patch: { keywords: ['portrait'] } },
   { es: 'París', patch: { keywords: ['Paris'] } },
   { es: 'Remedios Varo', patch: { artists: ['Remedios Varo'] } },
   { es: 'Surrealistas de Latinoamérica', patch: { artists: ['Remedios Varo', 'Leonora Carrington', 'Frida Kahlo', 'Wifredo Lam', 'Roberto Matta', 'Maruja Mallo', 'Alice Rahon', 'Óscar Domínguez'] } },
@@ -413,7 +412,6 @@ const R = {
   presets: () => '<option value="">Elegir una colección…</option>' + PRESETS.map((p, i) => '<option value="' + i + '">' + esc(p.es) + '</option>').join(''),
   eras: () => C.ERAS.map(e => chip('era', e.id, e.es, S.f.eras.includes(e.id))).join(''),
   styles: () => C.STYLES.map(s => chip('style', s.id, s.es, S.f.styles.includes(s.id))).join(''),
-  types: () => C.TYPES.map(t => chip('type', t.id, t.es, S.f.types.includes(t.id))).join(''),
   artists: () => S.f.artists.map(a => chip('rm-artist', a, a, true, 'rm')).join('') || '<span class="hint" style="font-size:14px;color:var(--muted)">Ninguno. Se muestran todos los artistas.</span>',
   artgroup: () => opts(C.ARTIST_GROUPS.map(g => [g.id, g.es + ' (' + g.names.length + ')']), S.artGroup),
   artistsug: () => ((C.ARTIST_GROUPS.find(g => g.id === S.artGroup) || C.ARTIST_GROUPS[0]).names).filter(a => !S.f.artists.some(x => C.norm(x) === C.norm(a))).map(a => chip('add-sug', a, a, false)).join('') || '<span class="hint" style="font-size:14px;color:var(--muted)">Ya elegiste todos los de este grupo.</span>',
@@ -429,7 +427,7 @@ const R = {
   opts: () => chip('opt', 'kb', 'Zoom lento', S.st.kenburns) + chip('opt', 'hq', 'Imágenes en alta calidad', S.st.quality === 'high') +
     chip('opt', 'pd', 'Solo dominio público', S.f.soloPD) + chip('opt', 'favs', 'Solo mis favoritas (' + S.favs.length + ')', S.f.onlyFavs)
 };
-const BOX = { presets: 'c-presets', eras: 'c-eras', styles: 'c-styles', types: 'c-types', artists: 'c-artists', artgroup: 'c-artgroup', artistsug: 'c-artist-sug', kws: 'c-kws', excl: 'c-excl', exwords: 'c-exwords', orient: 'c-orient', mode: 'c-mode', interval: 'c-interval', caption: 'c-caption', skin: 'c-skin', opts: 'c-opts' };
+const BOX = { presets: 'c-presets', eras: 'c-eras', styles: 'c-styles', artists: 'c-artists', artgroup: 'c-artgroup', artistsug: 'c-artist-sug', kws: 'c-kws', excl: 'c-excl', exwords: 'c-exwords', orient: 'c-orient', mode: 'c-mode', interval: 'c-interval', caption: 'c-caption', skin: 'c-skin', opts: 'c-opts' };
 
 function srcNote(s) {
   const st = S.status[s.id], base = s.place + ' · ' + s.note;
@@ -546,7 +544,6 @@ function onAct(act, id) {
     case 'add-museum': addMuseumByName(); break;
     case 'era': toggleArr(f.eras, id); f.yearFrom = f.yearTo = ''; $('#yFrom').value = $('#yTo').value = ''; render('eras'); applyChange(); break;
     case 'style': toggleArr(f.styles, id); render('styles'); applyChange(); break;
-    case 'type': toggleArr(f.types, id); render('types'); applyChange(); break;
     case 'kw': toggleArr(f.keywords, id); render('kws'); applyChange(); break;
     case 'orient': f.orientation = id; render('orient'); applyChange(); break;
     case 'add-artist': addArtist($('#artistIn').value); $('#artistIn').value = ''; break;
