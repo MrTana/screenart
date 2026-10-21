@@ -30,7 +30,7 @@ const S = {
   pool: [], seen: new Set(), seenKey: new Set(), hist: [], hi: -1,
   paused: false, menu: false, epoch: 0, refilling: 0, adv: false, advAt: 0, flight: new Map(), cool: {}, streak: {}, warned: false, recycleAfter: 6000, artGroup: 'impressionism', mfilter: '', detail: {}, acc: null,
   status: {}, counts: {}, layer: 0, nextP: null, nextEpoch: -1,
-  noClick: 0, timer: null, capT: null, idleT: null, waiters: [], current: null, shown: 0
+  timer: null, capT: null, idleT: null, waiters: [], current: null, shown: 0
 };
 function saveAll() { if (REMOTE) { remoteSetSoon(); return; } lsSet('f', S.f); lsSet('st', S.st); lsSet('keys', S.keys); lsSet('favs', S.favs.slice(0, 300)); }
 
@@ -587,26 +587,15 @@ document.addEventListener('click', e => {
   if (e.target.closest('#pair')) { hidePair(); return; }
   if (REMOTE) return;
   if (e.target.closest('#drawer') || e.target.closest('#diag')) return;
-  if (Date.now() < S.noClick) return; // el clic que sigue a una pulsación larga no cuenta
   if (S.menu) { closeMenu(); return; }
   if (touchLayout() && e.clientX != null) {
-    // Sin botones ni flechas: borde derecho = siguiente, borde izquierdo = anterior (y también deslizando). El menú se abre manteniendo pulsado.
+    // Sin botones ni flechas en pantalla: borde derecho = siguiente, borde izquierdo = anterior, centro = menú.
     const x = e.clientX / (window.innerWidth || 1);
-    if (x > EDGE_R) next(); else if (x < EDGE_L) prev();
+    if (x > EDGE_R) { next(); return; }
+    if (x < EDGE_L) { prev(); return; }
   }
+  openMenu();
 });
-// Mantener pulsada la pantalla (≈0,6 s) abre el menú; un clic suelto ya no lo abre ni muestra botones.
-{ let lp = null, p0 = null;
-  const stop = () => { clearTimeout(lp); lp = null; };
-  document.addEventListener('pointerdown', e => {
-    if (REMOTE || S.menu || e.button > 0 || e.target.closest('#drawer, #diag, #pair, #loader, #toast, [data-act]')) return;
-    p0 = { x: e.clientX, y: e.clientY }; stop();
-    lp = setTimeout(() => { lp = null; S.noClick = Date.now() + 700; openMenu(); }, 600);
-  }, { passive: true });
-  document.addEventListener('pointermove', e => { if (lp && p0 && Math.hypot(e.clientX - p0.x, e.clientY - p0.y) > 12) stop(); }, { passive: true });
-  ['pointerup', 'pointercancel', 'pointerleave', 'touchmove'].forEach(ev => document.addEventListener(ev, stop, { passive: true }));
-  document.addEventListener('contextmenu', e => { if (!REMOTE && !e.target.closest('#drawer, #diag, input, textarea, select')) e.preventDefault(); });
-}
 ['mousemove', 'touchstart', 'pointerdown'].forEach(ev => document.addEventListener(ev, activity, { passive: true }));
 document.addEventListener('keydown', e => {
   activity();
@@ -926,8 +915,8 @@ function init() {
   if (REMOTE) { initRemote(); return; }
   applyLook(); renderAll(); activity(); keepAwake();
   document.body.classList.add('active');
-  if (touchLayout() && !lsGet('tapHint', false)) { lsSet('tapHint', true); setTimeout(() => toast('Toca el borde derecho: siguiente · el izquierdo: anterior · mantén pulsado: menú'), 2500); }
-  showLoader('Buscando obras en los museos…', 'Pulsa Intro o mantén pulsada la pantalla para abrir los filtros.', false);
+  if (touchLayout() && !lsGet('tapHint', false)) { lsSet('tapHint', true); setTimeout(() => toast('Toca el borde derecho: siguiente · el izquierdo: anterior · el centro: menú'), 2500); }
+  showLoader('Buscando obras en los museos…', 'Pulsa Intro o toca la pantalla para abrir los filtros.', false);
   advance();
   initTV();
 }

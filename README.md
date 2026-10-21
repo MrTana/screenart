@@ -77,12 +77,12 @@ En el menú, «Claves de API» incluye un botón **Probar** por cada clave (Euro
 | --- | --- |
 | Flechas izquierda y derecha | Obra anterior y siguiente |
 | Espacio | Pausar y reanudar |
-| Intro, M o flechas arriba y abajo | Abrir el menú (con ratón o dedo: mantener pulsada la pantalla ≈0,6 s) |
+| Intro, M o flechas arriba y abajo | Abrir el menú |
 | F | Pantalla completa |
 | I | Mostrar u ocultar la ficha |
 | L | Guardar o quitar favorita |
 
-En el móvil o la tableta funciona como un libro electrónico: tocar el borde derecho pasa a la siguiente obra, el borde izquierdo vuelve a la anterior (sin flechas ni botones en pantalla). También se puede deslizar el dedo a izquierda o derecha. El menú se abre manteniendo pulsada la pantalla; un toque suelto ya no lo abre ni muestra botones.
+En el móvil o la tableta funciona como un libro electrónico: tocar el borde derecho pasa a la siguiente obra, el borde izquierdo vuelve a la anterior y el centro abre el menú (sin flechas ni botones en pantalla). También se puede deslizar el dedo a izquierda o derecha. Con ratón, un clic en cualquier punto abre el menú.
 
 ## Mando desde el móvil (sin usar el control de la TV)
 

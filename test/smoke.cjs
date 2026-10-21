@@ -124,9 +124,8 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   const rightOK = !S.menu && (S.adv || S.hist.length > hl0 || S.shown > sh0 || S.hi < S.hist.length - 1);
   const hi1 = S.hi; tap(15); await wait(100);
   const leftOK = !S.menu && (S.hi < hi1 || S.hi === 0);
-  tap(250); const centerOK = !S.menu; // un toque en el centro ya no abre el menú
-  { d.body.dispatchEvent(new w.MouseEvent('pointerdown', { clientX: 250, clientY: 100, bubbles: true, button: 0 })); await wait(750); assert.ok(S.menu, 'mantener pulsado abre el menú'); d.body.dispatchEvent(new w.MouseEvent('pointerup', { bubbles: true })); tap(250); await wait(50); assert.ok(S.menu, 'el clic tras la pulsación larga no cierra el menú'); await wait(700); A.closeMenu(); }
-  console.log('toques -> derecha:', rightOK, '| izquierda:', leftOK, '| centro ya no abre menú:', centerOK);
+  tap(250); const centerOK = S.menu; A.closeMenu();
+  console.log('toques -> derecha:', rightOK, '| izquierda:', leftOK, '| centro abre menú:', centerOK);
   if (!rightOK || !leftOK || !centerOK) { console.error('FALLO toques'); process.exit(1); }
   console.log('errores JS:', errors.length ? errors : 'ninguno');
   process.exit(0);
