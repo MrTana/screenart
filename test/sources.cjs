@@ -76,6 +76,13 @@ const idx = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/moma/index.
   const aq = sq.find(q => /mwapi/.test(q));
   assert.ok(aq && /wikibase:api "EntitySearch" \. bd:serviceParam mwapi:search "Remedios Varo" \./.test(aq) && !/"; bd:serviceParam/.test(aq), 'servicio mwapi bien formado');
   assert.ok(!sq.filter(q => /COUNT/.test(q)).some(q => /wdt:P31 \?cls/.test(q)), 'el conteo no arrastra uniones innecesarias');
+  // Colecciones sin CORS: si la petición directa falla, se repite por /api/p
+  globalThis.location = { protocol: 'https:', hostname: 'screenart.test' };
+  const prox = [];
+  globalThis.fetch = async u => { u = String(u); if (u.startsWith('/api/p?u=')) { prox.push(decodeURIComponent(u.slice(9))); return J({ AllPaintingsCount: 1, PageSize: 60, Paintings: [{ id: 'w', title: 'Casa', artistName: 'Remedios Varo', year: 1940, image: 'https://uploads.wikiart.org/a.jpg!Large.jpg', paintingUrl: '/en/x/y' }] }); } throw new TypeError('Failed to fetch'); };
+  const viaWa = await C.adapters.wikiartFetch(Object.assign({}, plan, { artist: 'Leonora Carrington' }), Object.assign(C.defaultFilters(), { artists: ['Leonora Carrington'] }), ctx);
+  assert.ok(viaWa.length === 1 && /wikiart\.org\/en\/leonora-carrington\/mode\/all-paintings\?json=2/.test(prox[0]), 'WikiArt por el intermediario');
+  delete globalThis.location;
   const ids = C.MUSEUMS.map(m => m.id); assert.strictEqual(new Set(ids).size, ids.length, 'ids de museo únicos');
   assert.ok(C.museumIdsByTag('artist').length >= 20, 'museos de un solo artista');
   console.log('MoMA', l.length, '· DPUL', d.length, '· Commons especial OK');

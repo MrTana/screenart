@@ -1,5 +1,5 @@
 /* Service worker: la app abre sin conexión (las obras sí necesitan internet). */
-const VERSION = 'ea6e0949b8';
+const VERSION = '90755d81c4';
 const CACHE = 'galeria-' + VERSION;
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/apple-touch-icon.png', 'icons/favicon-32.png'];
 
@@ -19,6 +19,7 @@ self.addEventListener('fetch', e => {
   }
   // Todo lo demás de otros servidores (APIs de museos, imágenes) va directo a internet, sin guardar.
   if (url.origin !== self.location.origin) return;
+  if (url.pathname.indexOf('/api/') === 0) return; // intermediario de colecciones: siempre a la red
   // La página: primero la red (así llegan las actualizaciones) y, sin conexión, la copia guardada.
   if (req.mode === 'navigate') {
     e.respondWith(fetch(req).then(r => { const copy = r.clone(); caches.open(CACHE).then(c => c.put('index.html', copy)); return r; })

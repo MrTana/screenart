@@ -24,6 +24,16 @@ async function getJSON(url, init, timeout) {
   } finally { clearTimeout(t); }
 }
 
+/* Algunas colecciones no envían CORS: si la petición directa falla por red, se repite por /api/p (función de Cloudflare Pages). */
+const canProxy = () => typeof location !== 'undefined' && /^https?:$/.test(location.protocol);
+async function getJSONvia(url, init, timeout) {
+  try { return await getJSON(url, init, timeout); }
+  catch (e) {
+    if (!(e instanceof TypeError) || !canProxy()) throw e;
+    return await getJSON('/api/p?u=' + encodeURIComponent(url), {}, timeout);
+  }
+}
+
 async function mapLimit(items, limit, fn) {
   const out = new Array(items.length); let i = 0;
   const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
@@ -383,7 +393,7 @@ async function aicFetch(plan, f, ctx) {
   if (text) gp.set('q', text);
   else gp.set('q', pick(GENERIC));
   let j;
-  try { j = await memo('aic:' + gp, () => getJSON(url + '?' + gp, {}, 25000)); }
+  try { j = await memo('aic:' + gp, () => getJSONvia(url + '?' + gp, {}, 25000)); }
   catch (e) { if (!(e instanceof TypeError)) throw e; j = { data: await aicProbe(plan, ctx) }; }
   const lo = plan.range ? plan.range[0] : -Infinity, hi = plan.range ? plan.range[1] : Infinity, tw = AIC_TYPE[plan.type] ? norm(AIC_TYPE[plan.type]) : null;
   const data = sampleN((j.data || []).filter(o => o.image_id && (o.date_start == null || (o.date_start >= lo && o.date_start <= hi)) && (!tw || !o.artwork_type_title || norm(o.artwork_type_title).includes(tw))), 24);
@@ -1058,11 +1068,11 @@ async function wikiartFetch(plan, f, ctx) {
     st = plan.style && plan.style.wa ? plan.style : pick(STYLES.filter(x => x.wa));
     url = n => 'https://www.wikiart.org/en/paintings-by-style/' + st.wa + '?select=featured&json=2&layout=new&resultType=masonry&page=' + n;
   }
-  const first = await memo('wa:' + st.wa, () => getJSON(url(1)));
+  const first = await memo('wa:' + st.wa, () => getJSONvia(url(1)));
   const total = first.AllPaintingsCount || 0, size = first.PageSize || 60;
   const pages = Math.max(1, Math.min(Math.ceil(total / size), 40));
   const n = 1 + rand(pages);
-  const j = n === 1 ? first : await getJSON(url(n));
+  const j = n === 1 ? first : await getJSONvia(url(n));
   return (Array.isArray(j) ? j : (j.Paintings || [])).filter(p => p.image && p.title).map(p => mk({
     src: 'wikiart', museum: 'WikiArt', id: p.id, title: p.title, artist: p.artistName, date: p.year,
     imgs: [p.image.replace(/!\w+\.jpg$/, ''), p.image], thumb: p.image + '!PinterestSmall.jpg',
@@ -1216,10 +1226,10 @@ const DPUL_WORDS = ['painting', 'print', 'drawing', 'engraving', 'woodcut', 'lit
 async function dpulFetch(plan, f, ctx) {
   const q = [plan.artist || plan.hintArtist, plan.style && plan.style.q, plan.keyword].filter(Boolean).join(' ') || pick(DPUL_WORDS);
   const base = 'https://dpul.princeton.edu/catalog.json?search_field=all_fields&per_page=24&q=' + encodeURIComponent(q);
-  const first = await memo('dpul:' + q, () => getJSON(base + '&page=1', { headers: { Accept: 'application/json' } }, 20000));
+  const first = await memo('dpul:' + q, () => getJSONvia(base + '&page=1', {}, 20000));
   const pages = Math.max(1, Math.min(((first.meta && first.meta.pages && first.meta.pages.total_pages) || 1), 40));
   const n = 1 + rand(pages);
-  const j = n === 1 ? first : await getJSON(base + '&page=' + n, { headers: { Accept: 'application/json' } }, 20000);
+  const j = n === 1 ? first : await getJSONvia(base + '&page=' + n, {}, 20000);
   const items = j.data || (j.response && j.response.docs) || [];
   const out = [];
   items.forEach(it => {
