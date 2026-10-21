@@ -74,6 +74,8 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   // nombres con tildes viajan bien
   assert.ok(posts > 4, 'mensajes enviados: ' + posts);
 
+  assert.ok(!p.getElementById('rcfoot').hidden && /Buscar actualización/.test(p.getElementById('rcfoot').textContent), 'botón de actualización al final del mando');
+  assert.ok(/Versión de la TV/.test(p.getElementById('rcver').textContent), 'versiones visibles');
   // en el móvil nada cierra el menú
   ph.ArtApp.closeMenu(); assert.ok(!p.getElementById('drawer').hidden, 'el menú del móvil no se cierra');
   console.log('mando OK · mensajes:', posts);

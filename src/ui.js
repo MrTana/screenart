@@ -202,15 +202,16 @@ async function pullNext() {
 
 /* ───────── escenario ───────── */
 function isFav(w) { return !!w && S.favs.some(x => x.uid === w.uid); }
+function captionMs() { const s = +S.st.interval || 30; return (s >= 1800 ? 300 : s * 0.25) * 1000; }
 function setCaption(w) {
   const c = $('#caption');
   c.querySelector('.t').textContent = w.title;
-  c.querySelector('.m').textContent = [w.artist, w.date].filter(Boolean).join(' · ');
-  c.querySelector('.s').textContent = [w.museum].filter(Boolean).join(' · ') + (isFav(w) ? ' · ♥ favorita' : '');
+  c.querySelector('.m').textContent = [w.artist, w.date || w.year].filter(Boolean).join(' · ');
   clearTimeout(S.capT);
   if (S.st.caption === 'never') { c.classList.remove('show'); return; }
   c.classList.add('show');
-  if (S.st.caption === 'auto') S.capT = setTimeout(() => c.classList.remove('show'), 9000);
+  // La ficha dura el 25 % del tiempo de la obra; con 30 min o más, 5 min como máximo.
+  if (S.st.caption === 'auto') S.capT = setTimeout(() => c.classList.remove('show'), captionMs());
 }
 function present(item, fromHist) {
   const nxt = 1 - S.layer, s = slides[nxt];
@@ -272,7 +273,7 @@ function toggleFav() {
   const w = S.current; if (!w) return;
   if (isFav(w)) { S.favs = S.favs.filter(x => x.uid !== w.uid); toast('Quitada de favoritas'); }
   else { S.favs.unshift({ uid: w.uid, src: w.src, museum: w.museum, title: w.title, artist: w.artist, date: w.date, year: w.year, imgs: [w.url].concat(w.imgs.filter(u => u !== w.url)), thumb: w.thumb, url: w.url_page || w.url, type: w.type, pd: w.pd, license: w.license, w: w.w, h: w.h }); toast('Guardada en favoritas'); }
-  saveAll(); updateFavBtn(); setCaption(w); tvNowSoon(true);
+  saveAll(); updateFavBtn(); tvNowSoon(true);
 }
 function updateFavBtn() { $('#favBtn').textContent = isFav(S.current) ? 'Quitar favorita' : 'Guardar favorita'; }
 function toggleFS() {
@@ -394,9 +395,9 @@ const PRESETS = [
   { es: 'Grandes museos de Europa', only: ['m:louvre', 'm:orsay', 'm:prado', 'm:uffizi', 'm:hermitage', 'm:nationalgallery', 'm:vangogh', 'm:mauritshuis', 'm:kunsthistorisches', 'm:versailles'], patch: {} }
 ];
 const ORIENT = [['any', 'Cualquiera'], ['landscape', 'Horizontal'], ['portrait', 'Vertical'], ['square', 'Cuadrada']];
-const MODES = [['gallery', 'Blanco con márgenes'], ['frame', 'Con marco'], ['fill', 'Llenar (recorta)']];
+const MODES = [['gallery', 'Blanco, obra lo más ancha'], ['frame', 'Con marco'], ['fill', 'Llenar (recorta)']];
 const INTERVALS = [[10, '10 s'], [15, '15 s'], [30, '30 s'], [60, '1 min'], [300, '5 min'], [900, '15 min'], [3600, '1 h']];
-const CAPTIONS = [['auto', 'Al cambiar de obra'], ['always', 'Siempre visible'], ['never', 'Oculta']];
+const CAPTIONS = [['auto', 'Al cambiar de obra (25 % del tiempo)'], ['always', 'Siempre visible'], ['never', 'Oculta']];
 
 const chip = (act, id, label, on, cls) => '<button class="chip' + (cls ? ' ' + cls : '') + '" data-act="' + act + '" data-id="' + esc(id) + '" aria-pressed="' + !!on + '">' + esc(label) + '</button>';
 const opts = (list, cur) => list.map(o => '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(cur) ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join('');
@@ -484,6 +485,7 @@ function onAct(act, id) {
     case 'qr': showPair(true); closeMenu(); break;
     case 'qr-close': hidePair(); break;
     case 'rc-retry': remoteHello(true); break;
+    case 'rc-update': remoteUpdate(); break;
     case 'acc': toggleAcc(id); break;
     case 'diag': diagnose(); break;
     case 'install': installApp(); break;
@@ -609,7 +611,7 @@ async function forceUpdate() {
     if ('serviceWorker' in navigator) { const regs = await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r => r.unregister())); }
     if (window.caches) { const keys = await caches.keys(); await Promise.all(keys.map(k => caches.delete(k))); }
   } catch (e) { /* se recarga igualmente */ }
-  location.replace(location.pathname + '?r=' + Date.now());
+  location.replace(location.pathname + '?' + (REMOTE ? 'c=' + REMOTE + '&' : '') + 'r=' + Date.now());
 }
 let installEv = null;
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEv = e; $('#installBtn').hidden = false; });
@@ -677,7 +679,8 @@ function relayListen(fn) {
 }
 
 /* — lado TV — */
-function tvState() { return { t: 'state', f: S.f, st: S.st, custom: S.custom, paused: S.paused, now: tvNow() }; }
+function buildVer() { const v = document.querySelector('.ver'); const m = v && /Versión\s+(\w+)/.exec(v.textContent); return m ? m[1] : ''; }
+function tvState() { return { t: 'state', f: S.f, st: S.st, custom: S.custom, paused: S.paused, now: tvNow(), ver: buildVer() }; }
 function tvNow() {
   const w = S.current; if (!w) return null;
   return { uid: w.uid, title: w.title, artist: w.artist, date: w.date, museum: w.museum, thumb: w.thumb || w.url, fav: isFav(w), paused: S.paused };
@@ -699,6 +702,7 @@ function tvHandle(m) {
   if (m.t === 'ping') { RC.forceNow = true; tvNowSoon(); return; }
   if (m.t === 'cmd') {
     RC.forceNow = true;
+    if (m.c === 'update') { forceUpdate(); return; }
     if (m.c === 'next') next(); else if (m.c === 'prev') prev(); else if (m.c === 'play') togglePlay(); else if (m.c === 'fav') toggleFav();
     return;
   }
@@ -740,6 +744,13 @@ function remoteNow(n) {
   const im = $('#rcImg'); if (n.thumb && im.dataset.u !== n.thumb) { im.dataset.u = n.thumb; im.src = n.thumb; }
   $('#playBtn').textContent = S.paused ? 'Reanudar' : 'Pausar'; updateFavBtn();
 }
+function remoteVer(tvVer) { $('#rcver').textContent = 'Versión de la TV: ' + (tvVer || '—') + ' · de este móvil: ' + (buildVer() || '—'); }
+function remoteUpdate() {
+  if (!RC.gotState) { toast('Todavía no hay conexión con la TV'); return; }
+  relaySend({ t: 'cmd', c: 'update' });
+  remoteStat('Actualizando la TV… este móvil se actualizará en unos segundos.', true, false);
+  setTimeout(forceUpdate, 20000);
+}
 function remoteHello(again) {
   if (again) RC.helloN = 0;
   clearTimeout(RC.helloT);
@@ -754,7 +765,7 @@ function remoteHandle(m) {
     RC.gotState = true; clearTimeout(RC.helloT);
     (m.custom || []).forEach(c => { try { if (c && c.id) { C.addMuseum(c); if (!S.custom.some(x => x.id === c.id)) S.custom.push(c); } } catch (e) { /* museo dañado */ } });
     S.f = normFilters(m.f); if (m.st) S.st = Object.assign(S.st, m.st);
-    renderAll(); remoteNow(m.now);
+    renderAll(); remoteNow(m.now); remoteVer(m.ver);
     remoteStat('Conectado a la TV. Lo que cambies aquí se aplica en la pantalla.', true, false);
   } else if (m.t === 'now') { remoteNow(m.now); if (!RC.gotState) remoteHello(true); }
 }
@@ -772,7 +783,7 @@ function initRemote() {
   RC.code = REMOTE; lsSet('rc', REMOTE);
   document.body.classList.add('rc');
   S.menu = true; applyLook(); renderAll();
-  $('#rcinfo').hidden = false; $('#drawer').hidden = false;
+  $('#rcinfo').hidden = false; $('#rcfoot').hidden = false; $('#drawer').hidden = false; remoteVer('');
   document.title = 'Mando · Galería de arte';
   remoteStat('Conectando con la TV…', false, false);
   relayListen(remoteHandle);
@@ -790,6 +801,6 @@ function init() {
   advance();
   initTV();
 }
-window.ArtApp = { S, next, prev, advance, openMenu, closeMenu, refill, onAct, render, renderAll, applyChange, present, pullNext, Remote: () => RC };
+window.ArtApp = { S, next, prev, advance, openMenu, closeMenu, refill, onAct, render, renderAll, applyChange, present, pullNext, captionMs, Remote: () => RC };
 init();
 })();

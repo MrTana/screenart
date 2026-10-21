@@ -77,6 +77,7 @@ Al abrir la galería en una pantalla grande aparece un **código QR** en la esqu
 - Si no ves el QR, abre la galería en la TV con `?tv=1` al final de la dirección (o pulsa la tecla Q). En el menú de la TV hay también «Mando en el móvil».
 - El móvil queda emparejado por un código aleatorio que la TV guarda en su navegador; puedes añadir la página del mando a la pantalla de inicio del móvil y seguirá funcionando mientras la TV no cambie de código.
 - La comunicación pasa por el canal público de [ntfy.sh](https://ntfy.sh) (sin cuentas ni servidor propio): solo viajan órdenes, filtros y el título de la obra, nunca claves de API. Con el límite gratuito de unos 250 mensajes al día por conexión, la TV solo avisa de cada obra nueva mientras hay un móvil conectado (como mucho una cada 8 segundos). Para usar tu propio servidor ntfy, añade `?relay=https://tu-servidor` en ambas direcciones.
+- **Actualizar:** al final del mando hay «Buscar actualización»: la TV borra su copia guardada y recarga la última versión, y el móvil se actualiza después. Muestra la versión de cada uno.
 - Pruebas: `test/remote.cjs` simula TV y móvil.
 
 ## Instalarla como app (PWA)

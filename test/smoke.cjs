@@ -24,8 +24,11 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   await wait(600);
   const A = w.ArtApp, S = A.S;
   console.log('mostradas:', S.shown, '| pool:', S.pool.length, '| cargador oculto:', w.document.getElementById('loader').hidden);
-  console.log('ficha:', w.document.querySelector('#caption .t').textContent, '|', w.document.querySelector('#caption .m').textContent, '|', w.document.querySelector('#caption .s').textContent);
+  console.log('ficha:', w.document.querySelector('#caption .t').textContent, '|', w.document.querySelector('#caption .m').textContent);
   console.log('estado fuentes:', JSON.stringify(Object.fromEntries(Object.entries(S.status).map(([k, v]) => [k, v.state]))));
+  { const k = S.st.interval; const t = (sec) => { S.st.interval = sec; return A.captionMs(); };
+    assert.deepStrictEqual([t(10), t(30), t(900), t(1800), t(3600)], [2500, 7500, 225000, 300000, 300000], 'la ficha dura el 25 % (máx. 5 min)'); S.st.interval = k; }
+  assert.strictEqual(w.document.querySelector('#caption .s'), null, 'la ficha solo lleva título, autor y año');
   A.openMenu();
   const d = w.document; function d0(){return d;}
   console.log('filas de museos:', d0().querySelectorAll('#c-msrcs .src').length, '| activas:', d0().querySelectorAll('#c-msrcs .src[aria-pressed=true]').length);

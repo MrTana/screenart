@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;1,400;1,500&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* Concepto: pared blanca de galería. Obra con márgenes del 5 % y 15 % abajo, donde va la cartela. */
+/* Concepto: pared blanca de galería. La obra ocupa lo más ancho posible, entera y centrada; la ficha va encima, abajo a la izquierda. */
 :root{
   --bg:#0b0c0b; --wall:#141513; --fg:#ecebe6; --muted:#9b9b93; --line:#2b2d29;
   --panel:#101110; --chip:#1b1d1a; --accent:#8fa8ff; --accent-ink:#0b0c0b;
@@ -39,11 +39,11 @@ button{cursor:pointer}
 .slide{position:absolute;inset:0;opacity:0;transition:opacity 1.6s ease;pointer-events:none}
 .slide.on{opacity:1}
 .slide .bg{position:absolute;inset:-6%;background-size:cover;background-position:center;filter:blur(46px) brightness(.42) saturate(1.15)}
-.slide .frame{position:absolute;top:5%;left:5%;right:5%;bottom:15%;display:flex;align-items:center;justify-content:center}
-.slide .art{display:block;max-width:100%;max-height:100%;object-fit:contain;user-select:none}
+.slide .frame{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.slide .art{display:block;width:100%;height:100%;object-fit:contain;object-position:center;user-select:none}
 .mode-frame .slide .bg{display:none}
 .mode-frame .slide .frame{padding:0}
-.mode-frame .slide .art{background:#f1ede4;padding:1.6vmin;border:.9vmin solid #3a2d20;box-shadow:0 1.2vmin 3.5vmin rgba(0,0,0,.28),inset 0 0 0 1px rgba(0,0,0,.2)}
+.mode-frame .slide .art{width:auto;height:auto;max-width:100%;max-height:100%;background:#f1ede4;padding:1.6vmin;border:.9vmin solid #3a2d20;box-shadow:0 1.2vmin 3.5vmin rgba(0,0,0,.28),inset 0 0 0 1px rgba(0,0,0,.2)}
 .slide .bg{display:none}
 .mode-fill .slide .frame{inset:0}
 .mode-fill .slide .art{width:100%;height:100%;object-fit:cover}
@@ -52,16 +52,11 @@ button{cursor:pointer}
 @media (prefers-reduced-motion:reduce){.kb .slide.on .art{animation:none}.slide{transition-duration:.4s}}
 
 /* ficha */
-#caption{position:fixed;left:0;right:0;bottom:0;height:15%;margin:0;padding:0 5%;display:flex;flex-direction:column;justify-content:center;color:#1b1b19;background:none;opacity:0;transition:opacity .9s ease;pointer-events:none;overflow:hidden}
+#caption{position:fixed;left:0;bottom:5%;width:fit-content;max-width:min(78%,1400px);margin:0;padding:.55em 1.3em .6em 2.5vw;display:flex;flex-direction:column;color:#1b1b19;background:rgba(255,255,255,.78);border-radius:0 10px 10px 0;box-shadow:0 2px 18px rgba(0,0,0,.12);opacity:0;transition:opacity .6s ease;pointer-events:none;overflow:hidden}
 #caption.show{opacity:1}
-#caption .t{font:italic 500 clamp(16px,2.2vw,34px)/1.15 var(--serif);text-wrap:balance;max-width:90%;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-#caption .m{margin-top:.35em;font-size:clamp(13px,1.3vw,21px);color:#3a3a36}
-#caption .s{margin-top:.2em;font-size:clamp(11px,1vw,16px);color:#6e6e66;letter-spacing:.04em}
-#caption .heart{color:#c23d4b}
-/* a pantalla completa la obra ocupa todo: la ficha vuelve a ir encima */
-body[data-mode=fill] #caption{height:auto;padding:6vh 4vw 4.2vh;background:linear-gradient(to top,rgba(0,0,0,.78),rgba(0,0,0,0));color:var(--fg)}
-body[data-mode=fill] #caption .m{color:#d9d8d0}
-body[data-mode=fill] #caption .s{color:#b5b4ac}
+#caption .t{font:italic 500 clamp(16px,2.2vw,34px)/1.15 var(--serif);text-wrap:balance;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+#caption .m{margin-top:.3em;font-size:clamp(13px,1.35vw,22px);color:#3a3a36}
+#caption .m:empty{display:none}
 
 /* carga y avisos */
 #loader{position:fixed;inset:0;display:flex;flex-direction:column;gap:2vh;align-items:center;justify-content:center;background:#fff;color:#1b1b19;z-index:5;text-align:center;padding:4vw}
@@ -108,6 +103,8 @@ body.rc #drawer{width:100vw;border:0;left:0}
 #rcnow .rt{min-width:0}
 #rcnow .rt b{display:block;font:italic 500 18px var(--serif);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #rcnow .rt span{display:block;font-size:14px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#rcfoot{margin:26px 0 8px;padding-top:14px;border-top:1px solid var(--line)}
+#rcfoot p{margin:10px 0 0;font-size:13px;color:var(--muted)}
 #rcstat{margin:10px 0 0;font-size:14px;color:var(--muted)}
 #rcstat.ok{color:var(--accent)}
 
@@ -178,7 +175,7 @@ details.adv label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut
   <div class="slide" id="slideB"><div class="bg"></div><div class="frame"><img class="art" alt=""></div></div>
 </div>
 
-<figure id="caption" aria-live="polite"><div class="t"></div><div class="m"></div><div class="s"></div></figure>
+<figure id="caption" aria-live="polite"><div class="t"></div><div class="m"></div></figure>
 
 <div id="loader"><div class="sp"></div><p id="loaderText">Buscando obras en los museos…</p><small id="loaderSub"></small><button class="btn pri" id="loaderMenu" hidden>Abrir filtros</button><button class="btn" id="loaderDiag" hidden>Probar fuentes</button></div>
 <div id="diag" hidden><div class="dhead"><h1>Diagnóstico de fuentes</h1><button class="btn" data-act="diag-close">Cerrar</button></div><pre id="diagOut"></pre></div>
@@ -256,7 +253,8 @@ details.adv label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut
       <p class="hint">Se guardan solo en este navegador. Con una clave puedes activar esas fuentes.</p>
     </div>
   </section>
-  <div class="foot">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión c1bccdc4ae · 2026-10-21 20:04 UTC</span><br><button class="btn" data-act="update" style="margin-top:10px">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" style="margin-top:10px" hidden>Instalar la app</button> <button class="btn" data-act="diag" style="margin-top:10px">Probar fuentes</button> <button class="btn" data-act="reset" style="margin-top:10px">Restablecer filtros</button></div>
+  <div id="rcfoot" hidden><button class="btn pri" data-act="rc-update">Buscar actualización</button><p id="rcver"></p></div>
+  <div class="foot">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión f885725486 · 2026-10-21 20:19 UTC</span><br><button class="btn" data-act="update" style="margin-top:10px">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" style="margin-top:10px" hidden>Instalar la app</button> <button class="btn" data-act="diag" style="margin-top:10px">Probar fuentes</button> <button class="btn" data-act="reset" style="margin-top:10px">Restablecer filtros</button></div>
 </aside>
 <script>
 /* qrcode-generator 1.4.4 · Kazuhiko Arase · licencia MIT · http://www.d-project.com/ · «QR Code» es marca registrada de DENSO WAVE */
@@ -1723,15 +1721,16 @@ async function pullNext() {
 
 /* ───────── escenario ───────── */
 function isFav(w) { return !!w && S.favs.some(x => x.uid === w.uid); }
+function captionMs() { const s = +S.st.interval || 30; return (s >= 1800 ? 300 : s * 0.25) * 1000; }
 function setCaption(w) {
   const c = $('#caption');
   c.querySelector('.t').textContent = w.title;
-  c.querySelector('.m').textContent = [w.artist, w.date].filter(Boolean).join(' · ');
-  c.querySelector('.s').textContent = [w.museum].filter(Boolean).join(' · ') + (isFav(w) ? ' · ♥ favorita' : '');
+  c.querySelector('.m').textContent = [w.artist, w.date || w.year].filter(Boolean).join(' · ');
   clearTimeout(S.capT);
   if (S.st.caption === 'never') { c.classList.remove('show'); return; }
   c.classList.add('show');
-  if (S.st.caption === 'auto') S.capT = setTimeout(() => c.classList.remove('show'), 9000);
+  // La ficha dura el 25 % del tiempo de la obra; con 30 min o más, 5 min como máximo.
+  if (S.st.caption === 'auto') S.capT = setTimeout(() => c.classList.remove('show'), captionMs());
 }
 function present(item, fromHist) {
   const nxt = 1 - S.layer, s = slides[nxt];
@@ -1793,7 +1792,7 @@ function toggleFav() {
   const w = S.current; if (!w) return;
   if (isFav(w)) { S.favs = S.favs.filter(x => x.uid !== w.uid); toast('Quitada de favoritas'); }
   else { S.favs.unshift({ uid: w.uid, src: w.src, museum: w.museum, title: w.title, artist: w.artist, date: w.date, year: w.year, imgs: [w.url].concat(w.imgs.filter(u => u !== w.url)), thumb: w.thumb, url: w.url_page || w.url, type: w.type, pd: w.pd, license: w.license, w: w.w, h: w.h }); toast('Guardada en favoritas'); }
-  saveAll(); updateFavBtn(); setCaption(w); tvNowSoon(true);
+  saveAll(); updateFavBtn(); tvNowSoon(true);
 }
 function updateFavBtn() { $('#favBtn').textContent = isFav(S.current) ? 'Quitar favorita' : 'Guardar favorita'; }
 function toggleFS() {
@@ -1915,9 +1914,9 @@ const PRESETS = [
   { es: 'Grandes museos de Europa', only: ['m:louvre', 'm:orsay', 'm:prado', 'm:uffizi', 'm:hermitage', 'm:nationalgallery', 'm:vangogh', 'm:mauritshuis', 'm:kunsthistorisches', 'm:versailles'], patch: {} }
 ];
 const ORIENT = [['any', 'Cualquiera'], ['landscape', 'Horizontal'], ['portrait', 'Vertical'], ['square', 'Cuadrada']];
-const MODES = [['gallery', 'Blanco con márgenes'], ['frame', 'Con marco'], ['fill', 'Llenar (recorta)']];
+const MODES = [['gallery', 'Blanco, obra lo más ancha'], ['frame', 'Con marco'], ['fill', 'Llenar (recorta)']];
 const INTERVALS = [[10, '10 s'], [15, '15 s'], [30, '30 s'], [60, '1 min'], [300, '5 min'], [900, '15 min'], [3600, '1 h']];
-const CAPTIONS = [['auto', 'Al cambiar de obra'], ['always', 'Siempre visible'], ['never', 'Oculta']];
+const CAPTIONS = [['auto', 'Al cambiar de obra (25 % del tiempo)'], ['always', 'Siempre visible'], ['never', 'Oculta']];
 
 const chip = (act, id, label, on, cls) => '<button class="chip' + (cls ? ' ' + cls : '') + '" data-act="' + act + '" data-id="' + esc(id) + '" aria-pressed="' + !!on + '">' + esc(label) + '</button>';
 const opts = (list, cur) => list.map(o => '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(cur) ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join('');
@@ -2005,6 +2004,7 @@ function onAct(act, id) {
     case 'qr': showPair(true); closeMenu(); break;
     case 'qr-close': hidePair(); break;
     case 'rc-retry': remoteHello(true); break;
+    case 'rc-update': remoteUpdate(); break;
     case 'acc': toggleAcc(id); break;
     case 'diag': diagnose(); break;
     case 'install': installApp(); break;
@@ -2130,7 +2130,7 @@ async function forceUpdate() {
     if ('serviceWorker' in navigator) { const regs = await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r => r.unregister())); }
     if (window.caches) { const keys = await caches.keys(); await Promise.all(keys.map(k => caches.delete(k))); }
   } catch (e) { /* se recarga igualmente */ }
-  location.replace(location.pathname + '?r=' + Date.now());
+  location.replace(location.pathname + '?' + (REMOTE ? 'c=' + REMOTE + '&' : '') + 'r=' + Date.now());
 }
 let installEv = null;
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEv = e; $('#installBtn').hidden = false; });
@@ -2198,7 +2198,8 @@ function relayListen(fn) {
 }
 
 /* — lado TV — */
-function tvState() { return { t: 'state', f: S.f, st: S.st, custom: S.custom, paused: S.paused, now: tvNow() }; }
+function buildVer() { const v = document.querySelector('.ver'); const m = v && /Versión\s+(\w+)/.exec(v.textContent); return m ? m[1] : ''; }
+function tvState() { return { t: 'state', f: S.f, st: S.st, custom: S.custom, paused: S.paused, now: tvNow(), ver: buildVer() }; }
 function tvNow() {
   const w = S.current; if (!w) return null;
   return { uid: w.uid, title: w.title, artist: w.artist, date: w.date, museum: w.museum, thumb: w.thumb || w.url, fav: isFav(w), paused: S.paused };
@@ -2220,6 +2221,7 @@ function tvHandle(m) {
   if (m.t === 'ping') { RC.forceNow = true; tvNowSoon(); return; }
   if (m.t === 'cmd') {
     RC.forceNow = true;
+    if (m.c === 'update') { forceUpdate(); return; }
     if (m.c === 'next') next(); else if (m.c === 'prev') prev(); else if (m.c === 'play') togglePlay(); else if (m.c === 'fav') toggleFav();
     return;
   }
@@ -2261,6 +2263,13 @@ function remoteNow(n) {
   const im = $('#rcImg'); if (n.thumb && im.dataset.u !== n.thumb) { im.dataset.u = n.thumb; im.src = n.thumb; }
   $('#playBtn').textContent = S.paused ? 'Reanudar' : 'Pausar'; updateFavBtn();
 }
+function remoteVer(tvVer) { $('#rcver').textContent = 'Versión de la TV: ' + (tvVer || '—') + ' · de este móvil: ' + (buildVer() || '—'); }
+function remoteUpdate() {
+  if (!RC.gotState) { toast('Todavía no hay conexión con la TV'); return; }
+  relaySend({ t: 'cmd', c: 'update' });
+  remoteStat('Actualizando la TV… este móvil se actualizará en unos segundos.', true, false);
+  setTimeout(forceUpdate, 20000);
+}
 function remoteHello(again) {
   if (again) RC.helloN = 0;
   clearTimeout(RC.helloT);
@@ -2275,7 +2284,7 @@ function remoteHandle(m) {
     RC.gotState = true; clearTimeout(RC.helloT);
     (m.custom || []).forEach(c => { try { if (c && c.id) { C.addMuseum(c); if (!S.custom.some(x => x.id === c.id)) S.custom.push(c); } } catch (e) { /* museo dañado */ } });
     S.f = normFilters(m.f); if (m.st) S.st = Object.assign(S.st, m.st);
-    renderAll(); remoteNow(m.now);
+    renderAll(); remoteNow(m.now); remoteVer(m.ver);
     remoteStat('Conectado a la TV. Lo que cambies aquí se aplica en la pantalla.', true, false);
   } else if (m.t === 'now') { remoteNow(m.now); if (!RC.gotState) remoteHello(true); }
 }
@@ -2293,7 +2302,7 @@ function initRemote() {
   RC.code = REMOTE; lsSet('rc', REMOTE);
   document.body.classList.add('rc');
   S.menu = true; applyLook(); renderAll();
-  $('#rcinfo').hidden = false; $('#drawer').hidden = false;
+  $('#rcinfo').hidden = false; $('#rcfoot').hidden = false; $('#drawer').hidden = false; remoteVer('');
   document.title = 'Mando · Galería de arte';
   remoteStat('Conectando con la TV…', false, false);
   relayListen(remoteHandle);
@@ -2311,7 +2320,7 @@ function init() {
   advance();
   initTV();
 }
-window.ArtApp = { S, next, prev, advance, openMenu, closeMenu, refill, onAct, render, renderAll, applyChange, present, pullNext, Remote: () => RC };
+window.ArtApp = { S, next, prev, advance, openMenu, closeMenu, refill, onAct, render, renderAll, applyChange, present, pullNext, captionMs, Remote: () => RC };
 init();
 })();
 
