@@ -1,0 +1,21 @@
+{
+  "name": "Galería de arte",
+  "short_name": "Galería",
+  "description": "Obras de museos de todo el mundo en pantalla completa, con cambio automático.",
+  "lang": "es",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#0b0c0b",
+  "theme_color": "#0b0c0b",
+  "categories": ["entertainment", "education", "lifestyle"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

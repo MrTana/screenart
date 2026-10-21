@@ -43,6 +43,15 @@ Abre el menú y pulsa **Probar fuentes** (también sale en la pantalla de carga 
 
 En el móvil o la tableta funciona como un libro electrónico: tocar el borde derecho pasa a la siguiente obra, el borde izquierdo vuelve a la anterior y el centro abre el menú. También se puede deslizar el dedo a izquierda o derecha.
 
+## Instalarla como app (PWA)
+
+La galería es una app instalable: tiene manifiesto, iconos y un service worker que la abre sin conexión (las obras sí necesitan internet). Abre la página publicada y:
+- **Android (Chrome):** menú de la galería, botón «Instalar la app», o menú de Chrome, «Instalar app».
+- **iPhone o iPad (Safari):** Compartir y «Añadir a pantalla de inicio».
+- **Ordenador (Chrome o Edge):** icono de instalar en la barra de direcciones.
+
+Se abre en pantalla completa, sin barra del navegador. Las actualizaciones llegan solas al abrirla con conexión. Para que se pueda instalar, la página debe servirse por https (Cloudflare Pages o GitHub Pages sirven).
+
 ## Publicar en GitHub Pages
 
 1. En el repositorio: Settings, Pages, Source «Deploy from a branch», rama `main`, carpeta `/ (root)`.
@@ -56,6 +65,6 @@ npm run build   # genera index.html a partir de src/
 npm test        # pruebas con respuestas simuladas de cada museo
 ```
 
-Estructura: `src/core.js` (fuentes y filtros, sin DOM), `src/ui.js` (interfaz), `src/template.html` (estilos y estructura). `build.mjs` los junta en `index.html`.
+Estructura: `src/core.js` (fuentes y filtros, sin DOM), `src/ui.js` (interfaz), `src/template.html` (estilos y estructura), `src/sw.js` (service worker). `build.mjs` los junta en `index.html` y `sw.js` (con la versión estampada). `manifest.webmanifest` y `icons/` van en la raíz.
 
 Las pruebas usan respuestas simuladas con la forma de cada API. Para saber si un museo responde de verdad desde el navegador, mira el punto de color junto a su nombre en el menú o usa «Probar fuentes».

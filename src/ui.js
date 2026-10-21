@@ -425,6 +425,7 @@ function onAct(act, id) {
   switch (act) {
     case 'close': closeMenu(); break;
     case 'diag': diagnose(); break;
+    case 'install': installApp(); break;
     case 'diag-close': $('#diag').hidden = true; diagRun++; break;
     case 'prev': prev(); break;
     case 'next': next(); break;
@@ -526,6 +527,20 @@ $('#yTo').addEventListener('change', e => { S.f.yearTo = e.target.value; S.f.era
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); });
 let lock = null;
 async function keepAwake() { try { if ('wakeLock' in navigator) lock = await navigator.wakeLock.request('screen'); } catch (e) { /* no disponible */ } }
+
+/* ───────── app instalable (PWA) ───────── */
+let installEv = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEv = e; $('#installBtn').hidden = false; });
+window.addEventListener('appinstalled', () => { installEv = null; $('#installBtn').hidden = true; toast('App instalada'); });
+async function installApp() {
+  if (!installEv) { toast('En iPhone: Compartir y «Añadir a pantalla de inicio»'); return; }
+  installEv.prompt();
+  try { await installEv.userChoice; } catch (e) { /* nada */ }
+  installEv = null; $('#installBtn').hidden = true;
+}
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => { /* sin service worker la app funciona igual */ }); });
+}
 
 /* ───────── inicio ───────── */
 function init() {

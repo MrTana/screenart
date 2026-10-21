@@ -4,4 +4,7 @@ const core = fs.readFileSync('src/core.js','utf8');
 const ui = fs.readFileSync('src/ui.js','utf8');
 const out = t.replace('/*__CORE__*/', () => core).replace('/*__UI__*/', () => ui);
 fs.writeFileSync('index.html', out);
-console.log('ok', out.length, 'bytes');
+import crypto from 'crypto';
+const ver = crypto.createHash('sha1').update(out).digest('hex').slice(0, 10);
+fs.writeFileSync('sw.js', fs.readFileSync('src/sw.js', 'utf8').replace('__VERSION__', ver));
+console.log('ok', out.length, 'bytes · sw', ver);
