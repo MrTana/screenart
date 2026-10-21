@@ -22,7 +22,7 @@ const S = {
   keys: Object.assign({ europeana: 'api2demo', si: 'DEMO_KEY', harvard: '' }, lsGet('keys', {})),
   favs: lsGet('favs', []),
   pool: [], seen: new Set(), seenKey: new Set(), hist: [], hi: -1,
-  paused: false, menu: false, epoch: 0, refilling: 0, emptyRuns: 0, adv: false,
+  paused: false, menu: false, epoch: 0, refilling: 0, adv: false, advAt: 0, flight: new Map(), cool: {}, streak: {}, warned: false, recycleAfter: 6000,
   status: {}, counts: {}, layer: 0, nextP: null, nextEpoch: -1,
   timer: null, capT: null, idleT: null, waiters: [], current: null, shown: 0
 };
@@ -36,7 +36,7 @@ let toastT;
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 3200); }
 function busy() { $('#busy').textContent = 'Buscando obras…'; $('#busy').classList.toggle('on', S.refilling > 0); }
 function showLoader(text, sub, btn) {
-  $('#loaderText').textContent = text; $('#loaderSub').textContent = sub || ''; $('#loaderMenu').hidden = !btn;
+  $('#loaderText').textContent = text; $('#loaderSub').textContent = sub || ''; $('#loaderMenu').hidden = !btn; $('#loaderDiag').hidden = !btn;
   $('#loader').hidden = false;
 }
 function errText(e) {
@@ -59,42 +59,68 @@ function setStatus(id, state, msg) {
   updateSrc(id);
 }
 
-function ensureRefill() { if (S.refilling > 0 || S.emptyRuns >= 3 || S.pool.length >= 8) return; refill(); }
+function ensureRefill() { if (S.pool.length < 8) refill(); }
 
-async function refill() {
+/* Cada fuente va por su cuenta: una lenta no frena a las demás, y las que fallan o vienen vacías descansan un rato (nunca se rinden del todo). */
+function refill() {
   const epoch = S.epoch, f = S.f;
   if (f.onlyFavs) {
     let list = S.favs.filter(w => !S.seen.has(w.uid));
     if (!list.length && S.favs.length) { S.favs.forEach(w => S.seen.delete(w.uid)); list = S.favs.slice(); }
-    if (!list.length) { toast('Aún no tienes favoritas'); S.emptyRuns = 3; wake(); return; }
+    if (!list.length) { if (!S.warned) { S.warned = true; toast('Aún no tienes favoritas'); } return; }
     insertRandom(C.shuffle(list.slice()).filter(w => !S.pool.some(x => x.uid === w.uid)));
     return;
   }
-  const on = C.SOURCE_LIST.filter(s => f.sources[s.id]);
-  // Wikidata aguanta pocas consultas a la vez: en cada ronda se consultan 4 museos al azar de los marcados.
-  const srcs = on.filter(s => s.group !== 'museum').concat(C.sampleN(on.filter(s => s.group === 'museum'), 4));
-  if (!srcs.length) { toast('Activa al menos un museo'); S.emptyRuns = 3; wake(); return; }
-  S.refilling++; busy();
-  let added = 0;
-  await Promise.all(srcs.map(async s => {
-    setStatus(s.id, 'loading');
-    try {
-      let list = await C.runSource(s, f, ctx());
-      if (epoch !== S.epoch) return;
+  const now = Date.now();
+  const enabled = C.SOURCE_LIST.filter(s => f.sources[s.id]);
+  if (!enabled.length) { if (!S.warned) { S.warned = true; toast('Activa al menos un museo'); } return; }
+  const ready = enabled.filter(s => !S.flight.has(s.id) && (S.cool[s.id] || 0) <= now);
+  // Wikidata aguanta pocas consultas a la vez: nunca más de 3 museos en marcha.
+  const busyMus = Array.from(S.flight.keys()).filter(id => id.indexOf('m:') === 0).length;
+  const srcs = ready.filter(s => s.group !== 'museum').concat(C.sampleN(ready.filter(s => s.group === 'museum'), Math.max(0, 3 - busyMus)));
+  srcs.forEach(s => launch(s, epoch));
+}
+
+async function launch(s, epoch) {
+  const f = S.f;
+  S.flight.set(s.id, epoch); S.refilling++; busy(); setStatus(s.id, 'loading');
+  let added = 0, fail = null;
+  try {
+    let list = await C.runSource(s, f, ctx());
+    if (epoch === S.epoch) {
       list = list.filter(w => C.accept(w, f) && !S.seen.has(w.uid) && !S.seenKey.has(wkey(w)) && !S.pool.some(x => x.uid === w.uid));
-      S.counts[s.id] = (S.counts[s.id] || 0) + list.length;
-      setStatus(s.id, S.counts[s.id] ? 'ok' : 'empty');
-      if (list.length) { added += list.length; insertRandom(list); }
-    } catch (e) {
-      if (epoch !== S.epoch) return;
-      setStatus(s.id, e && e.noKey ? 'nokey' : 'error', errText(e));
+      added = list.length;
+      if (added) insertRandom(list);
     }
-  }));
+  } catch (e) { fail = e; }
   S.refilling--; busy();
+  if (S.flight.get(s.id) === epoch) S.flight.delete(s.id);
   if (epoch !== S.epoch) return;
-  S.emptyRuns = added ? 0 : S.emptyRuns + 1;
-  wake();
-  if (S.pool.length < 6 && S.emptyRuns < 3) ensureRefill();
+  if (fail) {
+    const n = S.streak[s.id] = (S.streak[s.id] || 0) + 1;
+    S.cool[s.id] = Date.now() + (fail.noKey ? 1e12 : Math.min(120000, 15000 * Math.pow(2, n - 1)));
+    setStatus(s.id, fail.noKey ? 'nokey' : 'error', errText(fail));
+  } else if (!added) {
+    const n = S.streak[s.id] = (S.streak[s.id] || 0) + 1;
+    S.cool[s.id] = Date.now() + Math.min(60000, 3000 * n);
+    setStatus(s.id, S.counts[s.id] ? 'ok' : 'empty');
+  } else {
+    S.streak[s.id] = 0; S.cool[s.id] = 0;
+    S.counts[s.id] = (S.counts[s.id] || 0) + added;
+    setStatus(s.id, 'ok');
+  }
+  if (added) wake();
+  if (S.pool.length < 6) ensureRefill();
+}
+
+/* Cuando las fuentes no dan más obras nuevas, se vuelven a mostrar las ya vistas en lugar de quedarse parado. */
+function recycle() {
+  if (S.hist.length < 2) return false;
+  S.seen.clear(); S.seenKey.clear();
+  let list = C.shuffle(S.hist.map(w => Object.assign({}, w, { imgs: [w.url].concat((w.imgs || []).filter(u => u !== w.url)) })));
+  if (S.current && list.length > 1) list = list.filter(w => w.uid !== S.current.uid);
+  S.pool = list; wake();
+  return true;
 }
 
 function loadImage(urls) {
@@ -105,7 +131,7 @@ function loadImage(urls) {
       const url = urls[i++], im = new Image();
       let done = false;
       const fin = ok => { if (done) return; done = true; clearTimeout(t); ok ? resolve({ url, w: im.naturalWidth, h: im.naturalHeight }) : next(); };
-      const t = setTimeout(() => { im.onload = im.onerror = null; fin(false); }, 25000);
+      const t = setTimeout(() => { im.onload = im.onerror = null; fin(false); }, 15000);
       im.onload = () => fin(true); im.onerror = () => fin(false);
       im.referrerPolicy = 'no-referrer'; im.src = url;
     };
@@ -122,19 +148,31 @@ function orientOK(w, h) {
 }
 
 async function pullNext() {
-  const epoch = S.epoch;
-  for (let guard = 0; guard < 80; guard++) {
+  const epoch = S.epoch, t0 = Date.now();
+  let idleSince = 0;
+  while (Date.now() - t0 < 40000) {
     if (epoch !== S.epoch) return null;
     if (!S.pool.length) {
       ensureRefill();
-      if (!S.pool.length && S.refilling === 0 && S.emptyRuns >= 3) return null;
-      await waitPool(6000);
+      if (!S.flight.size) {
+        idleSince = idleSince || Date.now();
+        if (Date.now() - idleSince > S.recycleAfter && recycle()) { idleSince = 0; continue; }
+      } else idleSince = 0;
+      await waitPool(2500);
       continue;
     }
-    const w = S.pool.shift(); ensureRefill();
-    if (S.seen.has(w.uid)) continue;
-    const r = await loadImage(w.imgs);
-    if (!r || r.w < 300 || r.h < 300 || !orientOK(r.w, r.h)) continue;
+    const batch = S.pool.splice(0, 3); ensureRefill();
+    // Se prueban 3 imágenes a la vez: las que no cargan (bloqueadas o rotas) no frenan el cambio.
+    const res = await Promise.all(batch.map(async w => {
+      if (S.seen.has(w.uid) || (S.current && w.uid === S.current.uid)) return null;
+      const r = await loadImage(w.imgs);
+      return r && r.w >= 300 && r.h >= 300 && orientOK(r.w, r.h) ? { w, r } : null;
+    }));
+    if (epoch !== S.epoch) return null;
+    const ok = res.filter(Boolean);
+    if (!ok.length) continue;
+    ok.slice(1).reverse().forEach(x => S.pool.unshift(x.w));
+    const w = ok[0].w, r = ok[0].r;
     S.seen.add(w.uid); S.seenKey.add(wkey(w));
     if (S.seen.size > 3000) { S.seen.clear(); S.seenKey.clear(); }
     return Object.assign({}, w, { url: r.url, url_page: w.url });
@@ -173,25 +211,32 @@ function schedule() {
   S.timer = setTimeout(next, S.st.interval * 1000);
 }
 async function advance() {
-  if (S.adv) return;
-  S.adv = true; clearTimeout(S.timer);
+  if (S.adv && Date.now() - S.advAt < 90000) return;
+  const epoch = S.epoch;
+  S.adv = true; S.advAt = Date.now(); clearTimeout(S.timer);
   try {
     let item = null;
     if (S.nextP && S.nextEpoch === S.epoch) { item = await S.nextP; }
     S.nextP = null;
+    if (epoch !== S.epoch) return;
     if (!item) item = await pullNext();
-    if (!item) item = await pullNext();
-    if (!item) { showEmpty(); return; }
+    if (epoch !== S.epoch) return;
+    if (!item) {
+      // Sin obras nuevas: se repite una ya vista para que la pantalla nunca se quede parada.
+      const old = S.hist.filter(w => !S.current || w.uid !== S.current.uid);
+      if (old.length) { present(C.pick(old), true); toast('Repitiendo obras ya vistas: las fuentes no dan más por ahora'); S.nextEpoch = S.epoch; S.nextP = pullNext(); return; }
+      showEmpty(); return;
+    }
     present(item, false);
     S.nextEpoch = S.epoch; S.nextP = pullNext();
-  } finally { S.adv = false; schedule(); }
+  } finally { if (epoch === S.epoch) { S.adv = false; schedule(); } }
 }
 function showEmpty() {
   const states = Object.keys(S.status).map(k => S.status[k].state);
   const allBad = states.length && states.every(x => x === 'error' || x === 'nokey');
   if (S.current) { toast('No encuentro más obras con estos filtros'); return; }
   showLoader(allBad ? 'Ningún museo ha respondido' : 'No encontré obras con estos filtros',
-    allBad ? 'Revisa la conexión. Si abriste el archivo desde el disco, súbelo a un alojamiento https o ábrelo en otro navegador.' : 'Amplía la época o el estilo, o activa más museos.', true);
+    allBad ? 'Revisa la conexión. Si abriste el archivo desde el disco, súbelo a un alojamiento https o ábrelo en otro navegador.' : 'Amplía la época o el estilo, o activa más museos. El diagnóstico muestra qué responde cada fuente.', true);
 }
 function next() {
   if (S.hi < S.hist.length - 1) { S.hi++; present(S.hist[S.hi], true); schedule(); }
@@ -220,13 +265,54 @@ function applyLook() {
   document.documentElement.style.setProperty('--dur', S.st.interval + 's');
 }
 
+
+/* ───────── diagnóstico ───────── */
+function describeFilters() {
+  const f = S.f, nm = (list, arr, k) => arr.map(id => { const x = list.find(y => y.id === id); return x ? x.es : id; }).join(', ');
+  const parts = [];
+  if (f.styles.length) parts.push('estilo: ' + nm(C.STYLES, f.styles));
+  if (f.eras.length) parts.push('época: ' + nm(C.ERAS, f.eras));
+  if (f.yearFrom || f.yearTo) parts.push('años: ' + (f.yearFrom || '…') + ' a ' + (f.yearTo || '…'));
+  if (f.types.length) parts.push('tipo: ' + nm(C.TYPES, f.types));
+  if (f.artists.length) parts.push('artistas: ' + f.artists.join(', '));
+  if (f.keywords.length) parts.push('tema: ' + f.keywords.join(', '));
+  if (f.orientation !== 'any') parts.push('formato: ' + f.orientation);
+  if (f.soloPD) parts.push('solo dominio público');
+  return parts.length ? parts.join(' · ') : 'sin filtros';
+}
+let diagRun = 0;
+async function diagnose() {
+  const run = ++diagRun, f = S.f, box = $('#diag'), out = $('#diagOut');
+  box.hidden = false;
+  const srcs = C.SOURCE_LIST.filter(s => f.sources[s.id]);
+  const lines = {};
+  const draw = (done) => {
+    out.textContent = 'Filtros: ' + describeFilters() + '\n' + (done ? 'Listo.' : 'Probando ' + srcs.length + ' fuentes (los museos de Wikidata tardan; puede llevar un par de minutos)…') + '\n\n' +
+      srcs.map(s => lines[s.id] || ('… ' + s.name)).join('\n');
+  };
+  draw(false);
+  await C.mapLimit(srcs, 4, async s => {
+    const t0 = Date.now(); let line;
+    try {
+      const list = await C.runSource(s, f, ctx());
+      const ok = list.filter(w => C.accept(w, f));
+      let img = '';
+      if (ok.length) { const r = await loadImage(C.shuffle(ok.slice())[0].imgs); img = r ? ' · imagen carga bien (' + r.w + '×' + r.h + ')' : ' · la imagen NO carga (bloqueada o rota)'; }
+      line = (ok.length ? '✔ ' : '✖ ') + s.name + ': ' + list.length + ' obras, ' + ok.length + ' válidas con tus filtros' + img + (ok[0] ? ' · «' + ok[0].title.slice(0, 50) + '»' : '') + ' · ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s';
+    } catch (e) { line = '✖ ' + s.name + ': ERROR ' + errText(e) + ' · ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s'; }
+    if (run !== diagRun) return;
+    lines[s.id] = line; draw(false);
+  });
+  if (run === diagRun) draw(true);
+}
+
 /* ───────── cambio de filtros ───────── */
 let applyT;
 function applyChange() {
   saveAll();
   clearTimeout(applyT);
   applyT = setTimeout(() => {
-    S.epoch++; S.pool = []; S.nextP = null; S.emptyRuns = 0; S.counts = {}; S.status = {};
+    S.epoch++; S.pool = []; S.nextP = null; S.flight = new Map(); S.cool = {}; S.streak = {}; S.warned = false; S.adv = false; S.counts = {}; S.status = {};
     renderSrcs();
     if (S.f.onlyFavs && !S.favs.length) toast('Aún no tienes favoritas');
     advance();
@@ -319,6 +405,8 @@ function onAct(act, id) {
   const f = S.f;
   switch (act) {
     case 'close': closeMenu(); break;
+    case 'diag': diagnose(); break;
+    case 'diag-close': $('#diag').hidden = true; diagRun++; break;
     case 'prev': prev(); break;
     case 'next': next(); break;
     case 'play': togglePlay(); break;
@@ -367,7 +455,8 @@ document.addEventListener('click', e => {
   if (el) { onAct(el.dataset.act, el.dataset.id); return; }
   if (e.target.id === 'menuBtn') { openMenu(); return; }
   if (e.target.id === 'loaderMenu') { openMenu(); return; }
-  if (e.target.closest('#drawer')) return;
+  if (e.target.id === 'loaderDiag') { diagnose(); return; }
+  if (e.target.closest('#drawer') || e.target.closest('#diag')) return;
   S.menu ? closeMenu() : openMenu();
 });
 ['mousemove', 'touchstart', 'pointerdown'].forEach(ev => document.addEventListener(ev, activity, { passive: true }));
@@ -380,6 +469,7 @@ document.addEventListener('keydown', e => {
     return;
   }
   const k = e.key;
+  if (!$('#diag').hidden) { if (k === 'Escape' || k === 'Backspace' || k === 'GoBack') { e.preventDefault(); onAct('diag-close'); } return; }
   if (S.menu) { if (k === 'Escape' || k === 'Backspace' || k === 'GoBack') { e.preventDefault(); closeMenu(); } return; }
   if (k === 'ArrowRight' || k === 'MediaTrackNext' || k === 'MediaFastForward') { e.preventDefault(); next(); }
   else if (k === 'ArrowLeft' || k === 'MediaTrackPrevious' || k === 'MediaRewind') { e.preventDefault(); prev(); }

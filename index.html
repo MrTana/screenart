@@ -58,6 +58,11 @@ button{cursor:pointer}
 #loader small{color:var(--muted);font-size:clamp(14px,1.3vw,20px);max-width:40em}
 #loader button{margin-top:1vh}
 @keyframes spin{to{transform:rotate(360deg)}}
+#diag{position:fixed;inset:0;background:var(--bg);z-index:30;overflow:auto;padding:max(16px,3vw)}
+#diag[hidden]{display:none}
+#diag .dhead{background:var(--bg)}
+#diagOut{white-space:pre-wrap;word-break:break-word;font:14px/1.6 ui-monospace,Menlo,Consolas,monospace;color:var(--fg);margin:16px 0}
+#loader button+button{margin-top:0}
 #toast{position:fixed;left:50%;bottom:9vh;transform:translate(-50%,20px);background:rgba(16,17,16,.94);border:1px solid var(--line);padding:.7em 1.2em;border-radius:6px;font-size:clamp(15px,1.5vw,24px);opacity:0;transition:.3s;z-index:20;pointer-events:none;max-width:90vw;text-align:center}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 #busy{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:max(14px,env(safe-area-inset-bottom,0px));font-size:13px;color:var(--muted);opacity:0;transition:opacity .4s;z-index:4}
@@ -115,7 +120,8 @@ details.adv label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut
 
 <figure id="caption" aria-live="polite"><div class="t"></div><div class="m"></div><div class="s"></div></figure>
 
-<div id="loader"><div class="sp"></div><p id="loaderText">Buscando obras en los museos…</p><small id="loaderSub"></small><button class="btn pri" id="loaderMenu" hidden>Abrir filtros</button></div>
+<div id="loader"><div class="sp"></div><p id="loaderText">Buscando obras en los museos…</p><small id="loaderSub"></small><button class="btn pri" id="loaderMenu" hidden>Abrir filtros</button><button class="btn" id="loaderDiag" hidden>Probar fuentes</button></div>
+<div id="diag" hidden><div class="dhead"><h1>Diagnóstico de fuentes</h1><button class="btn" data-act="diag-close">Cerrar</button></div><pre id="diagOut"></pre></div>
 <div id="busy">Aplicando filtros…</div>
 <div id="toast" role="status"></div>
 <button id="menuBtn" aria-label="Abrir menú de filtros">Menú</button>
@@ -154,7 +160,7 @@ details.adv label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut
     <label for="k-si">Smithsonian (clave de api.data.gov)</label><input type="password" id="k-si" autocomplete="off">
     <label for="k-harvard">Harvard Art Museums</label><input type="password" id="k-harvard" autocomplete="off">
     <p class="hint" style="font-size:13.5px;color:var(--muted)">Se guardan solo en este navegador. Con una clave puedes activar esas fuentes arriba.</p></details>
-  <div class="foot">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><button class="btn" data-act="reset" style="margin-top:10px">Restablecer filtros</button></div>
+  <div class="foot">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><button class="btn" data-act="diag" style="margin-top:10px">Probar fuentes</button> <button class="btn" data-act="reset" style="margin-top:10px">Restablecer filtros</button></div>
 </aside>
 <script>
 /* Núcleo: catálogos de filtros, utilidades y adaptadores de museos.
@@ -271,6 +277,34 @@ const STYLES = [
   { id: 'ukiyoe', es: 'Ukiyo-e (Japón)', q: 'Ukiyo-e', range: [1600, 1915], wd: 'Ukiyo-e', artists: ['Hokusai', 'Hiroshige', 'Utamaro', 'Kuniyoshi', 'Sharaku', 'Kunisada'] }
 ];
 
+/* Categoría de Wikimedia Commons y nombre del estilo en WikiArt (si existe). */
+const STYLE_EXTRA = {
+  renaissance: { cat: 'Renaissance paintings', wa: 'high-renaissance' },
+  mannerism: { cat: 'Mannerist paintings', wa: 'mannerism-late-renaissance' },
+  baroque: { cat: 'Baroque paintings', wa: 'baroque' },
+  dutch: { cat: 'Dutch Golden Age paintings', wa: 'baroque' },
+  rococo: { cat: 'Rococo paintings', wa: 'rococo' },
+  neoclassicism: { cat: 'Neoclassical paintings', wa: 'neoclassicism' },
+  romanticism: { cat: 'Romantic paintings', wa: 'romanticism' },
+  hudson: { cat: 'Hudson River School paintings', wa: 'hudson-river-school' },
+  realism: { cat: 'Realist paintings', wa: 'realism' },
+  barbizon: { cat: 'Barbizon school paintings', wa: 'barbizon-school' },
+  prer: { cat: 'Pre-Raphaelite paintings', wa: 'pre-raphaelite-brotherhood' },
+  impressionism: { cat: 'Impressionist paintings', wa: 'impressionism' },
+  postimpressionism: { cat: 'Post-Impressionist paintings', wa: 'post-impressionism' },
+  symbolism: { cat: 'Symbolist paintings', wa: 'symbolism' },
+  artnouveau: { cat: 'Art Nouveau paintings', wa: 'art-nouveau-modern' },
+  expressionism: { cat: 'Expressionist paintings', wa: 'expressionism' },
+  fauvism: { cat: 'Fauvist paintings', wa: 'fauvism' },
+  cubism: { cat: 'Cubist paintings', wa: 'cubism' },
+  surrealism: { cat: 'Surrealist paintings', wa: 'surrealism' },
+  abstract: { cat: 'Abstract paintings', wa: 'abstract-art' },
+  abstractexp: { cat: 'Abstract expressionist paintings', wa: 'abstract-expressionism' },
+  pop: { cat: 'Pop art paintings', wa: 'pop-art' },
+  ukiyoe: { cat: 'Ukiyo-e', wa: 'ukiyo-e' }
+};
+STYLES.forEach(s => Object.assign(s, STYLE_EXTRA[s.id] || {}));
+
 const TYPES = [
   { id: 'painting', es: 'Pintura' },
   { id: 'drawing', es: 'Dibujo y acuarela' },
@@ -295,7 +329,7 @@ function keywordToQuery(text) { const n = norm(text); return ES_EN[n] || text.tr
 
 /* ───────── filtros ───────── */
 const DEFAULT_MUSEUMS = ['louvre', 'orsay', 'versailles', 'orangerie', 'marmottan', 'petitpalais', 'carnavalet', 'prado', 'thyssen', 'uffizi', 'hermitage', 'nationalgallery', 'vangogh', 'mauritshuis', 'kunsthistorisches'];
-const SOURCE_DEFAULTS = { met: true, aic: true, cma: true, rijks: true, vam: true, smk: true, mia: true, wiki: true, europeana: false, si: false, harvard: false };
+const SOURCE_DEFAULTS = { met: true, aic: true, cma: true, rijks: true, vam: true, smk: true, mia: true, wiki: true, commons: true, wikiart: true, europeana: false, si: false, harvard: false };
 DEFAULT_MUSEUMS.forEach(id => { SOURCE_DEFAULTS['m:' + id] = true; });
 
 function defaultFilters() {
@@ -680,23 +714,28 @@ async function sparql(q) {
 function wdParts(plan, opts) {
   const typeQ = opts.byType ? (WD_TYPE[plan.type] || 'Q3305213') : null;
   let style = plan.style;
-  const artist = plan.artist || plan.hintArtist;
-  const parts = [];
   const m = opts.museum;
+  const artist = plan.artist;
+  const parts = [];
   if (m) {
     const blocks = [];
     if (m.ids.length) blocks.push('{ VALUES ?coll { ' + m.ids.map(q => 'wd:' + q).join(' ') + ' } }');
     blocks.push('{ VALUES ?lbl { ' + m.labels.map(l => '"' + sparqlEsc(l[0]) + '"@' + l[1]).join(' ') + ' } ?coll rdfs:label ?lbl. }');
     parts.push(blocks.join(' UNION ') + ' ?item wdt:P195 ?coll.');
-  } else if (!style && !artist) style = pick(STYLES);
-  if (style) parts.push('?mv rdfs:label "' + sparqlEsc(style.wd) + '"@en. ?item wdt:P135 ?mv.');
-  if (plan.artist) parts.push('SERVICE wikibase:mwapi { bd:serviceParam wikibase:endpoint "www.wikidata.org"; bd:serviceParam wikibase:api "EntitySearch"; bd:serviceParam mwapi:search "' + sparqlEsc(plan.artist) + '"; bd:serviceParam mwapi:language "en"; ?creator wikibase:apiOutputItem mwapi:item. } ?item wdt:P170 ?creator.');
+  } else if (!style && !artist && !plan.hintArtist) style = pick(STYLES);
+  // Pocas obras tienen movimiento propio en Wikidata; muchos autores sí: se acepta cualquiera de los dos.
+  if (style) parts.push('?mv rdfs:label "' + sparqlEsc(style.wd) + '"@en. { ?item wdt:P135 ?mv. } UNION { ?item wdt:P170 ?cr0. ?cr0 wdt:P135 ?mv. }');
+  if (artist) parts.push('SERVICE wikibase:mwapi { bd:serviceParam wikibase:endpoint "www.wikidata.org"; bd:serviceParam wikibase:api "EntitySearch"; bd:serviceParam mwapi:search "' + sparqlEsc(artist) + '"; bd:serviceParam mwapi:language "en"; ?creator wikibase:apiOutputItem mwapi:item. } ?item wdt:P170 ?creator.');
   else parts.push('OPTIONAL { ?item wdt:P170 ?creator. }');
   parts.push(typeQ ? '?item wdt:P31 wd:' + typeQ + '.' : 'OPTIONAL { ?item wdt:P31 ?cls. }');
   // P18 = imagen en Commons. P6500 = imagen externa de obras con derechos de autor.
   parts.push(opts.anyRights ? '{ ?item wdt:P18 ?image. } UNION { ?item wdt:P6500 ?image. }' : '?item wdt:P18 ?image.');
   parts.push('OPTIONAL { ?item wdt:P571 ?inc. } OPTIONAL { ?creator wdt:P570 ?death. }' + (m ? '' : ' OPTIONAL { ?item wdt:P195 ?coll. }'));
-  if (plan.range) parts.push('FILTER(BOUND(?inc) && YEAR(?inc) >= ' + Math.round(plan.range[0]) + ' && YEAR(?inc) <= ' + Math.round(plan.range[1]) + ').');
+  if (plan.range) {
+    const yr = 'YEAR(?inc) >= ' + Math.round(plan.range[0]) + ' && YEAR(?inc) <= ' + Math.round(plan.range[1]);
+    // Con un estilo elegido, las obras sin fecha en Wikidata también valen.
+    parts.push(style ? 'FILTER(!BOUND(?inc) || (' + yr + ')).' : 'FILTER(BOUND(?inc) && ' + yr + ').');
+  }
   if (!opts.anyRights) parts.push('FILTER((BOUND(?inc) && YEAR(?inc) <= 1930) || (BOUND(?death) && YEAR(?death) <= 1955)).');
   return { parts, typeQ };
 }
@@ -822,6 +861,77 @@ async function harvardFetch(plan, f, ctx) {
   }));
 }
 
+/* Wikimedia Commons: búsqueda de archivos por categoría o texto (estilo, artista, tema). */
+const stripTags = h => String(h == null ? '' : h).replace(/<[^>]*>/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#0?39;/g, "'").replace(/\s+/g, ' ').trim();
+const COMMONS_KIND = { painting: 'painting', drawing: 'drawing', print: 'print', photo: 'photograph', sculpture: 'sculpture' };
+function commonsQueries(plan, f) {
+  const artist = plan.artist || plan.hintArtist;
+  const q = [];
+  const kind = COMMONS_KIND[plan.type] || 'painting';
+  const tail = ' filetype:bitmap';
+  if (plan.artist) q.push('"' + plan.artist + '" ' + kind + (plan.keyword ? ' ' + plan.keyword : '') + tail);
+  else if (plan.style && plan.style.cat) {
+    q.push('incategory:"' + plan.style.cat + '"' + (plan.keyword ? ' ' + plan.keyword : '') + tail);
+    q.push((plan.style.q) + ' ' + kind + (plan.keyword ? ' ' + plan.keyword : '') + tail);
+    if (plan.hintArtist) q.push('"' + plan.hintArtist + '" painting' + tail);
+  } else if (plan.style) q.push(plan.style.q + ' ' + kind + tail);
+  else q.push((plan.keyword || pick(GENERIC)) + ' ' + kind + ' museum' + tail);
+  return q;
+}
+async function commonsFetch(plan, f, ctx) {
+  const API = 'https://commons.wikimedia.org/w/api.php?format=json&formatversion=2&origin=*&action=query';
+  const W = ctx.hq ? 3000 : 1800;
+  let pages = [];
+  for (const q of commonsQueries(plan, f)) {
+    const total = await memo('cm:' + q, async () => {
+      const j = await getJSON(API + '&list=search&srnamespace=6&srlimit=1&srprop=&srinfo=totalhits&srsearch=' + encodeURIComponent(q));
+      return (j.query && j.query.searchinfo && j.query.searchinfo.totalhits) || 0;
+    });
+    if (!total) continue;
+    const off = rand(Math.max(1, Math.min(total - 40, 9000)));
+    const j = await getJSON(API + '&generator=search&gsrnamespace=6&gsrlimit=40&gsroffset=' + off + '&gsrsearch=' + encodeURIComponent(q) +
+      '&prop=imageinfo&iiprop=url|size|mime|extmetadata&iiurlwidth=' + W + '&iiextmetadatafilter=ObjectName|Artist|DateTimeOriginal|LicenseShortName');
+    pages = (j.query && j.query.pages) || [];
+    if (pages.length) break;
+  }
+  if (!Array.isArray(pages)) pages = Object.keys(pages).map(k => pages[k]);
+  return pages.map(p => {
+    const ii = p.imageinfo && p.imageinfo[0];
+    if (!ii || !/^image\/(jpeg|png|webp|gif)$/.test(ii.mime || '') || (ii.width || 0) < 700 || (ii.height || 0) < 500) return null;
+    const md = ii.extmetadata || {};
+    const val = k => stripTags(md[k] && md[k].value);
+    const lic = val('LicenseShortName');
+    const name = String(p.title || '').replace(/^File:/, '').replace(/\.[a-z]+$/i, '').replace(/_/g, ' ');
+    const title = val('ObjectName') || name;
+    const date = val('DateTimeOriginal');
+    return mk({
+      src: 'commons', museum: 'Wikimedia Commons', id: p.pageid || p.title,
+      title, artist: flipName(val('Artist')).slice(0, 80), date: date.slice(0, 40), year: parseYear(date),
+      imgs: [ii.thumburl, ii.url], thumb: ii.thumburl, url: ii.descriptionurl || ('https://commons.wikimedia.org/wiki/' + encodeURIComponent(p.title || '')),
+      w: ii.width, h: ii.height, type: classifyType(title) || (plan.type === 'painting' ? 'painting' : null),
+      pd: /public domain|pd|cc0/i.test(lic) ? true : (lic ? false : null), license: lic || 'Wikimedia Commons'
+    });
+  }).filter(Boolean);
+}
+
+/* WikiArt: catálogo grande de pintura clasificado por estilo (respuesta JSON de su propia web). */
+async function wikiartFetch(plan, f, ctx) {
+  if ((f.artists && f.artists.length) || (f.keywords && f.keywords.length) || (f.types && f.types.length && !f.types.includes('painting'))) return [];
+  const st = plan.style && plan.style.wa ? plan.style : pick(STYLES.filter(x => x.wa));
+  const url = n => 'https://www.wikiart.org/en/paintings-by-style/' + st.wa + '?select=featured&json=2&layout=new&resultType=masonry&page=' + n;
+  const first = await memo('wa:' + st.wa, () => getJSON(url(1)));
+  const total = first.AllPaintingsCount || 0, size = first.PageSize || 60;
+  const pages = Math.max(1, Math.min(Math.ceil(total / size), 40));
+  const n = 1 + rand(pages);
+  const j = n === 1 ? first : await getJSON(url(n));
+  return (j.Paintings || []).filter(p => p.image && p.title).map(p => mk({
+    src: 'wikiart', museum: 'WikiArt', id: p.id, title: p.title, artist: p.artistName, date: p.year,
+    imgs: [p.image.replace(/!\w+\.jpg$/, ''), p.image], thumb: p.image + '!PinterestSmall.jpg',
+    url: 'https://www.wikiart.org' + (p.paintingUrl || ''), w: p.width, h: p.height, type: 'painting',
+    pd: null, license: 'WikiArt (obra con o sin derechos de autor)'
+  }));
+}
+
 const GENERIC = ['landscape', 'portrait', 'flowers', 'sea', 'garden', 'still life', 'river', 'mountains', 'figure', 'city', 'harbor', 'winter', 'horse', 'woman', 'sky', 'forest', 'village', 'ship', 'night', 'mother'];
 
 const SOURCE_LIST = [
@@ -833,6 +943,8 @@ const SOURCE_LIST = [
   { id: 'smk', name: 'SMK', place: 'Copenhague', fetch: smkFetch, note: 'Arte nórdico y europeo' },
   { id: 'mia', name: 'Minneapolis Institute of Art', place: 'Minneapolis', fetch: miaFetch, note: 'Dominio público' },
   { id: 'wiki', name: 'Wikidata y Commons (por movimiento)', place: 'Todo el mundo', fetch: wikiFetch, note: 'Filtra bien por movimiento artístico' },
+  { id: 'commons', name: 'Wikimedia Commons (búsqueda)', place: 'Todo el mundo', fetch: commonsFetch, note: 'Busca por estilo, artista o tema' },
+  { id: 'wikiart', name: 'WikiArt (por estilo)', place: 'Todo el mundo', fetch: wikiartFetch, note: 'Muchas obras por estilo (experimental)' },
   { id: 'europeana', name: 'Europeana', place: 'Europa', fetch: europeanaFetch, note: 'Calidad variable. Necesita clave', key: 'europeana', keyUrl: 'https://pro.europeana.eu/pages/get-api' },
   { id: 'si', name: 'Smithsonian', place: 'Washington', fetch: siFetch, note: 'Necesita clave gratuita', key: 'si', keyUrl: 'https://api.data.gov/signup/' },
   { id: 'harvard', name: 'Harvard Art Museums', place: 'Cambridge (EE. UU.)', fetch: harvardFetch, note: 'Necesita clave gratuita', key: 'harvard', keyUrl: 'https://harvardartmuseums.org/collections/api' }
@@ -845,20 +957,26 @@ const MUSEUM_SOURCES = MUSEUMS.map(m => ({
 }));
 MUSEUM_SOURCES.forEach(x => SOURCE_LIST.push(x));
 
-/* Ejecuta una fuente: consulta concreta y, si no hay resultados, una versión relajada. */
+/* Ejecuta una fuente: consulta concreta y, si no hay resultados, versiones cada vez más relajadas. */
 async function runSource(src, f, ctx) {
   const plan = makePlan(f);
   if (plan.empty) return [];
-  let w = await src.fetch(plan, f, ctx);
-  if (!w.length && (plan.keyword || plan.hintArtist)) w = await src.fetch(Object.assign({}, plan, { keyword: null, hintArtist: null }), f, ctx);
-  return w;
+  const loose = Object.assign({}, plan, { keyword: null, hintArtist: null });
+  const tries = [plan];
+  if (plan.keyword || plan.hintArtist) tries.push(loose);
+  if (plan.style && plan.range && !allowedRanges(f)) tries.push(Object.assign({}, loose, { range: null }));
+  for (const p of tries) {
+    const w = await src.fetch(p, f, ctx);
+    if (w.length) return w;
+  }
+  return [];
 }
 
 const api = {
   rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
   ERAS, STYLES, TYPES, KEYWORDS, MUSEUMS, DEFAULT_MUSEUMS, MUSEUM_SOURCES, ARTIST_SUGGESTIONS, keywordToQuery,
   defaultFilters, allowedRanges, makePlan, accept, mk, SOURCE_LIST, SOURCE_DEFAULTS, runSource,
-  adapters: { metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }
+  adapters: { commonsFetch, wikiartFetch, metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }
 };
 if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.ArtCore = api;
 })(typeof self !== 'undefined' ? self : globalThis);
@@ -889,7 +1007,7 @@ const S = {
   keys: Object.assign({ europeana: 'api2demo', si: 'DEMO_KEY', harvard: '' }, lsGet('keys', {})),
   favs: lsGet('favs', []),
   pool: [], seen: new Set(), seenKey: new Set(), hist: [], hi: -1,
-  paused: false, menu: false, epoch: 0, refilling: 0, emptyRuns: 0, adv: false,
+  paused: false, menu: false, epoch: 0, refilling: 0, adv: false, advAt: 0, flight: new Map(), cool: {}, streak: {}, warned: false, recycleAfter: 6000,
   status: {}, counts: {}, layer: 0, nextP: null, nextEpoch: -1,
   timer: null, capT: null, idleT: null, waiters: [], current: null, shown: 0
 };
@@ -903,7 +1021,7 @@ let toastT;
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 3200); }
 function busy() { $('#busy').textContent = 'Buscando obras…'; $('#busy').classList.toggle('on', S.refilling > 0); }
 function showLoader(text, sub, btn) {
-  $('#loaderText').textContent = text; $('#loaderSub').textContent = sub || ''; $('#loaderMenu').hidden = !btn;
+  $('#loaderText').textContent = text; $('#loaderSub').textContent = sub || ''; $('#loaderMenu').hidden = !btn; $('#loaderDiag').hidden = !btn;
   $('#loader').hidden = false;
 }
 function errText(e) {
@@ -926,42 +1044,68 @@ function setStatus(id, state, msg) {
   updateSrc(id);
 }
 
-function ensureRefill() { if (S.refilling > 0 || S.emptyRuns >= 3 || S.pool.length >= 8) return; refill(); }
+function ensureRefill() { if (S.pool.length < 8) refill(); }
 
-async function refill() {
+/* Cada fuente va por su cuenta: una lenta no frena a las demás, y las que fallan o vienen vacías descansan un rato (nunca se rinden del todo). */
+function refill() {
   const epoch = S.epoch, f = S.f;
   if (f.onlyFavs) {
     let list = S.favs.filter(w => !S.seen.has(w.uid));
     if (!list.length && S.favs.length) { S.favs.forEach(w => S.seen.delete(w.uid)); list = S.favs.slice(); }
-    if (!list.length) { toast('Aún no tienes favoritas'); S.emptyRuns = 3; wake(); return; }
+    if (!list.length) { if (!S.warned) { S.warned = true; toast('Aún no tienes favoritas'); } return; }
     insertRandom(C.shuffle(list.slice()).filter(w => !S.pool.some(x => x.uid === w.uid)));
     return;
   }
-  const on = C.SOURCE_LIST.filter(s => f.sources[s.id]);
-  // Wikidata aguanta pocas consultas a la vez: en cada ronda se consultan 4 museos al azar de los marcados.
-  const srcs = on.filter(s => s.group !== 'museum').concat(C.sampleN(on.filter(s => s.group === 'museum'), 4));
-  if (!srcs.length) { toast('Activa al menos un museo'); S.emptyRuns = 3; wake(); return; }
-  S.refilling++; busy();
-  let added = 0;
-  await Promise.all(srcs.map(async s => {
-    setStatus(s.id, 'loading');
-    try {
-      let list = await C.runSource(s, f, ctx());
-      if (epoch !== S.epoch) return;
+  const now = Date.now();
+  const enabled = C.SOURCE_LIST.filter(s => f.sources[s.id]);
+  if (!enabled.length) { if (!S.warned) { S.warned = true; toast('Activa al menos un museo'); } return; }
+  const ready = enabled.filter(s => !S.flight.has(s.id) && (S.cool[s.id] || 0) <= now);
+  // Wikidata aguanta pocas consultas a la vez: nunca más de 3 museos en marcha.
+  const busyMus = Array.from(S.flight.keys()).filter(id => id.indexOf('m:') === 0).length;
+  const srcs = ready.filter(s => s.group !== 'museum').concat(C.sampleN(ready.filter(s => s.group === 'museum'), Math.max(0, 3 - busyMus)));
+  srcs.forEach(s => launch(s, epoch));
+}
+
+async function launch(s, epoch) {
+  const f = S.f;
+  S.flight.set(s.id, epoch); S.refilling++; busy(); setStatus(s.id, 'loading');
+  let added = 0, fail = null;
+  try {
+    let list = await C.runSource(s, f, ctx());
+    if (epoch === S.epoch) {
       list = list.filter(w => C.accept(w, f) && !S.seen.has(w.uid) && !S.seenKey.has(wkey(w)) && !S.pool.some(x => x.uid === w.uid));
-      S.counts[s.id] = (S.counts[s.id] || 0) + list.length;
-      setStatus(s.id, S.counts[s.id] ? 'ok' : 'empty');
-      if (list.length) { added += list.length; insertRandom(list); }
-    } catch (e) {
-      if (epoch !== S.epoch) return;
-      setStatus(s.id, e && e.noKey ? 'nokey' : 'error', errText(e));
+      added = list.length;
+      if (added) insertRandom(list);
     }
-  }));
+  } catch (e) { fail = e; }
   S.refilling--; busy();
+  if (S.flight.get(s.id) === epoch) S.flight.delete(s.id);
   if (epoch !== S.epoch) return;
-  S.emptyRuns = added ? 0 : S.emptyRuns + 1;
-  wake();
-  if (S.pool.length < 6 && S.emptyRuns < 3) ensureRefill();
+  if (fail) {
+    const n = S.streak[s.id] = (S.streak[s.id] || 0) + 1;
+    S.cool[s.id] = Date.now() + (fail.noKey ? 1e12 : Math.min(120000, 15000 * Math.pow(2, n - 1)));
+    setStatus(s.id, fail.noKey ? 'nokey' : 'error', errText(fail));
+  } else if (!added) {
+    const n = S.streak[s.id] = (S.streak[s.id] || 0) + 1;
+    S.cool[s.id] = Date.now() + Math.min(60000, 3000 * n);
+    setStatus(s.id, S.counts[s.id] ? 'ok' : 'empty');
+  } else {
+    S.streak[s.id] = 0; S.cool[s.id] = 0;
+    S.counts[s.id] = (S.counts[s.id] || 0) + added;
+    setStatus(s.id, 'ok');
+  }
+  if (added) wake();
+  if (S.pool.length < 6) ensureRefill();
+}
+
+/* Cuando las fuentes no dan más obras nuevas, se vuelven a mostrar las ya vistas en lugar de quedarse parado. */
+function recycle() {
+  if (S.hist.length < 2) return false;
+  S.seen.clear(); S.seenKey.clear();
+  let list = C.shuffle(S.hist.map(w => Object.assign({}, w, { imgs: [w.url].concat((w.imgs || []).filter(u => u !== w.url)) })));
+  if (S.current && list.length > 1) list = list.filter(w => w.uid !== S.current.uid);
+  S.pool = list; wake();
+  return true;
 }
 
 function loadImage(urls) {
@@ -972,7 +1116,7 @@ function loadImage(urls) {
       const url = urls[i++], im = new Image();
       let done = false;
       const fin = ok => { if (done) return; done = true; clearTimeout(t); ok ? resolve({ url, w: im.naturalWidth, h: im.naturalHeight }) : next(); };
-      const t = setTimeout(() => { im.onload = im.onerror = null; fin(false); }, 25000);
+      const t = setTimeout(() => { im.onload = im.onerror = null; fin(false); }, 15000);
       im.onload = () => fin(true); im.onerror = () => fin(false);
       im.referrerPolicy = 'no-referrer'; im.src = url;
     };
@@ -989,19 +1133,31 @@ function orientOK(w, h) {
 }
 
 async function pullNext() {
-  const epoch = S.epoch;
-  for (let guard = 0; guard < 80; guard++) {
+  const epoch = S.epoch, t0 = Date.now();
+  let idleSince = 0;
+  while (Date.now() - t0 < 40000) {
     if (epoch !== S.epoch) return null;
     if (!S.pool.length) {
       ensureRefill();
-      if (!S.pool.length && S.refilling === 0 && S.emptyRuns >= 3) return null;
-      await waitPool(6000);
+      if (!S.flight.size) {
+        idleSince = idleSince || Date.now();
+        if (Date.now() - idleSince > S.recycleAfter && recycle()) { idleSince = 0; continue; }
+      } else idleSince = 0;
+      await waitPool(2500);
       continue;
     }
-    const w = S.pool.shift(); ensureRefill();
-    if (S.seen.has(w.uid)) continue;
-    const r = await loadImage(w.imgs);
-    if (!r || r.w < 300 || r.h < 300 || !orientOK(r.w, r.h)) continue;
+    const batch = S.pool.splice(0, 3); ensureRefill();
+    // Se prueban 3 imágenes a la vez: las que no cargan (bloqueadas o rotas) no frenan el cambio.
+    const res = await Promise.all(batch.map(async w => {
+      if (S.seen.has(w.uid) || (S.current && w.uid === S.current.uid)) return null;
+      const r = await loadImage(w.imgs);
+      return r && r.w >= 300 && r.h >= 300 && orientOK(r.w, r.h) ? { w, r } : null;
+    }));
+    if (epoch !== S.epoch) return null;
+    const ok = res.filter(Boolean);
+    if (!ok.length) continue;
+    ok.slice(1).reverse().forEach(x => S.pool.unshift(x.w));
+    const w = ok[0].w, r = ok[0].r;
     S.seen.add(w.uid); S.seenKey.add(wkey(w));
     if (S.seen.size > 3000) { S.seen.clear(); S.seenKey.clear(); }
     return Object.assign({}, w, { url: r.url, url_page: w.url });
@@ -1040,25 +1196,32 @@ function schedule() {
   S.timer = setTimeout(next, S.st.interval * 1000);
 }
 async function advance() {
-  if (S.adv) return;
-  S.adv = true; clearTimeout(S.timer);
+  if (S.adv && Date.now() - S.advAt < 90000) return;
+  const epoch = S.epoch;
+  S.adv = true; S.advAt = Date.now(); clearTimeout(S.timer);
   try {
     let item = null;
     if (S.nextP && S.nextEpoch === S.epoch) { item = await S.nextP; }
     S.nextP = null;
+    if (epoch !== S.epoch) return;
     if (!item) item = await pullNext();
-    if (!item) item = await pullNext();
-    if (!item) { showEmpty(); return; }
+    if (epoch !== S.epoch) return;
+    if (!item) {
+      // Sin obras nuevas: se repite una ya vista para que la pantalla nunca se quede parada.
+      const old = S.hist.filter(w => !S.current || w.uid !== S.current.uid);
+      if (old.length) { present(C.pick(old), true); toast('Repitiendo obras ya vistas: las fuentes no dan más por ahora'); S.nextEpoch = S.epoch; S.nextP = pullNext(); return; }
+      showEmpty(); return;
+    }
     present(item, false);
     S.nextEpoch = S.epoch; S.nextP = pullNext();
-  } finally { S.adv = false; schedule(); }
+  } finally { if (epoch === S.epoch) { S.adv = false; schedule(); } }
 }
 function showEmpty() {
   const states = Object.keys(S.status).map(k => S.status[k].state);
   const allBad = states.length && states.every(x => x === 'error' || x === 'nokey');
   if (S.current) { toast('No encuentro más obras con estos filtros'); return; }
   showLoader(allBad ? 'Ningún museo ha respondido' : 'No encontré obras con estos filtros',
-    allBad ? 'Revisa la conexión. Si abriste el archivo desde el disco, súbelo a un alojamiento https o ábrelo en otro navegador.' : 'Amplía la época o el estilo, o activa más museos.', true);
+    allBad ? 'Revisa la conexión. Si abriste el archivo desde el disco, súbelo a un alojamiento https o ábrelo en otro navegador.' : 'Amplía la época o el estilo, o activa más museos. El diagnóstico muestra qué responde cada fuente.', true);
 }
 function next() {
   if (S.hi < S.hist.length - 1) { S.hi++; present(S.hist[S.hi], true); schedule(); }
@@ -1087,13 +1250,54 @@ function applyLook() {
   document.documentElement.style.setProperty('--dur', S.st.interval + 's');
 }
 
+
+/* ───────── diagnóstico ───────── */
+function describeFilters() {
+  const f = S.f, nm = (list, arr, k) => arr.map(id => { const x = list.find(y => y.id === id); return x ? x.es : id; }).join(', ');
+  const parts = [];
+  if (f.styles.length) parts.push('estilo: ' + nm(C.STYLES, f.styles));
+  if (f.eras.length) parts.push('época: ' + nm(C.ERAS, f.eras));
+  if (f.yearFrom || f.yearTo) parts.push('años: ' + (f.yearFrom || '…') + ' a ' + (f.yearTo || '…'));
+  if (f.types.length) parts.push('tipo: ' + nm(C.TYPES, f.types));
+  if (f.artists.length) parts.push('artistas: ' + f.artists.join(', '));
+  if (f.keywords.length) parts.push('tema: ' + f.keywords.join(', '));
+  if (f.orientation !== 'any') parts.push('formato: ' + f.orientation);
+  if (f.soloPD) parts.push('solo dominio público');
+  return parts.length ? parts.join(' · ') : 'sin filtros';
+}
+let diagRun = 0;
+async function diagnose() {
+  const run = ++diagRun, f = S.f, box = $('#diag'), out = $('#diagOut');
+  box.hidden = false;
+  const srcs = C.SOURCE_LIST.filter(s => f.sources[s.id]);
+  const lines = {};
+  const draw = (done) => {
+    out.textContent = 'Filtros: ' + describeFilters() + '\n' + (done ? 'Listo.' : 'Probando ' + srcs.length + ' fuentes (los museos de Wikidata tardan; puede llevar un par de minutos)…') + '\n\n' +
+      srcs.map(s => lines[s.id] || ('… ' + s.name)).join('\n');
+  };
+  draw(false);
+  await C.mapLimit(srcs, 4, async s => {
+    const t0 = Date.now(); let line;
+    try {
+      const list = await C.runSource(s, f, ctx());
+      const ok = list.filter(w => C.accept(w, f));
+      let img = '';
+      if (ok.length) { const r = await loadImage(C.shuffle(ok.slice())[0].imgs); img = r ? ' · imagen carga bien (' + r.w + '×' + r.h + ')' : ' · la imagen NO carga (bloqueada o rota)'; }
+      line = (ok.length ? '✔ ' : '✖ ') + s.name + ': ' + list.length + ' obras, ' + ok.length + ' válidas con tus filtros' + img + (ok[0] ? ' · «' + ok[0].title.slice(0, 50) + '»' : '') + ' · ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s';
+    } catch (e) { line = '✖ ' + s.name + ': ERROR ' + errText(e) + ' · ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s'; }
+    if (run !== diagRun) return;
+    lines[s.id] = line; draw(false);
+  });
+  if (run === diagRun) draw(true);
+}
+
 /* ───────── cambio de filtros ───────── */
 let applyT;
 function applyChange() {
   saveAll();
   clearTimeout(applyT);
   applyT = setTimeout(() => {
-    S.epoch++; S.pool = []; S.nextP = null; S.emptyRuns = 0; S.counts = {}; S.status = {};
+    S.epoch++; S.pool = []; S.nextP = null; S.flight = new Map(); S.cool = {}; S.streak = {}; S.warned = false; S.adv = false; S.counts = {}; S.status = {};
     renderSrcs();
     if (S.f.onlyFavs && !S.favs.length) toast('Aún no tienes favoritas');
     advance();
@@ -1186,6 +1390,8 @@ function onAct(act, id) {
   const f = S.f;
   switch (act) {
     case 'close': closeMenu(); break;
+    case 'diag': diagnose(); break;
+    case 'diag-close': $('#diag').hidden = true; diagRun++; break;
     case 'prev': prev(); break;
     case 'next': next(); break;
     case 'play': togglePlay(); break;
@@ -1234,7 +1440,8 @@ document.addEventListener('click', e => {
   if (el) { onAct(el.dataset.act, el.dataset.id); return; }
   if (e.target.id === 'menuBtn') { openMenu(); return; }
   if (e.target.id === 'loaderMenu') { openMenu(); return; }
-  if (e.target.closest('#drawer')) return;
+  if (e.target.id === 'loaderDiag') { diagnose(); return; }
+  if (e.target.closest('#drawer') || e.target.closest('#diag')) return;
   S.menu ? closeMenu() : openMenu();
 });
 ['mousemove', 'touchstart', 'pointerdown'].forEach(ev => document.addEventListener(ev, activity, { passive: true }));
@@ -1247,6 +1454,7 @@ document.addEventListener('keydown', e => {
     return;
   }
   const k = e.key;
+  if (!$('#diag').hidden) { if (k === 'Escape' || k === 'Backspace' || k === 'GoBack') { e.preventDefault(); onAct('diag-close'); } return; }
   if (S.menu) { if (k === 'Escape' || k === 'Backspace' || k === 'GoBack') { e.preventDefault(); closeMenu(); } return; }
   if (k === 'ArrowRight' || k === 'MediaTrackNext' || k === 'MediaFastForward') { e.preventDefault(); next(); }
   else if (k === 'ArrowLeft' || k === 'MediaTrackPrevious' || k === 'MediaRewind') { e.preventDefault(); prev(); }

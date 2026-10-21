@@ -1,6 +1,7 @@
 const C = require('../src/core.js');
 const assert = require('assert');
 const calls = []; const sparqlLog = []; let aicBodies = []; let sparqlActive = 0, sparqlMax = 0;
+const commonsLog = []; let commonsEmpty = [];
 const J = o => ({ ok: true, status: 200, json: async () => o });
 
 // Fixtures con la forma de las respuestas reales observadas
@@ -18,6 +19,13 @@ const fx = {
   rijksObj: { id: 'https://id.rijksmuseum.nl/200100988', identified_by: [{ type: 'Name', content: 'Misty Sea', language: [{ id: 'http://vocab.getty.edu/aat/300388277' }] }], produced_by: { timespan: { identified_by: [{ content: '1899' }], begin_of_the_begin: '1899-01-01T00:00:00Z' }, part: [{ carried_out_by: [{ notation: [{ '@language': 'en', '@value': 'Jan Toorop' }] }] }] }, shows: [{ id: 'https://id.rijksmuseum.nl/202100988' }], classified_as: [{ notation: [{ '@language': 'en', '@value': 'painting' }] }] },
   rijksVis: { digitally_shown_by: [{ id: 'https://id.rijksmuseum.nl/5008910398567010810098' }] },
   rijksDig: { access_point: [{ id: 'https://iiif.micr.io/RFwqO' }] },
+  commonsPages: [
+    { pageid: 11, title: 'File:La persistencia de la memoria.jpg', imageinfo: [{ thumburl: 'https://upload.wikimedia.org/thumb/a/1800px-m.jpg', url: 'https://upload.wikimedia.org/a/m.jpg', descriptionurl: 'https://commons.wikimedia.org/wiki/File:m.jpg', width: 3000, height: 2000, mime: 'image/jpeg', extmetadata: { ObjectName: { value: 'The Persistence of Memory' }, Artist: { value: '<a href="x">Salvador Dalí</a>' }, DateTimeOriginal: { value: '1931' }, LicenseShortName: { value: 'Public domain' } } }] },
+    { pageid: 12, title: 'File:Tiny.jpg', imageinfo: [{ thumburl: 'https://upload.wikimedia.org/t.jpg', url: 'https://upload.wikimedia.org/t.jpg', width: 200, height: 100, mime: 'image/jpeg', extmetadata: {} }] },
+    { pageid: 13, title: 'File:Doc.pdf', imageinfo: [{ thumburl: 'https://upload.wikimedia.org/d.jpg', url: 'https://upload.wikimedia.org/d.pdf', width: 3000, height: 2000, mime: 'application/pdf', extmetadata: {} }] },
+    { pageid: 14, title: 'File:Golconda.jpg', imageinfo: [{ thumburl: 'https://upload.wikimedia.org/thumb/g.jpg', url: 'https://upload.wikimedia.org/g.jpg', width: 2400, height: 3000, mime: 'image/jpeg', extmetadata: { Artist: { value: 'René Magritte' }, DateTimeOriginal: { value: '<time>1953</time>' }, LicenseShortName: { value: 'All rights reserved' } } }] }
+  ],
+  wikiart: { Paintings: [{ id: 'a1', title: 'The Big Wheel', year: '1911-1912', width: 901, height: 599, artistName: 'Marc Chagall', image: 'https://uploads5.wikiart.org/images/marc-chagall/the-big-wheel.jpg', paintingUrl: '/en/marc-chagall/the-big-wheel' }], AllPaintingsCount: 2400, PageSize: 60 },
   wdRows: [
     { item: { value: 'http://www.wikidata.org/entity/Q1' }, itemLabel: { value: 'La Gioconda' }, creatorLabel: { value: 'Leonardo da Vinci' }, clsLabel: { value: 'pintura' }, image: { value: 'http://commons.wikimedia.org/wiki/Special:FilePath/Mona%20Lisa.jpg' }, inc: { value: '1503-01-01T00:00:00Z' } },
     { item: { value: 'http://www.wikidata.org/entity/Q2' }, itemLabel: { value: 'Venus de Milo' }, clsLabel: { value: 'escultura' }, image: { value: 'http://commons.wikimedia.org/wiki/Special:FilePath/Venus.JPG' }, inc: { value: '-0150-01-01T00:00:00Z' } },
@@ -41,6 +49,14 @@ globalThis.fetch = async (url, init) => {
   if (url.includes('data.rijksmuseum.nl/200100988')) return J(fx.rijksObj);
   if (url.includes('data.rijksmuseum.nl/202100988')) return J(fx.rijksVis);
   if (url.includes('data.rijksmuseum.nl/5008910398567010810098')) return J(fx.rijksDig);
+  if (url.includes('commons.wikimedia.org/w/api.php')) {
+    const u = new URL(url), sr = decodeURIComponent(u.searchParams.get('srsearch') || u.searchParams.get('gsrsearch') || '');
+    commonsLog.push(sr);
+    const empty = commonsEmpty.some(e => sr.includes(e));
+    if (u.searchParams.get('list') === 'search') return J({ query: { searchinfo: { totalhits: empty ? 0 : 321 } } });
+    return J({ query: { pages: fx.commonsPages } });
+  }
+  if (url.includes('wikiart.org')) return J(fx.wikiart);
   if (url.includes('wikidata')) {
     const q = decodeURIComponent(url.split('query=')[1]); sparqlLog.push(q);
     sparqlActive++; sparqlMax = Math.max(sparqlMax, sparqlActive); await new Promise(r => setTimeout(r, 15)); sparqlActive--;
@@ -143,6 +159,37 @@ globalThis.fetch = async (url, init) => {
   sparqlMax = 0; await Promise.all(museumSrcs.slice(0, 8).map(x => C.runSource(x, f1, anyCtx)));
   assert.ok(sparqlMax <= 2, 'concurrencia SPARQL: ' + sparqlMax);
   console.log('museos   |', museumSrcs.length, 'fuentes, Louvre ->', ws.map(w => w.title).join(', '), '| máx. consultas simultáneas:', sparqlMax);
+
+  // Surrealismo: Commons por categoría, con respaldo por texto
+  const sur = C.STYLES.find(x => x.id === 'surrealism'); assert.strictEqual(sur.cat, 'Surrealist paintings'); assert.strictEqual(sur.wa, 'surrealism');
+  const fs = C.defaultFilters(); fs.styles = ['surrealism'];
+  commonsLog.length = 0;
+  const cm = await C.runSource(C.SOURCE_LIST.find(x => x.id === 'commons'), fs, anyCtx);
+  assert.ok(commonsLog.some(x => x.includes('incategory:"Surrealist paintings"')), 'Commons: usa la categoría');
+  assert.deepStrictEqual(cm.map(w => w.title), ['The Persistence of Memory', 'Golconda'], 'se descartan miniaturas y pdf');
+  assert.strictEqual(cm[0].artist, 'Salvador Dalí'); assert.strictEqual(cm[0].year, 1931); assert.strictEqual(cm[0].pd, true); assert.strictEqual(cm[1].pd, false); assert.strictEqual(cm[1].year, 1953);
+  assert.ok(cm.every(w => C.accept(w, fs)), 'accept deja pasar el Surrealismo');
+  commonsEmpty = ['incategory:']; commonsLog.length = 0;
+  const fs2 = C.defaultFilters(); fs2.styles = ['surrealism']; fs2.keywords = ['landscape'];
+  const cm2 = await C.runSource(C.SOURCE_LIST.find(x => x.id === 'commons'), fs2, anyCtx); commonsEmpty = [];
+  assert.ok(cm2.length === 2 && commonsLog.some(x => /^Surrealism painting/.test(x)), 'Commons: sin categoría usa el texto');
+  const wa = await C.runSource(C.SOURCE_LIST.find(x => x.id === 'wikiart'), fs, anyCtx);
+  assert.ok(wa.length === 1 && wa[0].year === 1911 && wa[0].url === 'https://www.wikiart.org/en/marc-chagall/the-big-wheel' && wa[0].imgs[0].endsWith('.jpg'), 'WikiArt');
+  const fa = C.defaultFilters(); fa.artists = ['Dalí']; assert.deepStrictEqual(await C.adapters.wikiartFetch(C.makePlan(fa), fa, anyCtx), [], 'WikiArt no sirve para artistas');
+  // Wikidata: el movimiento vale por la obra o por su autor, y las obras sin fecha entran
+  sparqlLog.length = 0; await C.runSource(museumSrcs.find(x => x.id === 'm:orsay'), fs, anyCtx);
+  const qs = sparqlLog.filter(q => !/COUNT\(/.test(q)).pop();
+  assert.ok(/"Surrealism"@en/.test(qs) && /wdt:P135 \?mv\. \} UNION \{ \?item wdt:P170 \?cr0\. \?cr0 wdt:P135 \?mv/.test(qs), 'movimiento por obra o por autor');
+  assert.ok(/FILTER\(!BOUND\(\?inc\) \|\|/.test(qs), 'con estilo, entran obras sin fecha');
+  assert.ok(!/EntitySearch/.test(qs), 'sin búsqueda de artista en museos');
+  // relajación progresiva: si nada responde con el rango del estilo, se prueba sin rango
+  const seenPlans = [];
+  const fake = { id: 'x', fetch: async p => { seenPlans.push(p); return p.range ? [] : [C.mk({ src: 'x', id: 1, title: 'Sí', imgs: ['https://a/b.jpg'] })]; } };
+  const rr = await C.runSource(fake, fs, anyCtx);
+  assert.strictEqual(rr.length, 1); assert.ok(seenPlans.length >= 2 && seenPlans[seenPlans.length - 1].range === null, 'relajó el rango');
+  const fe = C.defaultFilters(); fe.styles = ['surrealism']; fe.eras = ['mod']; seenPlans.length = 0;
+  assert.strictEqual((await C.runSource(fake, fe, anyCtx)).length, 0); assert.ok(seenPlans.every(p => p.range), 'con época elegida no se quita el rango');
+  console.log('surrealismo | Commons', cm.length, '· WikiArt', wa.length, '· SPARQL con autor y sin fecha: OK');
   // runSource con relajación
   const r = await C.runSource(C.SOURCE_LIST[0], C.defaultFilters(), ctx);
   assert.ok(r.length);

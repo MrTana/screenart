@@ -58,6 +58,11 @@ button{cursor:pointer}
 #loader small{color:var(--muted);font-size:clamp(14px,1.3vw,20px);max-width:40em}
 #loader button{margin-top:1vh}
 @keyframes spin{to{transform:rotate(360deg)}}
+#diag{position:fixed;inset:0;background:var(--bg);z-index:30;overflow:auto;padding:max(16px,3vw)}
+#diag[hidden]{display:none}
+#diag .dhead{background:var(--bg)}
+#diagOut{white-space:pre-wrap;word-break:break-word;font:14px/1.6 ui-monospace,Menlo,Consolas,monospace;color:var(--fg);margin:16px 0}
+#loader button+button{margin-top:0}
 #toast{position:fixed;left:50%;bottom:9vh;transform:translate(-50%,20px);background:rgba(16,17,16,.94);border:1px solid var(--line);padding:.7em 1.2em;border-radius:6px;font-size:clamp(15px,1.5vw,24px);opacity:0;transition:.3s;z-index:20;pointer-events:none;max-width:90vw;text-align:center}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 #busy{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:max(14px,env(safe-area-inset-bottom,0px));font-size:13px;color:var(--muted);opacity:0;transition:opacity .4s;z-index:4}
@@ -115,7 +120,8 @@ details.adv label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut
 
 <figure id="caption" aria-live="polite"><div class="t"></div><div class="m"></div><div class="s"></div></figure>
 
-<div id="loader"><div class="sp"></div><p id="loaderText">Buscando obras en los museos…</p><small id="loaderSub"></small><button class="btn pri" id="loaderMenu" hidden>Abrir filtros</button></div>
+<div id="loader"><div class="sp"></div><p id="loaderText">Buscando obras en los museos…</p><small id="loaderSub"></small><button class="btn pri" id="loaderMenu" hidden>Abrir filtros</button><button class="btn" id="loaderDiag" hidden>Probar fuentes</button></div>
+<div id="diag" hidden><div class="dhead"><h1>Diagnóstico de fuentes</h1><button class="btn" data-act="diag-close">Cerrar</button></div><pre id="diagOut"></pre></div>
 <div id="busy">Aplicando filtros…</div>
 <div id="toast" role="status"></div>
 <button id="menuBtn" aria-label="Abrir menú de filtros">Menú</button>
@@ -154,7 +160,7 @@ details.adv label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut
     <label for="k-si">Smithsonian (clave de api.data.gov)</label><input type="password" id="k-si" autocomplete="off">
     <label for="k-harvard">Harvard Art Museums</label><input type="password" id="k-harvard" autocomplete="off">
     <p class="hint" style="font-size:13.5px;color:var(--muted)">Se guardan solo en este navegador. Con una clave puedes activar esas fuentes arriba.</p></details>
-  <div class="foot">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><button class="btn" data-act="reset" style="margin-top:10px">Restablecer filtros</button></div>
+  <div class="foot">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><button class="btn" data-act="diag" style="margin-top:10px">Probar fuentes</button> <button class="btn" data-act="reset" style="margin-top:10px">Restablecer filtros</button></div>
 </aside>
 <script>
 /*__CORE__*/

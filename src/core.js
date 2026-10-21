@@ -112,6 +112,34 @@ const STYLES = [
   { id: 'ukiyoe', es: 'Ukiyo-e (Japón)', q: 'Ukiyo-e', range: [1600, 1915], wd: 'Ukiyo-e', artists: ['Hokusai', 'Hiroshige', 'Utamaro', 'Kuniyoshi', 'Sharaku', 'Kunisada'] }
 ];
 
+/* Categoría de Wikimedia Commons y nombre del estilo en WikiArt (si existe). */
+const STYLE_EXTRA = {
+  renaissance: { cat: 'Renaissance paintings', wa: 'high-renaissance' },
+  mannerism: { cat: 'Mannerist paintings', wa: 'mannerism-late-renaissance' },
+  baroque: { cat: 'Baroque paintings', wa: 'baroque' },
+  dutch: { cat: 'Dutch Golden Age paintings', wa: 'baroque' },
+  rococo: { cat: 'Rococo paintings', wa: 'rococo' },
+  neoclassicism: { cat: 'Neoclassical paintings', wa: 'neoclassicism' },
+  romanticism: { cat: 'Romantic paintings', wa: 'romanticism' },
+  hudson: { cat: 'Hudson River School paintings', wa: 'hudson-river-school' },
+  realism: { cat: 'Realist paintings', wa: 'realism' },
+  barbizon: { cat: 'Barbizon school paintings', wa: 'barbizon-school' },
+  prer: { cat: 'Pre-Raphaelite paintings', wa: 'pre-raphaelite-brotherhood' },
+  impressionism: { cat: 'Impressionist paintings', wa: 'impressionism' },
+  postimpressionism: { cat: 'Post-Impressionist paintings', wa: 'post-impressionism' },
+  symbolism: { cat: 'Symbolist paintings', wa: 'symbolism' },
+  artnouveau: { cat: 'Art Nouveau paintings', wa: 'art-nouveau-modern' },
+  expressionism: { cat: 'Expressionist paintings', wa: 'expressionism' },
+  fauvism: { cat: 'Fauvist paintings', wa: 'fauvism' },
+  cubism: { cat: 'Cubist paintings', wa: 'cubism' },
+  surrealism: { cat: 'Surrealist paintings', wa: 'surrealism' },
+  abstract: { cat: 'Abstract paintings', wa: 'abstract-art' },
+  abstractexp: { cat: 'Abstract expressionist paintings', wa: 'abstract-expressionism' },
+  pop: { cat: 'Pop art paintings', wa: 'pop-art' },
+  ukiyoe: { cat: 'Ukiyo-e', wa: 'ukiyo-e' }
+};
+STYLES.forEach(s => Object.assign(s, STYLE_EXTRA[s.id] || {}));
+
 const TYPES = [
   { id: 'painting', es: 'Pintura' },
   { id: 'drawing', es: 'Dibujo y acuarela' },
@@ -136,7 +164,7 @@ function keywordToQuery(text) { const n = norm(text); return ES_EN[n] || text.tr
 
 /* ───────── filtros ───────── */
 const DEFAULT_MUSEUMS = ['louvre', 'orsay', 'versailles', 'orangerie', 'marmottan', 'petitpalais', 'carnavalet', 'prado', 'thyssen', 'uffizi', 'hermitage', 'nationalgallery', 'vangogh', 'mauritshuis', 'kunsthistorisches'];
-const SOURCE_DEFAULTS = { met: true, aic: true, cma: true, rijks: true, vam: true, smk: true, mia: true, wiki: true, europeana: false, si: false, harvard: false };
+const SOURCE_DEFAULTS = { met: true, aic: true, cma: true, rijks: true, vam: true, smk: true, mia: true, wiki: true, commons: true, wikiart: true, europeana: false, si: false, harvard: false };
 DEFAULT_MUSEUMS.forEach(id => { SOURCE_DEFAULTS['m:' + id] = true; });
 
 function defaultFilters() {
@@ -521,23 +549,28 @@ async function sparql(q) {
 function wdParts(plan, opts) {
   const typeQ = opts.byType ? (WD_TYPE[plan.type] || 'Q3305213') : null;
   let style = plan.style;
-  const artist = plan.artist || plan.hintArtist;
-  const parts = [];
   const m = opts.museum;
+  const artist = plan.artist;
+  const parts = [];
   if (m) {
     const blocks = [];
     if (m.ids.length) blocks.push('{ VALUES ?coll { ' + m.ids.map(q => 'wd:' + q).join(' ') + ' } }');
     blocks.push('{ VALUES ?lbl { ' + m.labels.map(l => '"' + sparqlEsc(l[0]) + '"@' + l[1]).join(' ') + ' } ?coll rdfs:label ?lbl. }');
     parts.push(blocks.join(' UNION ') + ' ?item wdt:P195 ?coll.');
-  } else if (!style && !artist) style = pick(STYLES);
-  if (style) parts.push('?mv rdfs:label "' + sparqlEsc(style.wd) + '"@en. ?item wdt:P135 ?mv.');
-  if (plan.artist) parts.push('SERVICE wikibase:mwapi { bd:serviceParam wikibase:endpoint "www.wikidata.org"; bd:serviceParam wikibase:api "EntitySearch"; bd:serviceParam mwapi:search "' + sparqlEsc(plan.artist) + '"; bd:serviceParam mwapi:language "en"; ?creator wikibase:apiOutputItem mwapi:item. } ?item wdt:P170 ?creator.');
+  } else if (!style && !artist && !plan.hintArtist) style = pick(STYLES);
+  // Pocas obras tienen movimiento propio en Wikidata; muchos autores sí: se acepta cualquiera de los dos.
+  if (style) parts.push('?mv rdfs:label "' + sparqlEsc(style.wd) + '"@en. { ?item wdt:P135 ?mv. } UNION { ?item wdt:P170 ?cr0. ?cr0 wdt:P135 ?mv. }');
+  if (artist) parts.push('SERVICE wikibase:mwapi { bd:serviceParam wikibase:endpoint "www.wikidata.org"; bd:serviceParam wikibase:api "EntitySearch"; bd:serviceParam mwapi:search "' + sparqlEsc(artist) + '"; bd:serviceParam mwapi:language "en"; ?creator wikibase:apiOutputItem mwapi:item. } ?item wdt:P170 ?creator.');
   else parts.push('OPTIONAL { ?item wdt:P170 ?creator. }');
   parts.push(typeQ ? '?item wdt:P31 wd:' + typeQ + '.' : 'OPTIONAL { ?item wdt:P31 ?cls. }');
   // P18 = imagen en Commons. P6500 = imagen externa de obras con derechos de autor.
   parts.push(opts.anyRights ? '{ ?item wdt:P18 ?image. } UNION { ?item wdt:P6500 ?image. }' : '?item wdt:P18 ?image.');
   parts.push('OPTIONAL { ?item wdt:P571 ?inc. } OPTIONAL { ?creator wdt:P570 ?death. }' + (m ? '' : ' OPTIONAL { ?item wdt:P195 ?coll. }'));
-  if (plan.range) parts.push('FILTER(BOUND(?inc) && YEAR(?inc) >= ' + Math.round(plan.range[0]) + ' && YEAR(?inc) <= ' + Math.round(plan.range[1]) + ').');
+  if (plan.range) {
+    const yr = 'YEAR(?inc) >= ' + Math.round(plan.range[0]) + ' && YEAR(?inc) <= ' + Math.round(plan.range[1]);
+    // Con un estilo elegido, las obras sin fecha en Wikidata también valen.
+    parts.push(style ? 'FILTER(!BOUND(?inc) || (' + yr + ')).' : 'FILTER(BOUND(?inc) && ' + yr + ').');
+  }
   if (!opts.anyRights) parts.push('FILTER((BOUND(?inc) && YEAR(?inc) <= 1930) || (BOUND(?death) && YEAR(?death) <= 1955)).');
   return { parts, typeQ };
 }
@@ -663,6 +696,77 @@ async function harvardFetch(plan, f, ctx) {
   }));
 }
 
+/* Wikimedia Commons: búsqueda de archivos por categoría o texto (estilo, artista, tema). */
+const stripTags = h => String(h == null ? '' : h).replace(/<[^>]*>/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#0?39;/g, "'").replace(/\s+/g, ' ').trim();
+const COMMONS_KIND = { painting: 'painting', drawing: 'drawing', print: 'print', photo: 'photograph', sculpture: 'sculpture' };
+function commonsQueries(plan, f) {
+  const artist = plan.artist || plan.hintArtist;
+  const q = [];
+  const kind = COMMONS_KIND[plan.type] || 'painting';
+  const tail = ' filetype:bitmap';
+  if (plan.artist) q.push('"' + plan.artist + '" ' + kind + (plan.keyword ? ' ' + plan.keyword : '') + tail);
+  else if (plan.style && plan.style.cat) {
+    q.push('incategory:"' + plan.style.cat + '"' + (plan.keyword ? ' ' + plan.keyword : '') + tail);
+    q.push((plan.style.q) + ' ' + kind + (plan.keyword ? ' ' + plan.keyword : '') + tail);
+    if (plan.hintArtist) q.push('"' + plan.hintArtist + '" painting' + tail);
+  } else if (plan.style) q.push(plan.style.q + ' ' + kind + tail);
+  else q.push((plan.keyword || pick(GENERIC)) + ' ' + kind + ' museum' + tail);
+  return q;
+}
+async function commonsFetch(plan, f, ctx) {
+  const API = 'https://commons.wikimedia.org/w/api.php?format=json&formatversion=2&origin=*&action=query';
+  const W = ctx.hq ? 3000 : 1800;
+  let pages = [];
+  for (const q of commonsQueries(plan, f)) {
+    const total = await memo('cm:' + q, async () => {
+      const j = await getJSON(API + '&list=search&srnamespace=6&srlimit=1&srprop=&srinfo=totalhits&srsearch=' + encodeURIComponent(q));
+      return (j.query && j.query.searchinfo && j.query.searchinfo.totalhits) || 0;
+    });
+    if (!total) continue;
+    const off = rand(Math.max(1, Math.min(total - 40, 9000)));
+    const j = await getJSON(API + '&generator=search&gsrnamespace=6&gsrlimit=40&gsroffset=' + off + '&gsrsearch=' + encodeURIComponent(q) +
+      '&prop=imageinfo&iiprop=url|size|mime|extmetadata&iiurlwidth=' + W + '&iiextmetadatafilter=ObjectName|Artist|DateTimeOriginal|LicenseShortName');
+    pages = (j.query && j.query.pages) || [];
+    if (pages.length) break;
+  }
+  if (!Array.isArray(pages)) pages = Object.keys(pages).map(k => pages[k]);
+  return pages.map(p => {
+    const ii = p.imageinfo && p.imageinfo[0];
+    if (!ii || !/^image\/(jpeg|png|webp|gif)$/.test(ii.mime || '') || (ii.width || 0) < 700 || (ii.height || 0) < 500) return null;
+    const md = ii.extmetadata || {};
+    const val = k => stripTags(md[k] && md[k].value);
+    const lic = val('LicenseShortName');
+    const name = String(p.title || '').replace(/^File:/, '').replace(/\.[a-z]+$/i, '').replace(/_/g, ' ');
+    const title = val('ObjectName') || name;
+    const date = val('DateTimeOriginal');
+    return mk({
+      src: 'commons', museum: 'Wikimedia Commons', id: p.pageid || p.title,
+      title, artist: flipName(val('Artist')).slice(0, 80), date: date.slice(0, 40), year: parseYear(date),
+      imgs: [ii.thumburl, ii.url], thumb: ii.thumburl, url: ii.descriptionurl || ('https://commons.wikimedia.org/wiki/' + encodeURIComponent(p.title || '')),
+      w: ii.width, h: ii.height, type: classifyType(title) || (plan.type === 'painting' ? 'painting' : null),
+      pd: /public domain|pd|cc0/i.test(lic) ? true : (lic ? false : null), license: lic || 'Wikimedia Commons'
+    });
+  }).filter(Boolean);
+}
+
+/* WikiArt: catálogo grande de pintura clasificado por estilo (respuesta JSON de su propia web). */
+async function wikiartFetch(plan, f, ctx) {
+  if ((f.artists && f.artists.length) || (f.keywords && f.keywords.length) || (f.types && f.types.length && !f.types.includes('painting'))) return [];
+  const st = plan.style && plan.style.wa ? plan.style : pick(STYLES.filter(x => x.wa));
+  const url = n => 'https://www.wikiart.org/en/paintings-by-style/' + st.wa + '?select=featured&json=2&layout=new&resultType=masonry&page=' + n;
+  const first = await memo('wa:' + st.wa, () => getJSON(url(1)));
+  const total = first.AllPaintingsCount || 0, size = first.PageSize || 60;
+  const pages = Math.max(1, Math.min(Math.ceil(total / size), 40));
+  const n = 1 + rand(pages);
+  const j = n === 1 ? first : await getJSON(url(n));
+  return (j.Paintings || []).filter(p => p.image && p.title).map(p => mk({
+    src: 'wikiart', museum: 'WikiArt', id: p.id, title: p.title, artist: p.artistName, date: p.year,
+    imgs: [p.image.replace(/!\w+\.jpg$/, ''), p.image], thumb: p.image + '!PinterestSmall.jpg',
+    url: 'https://www.wikiart.org' + (p.paintingUrl || ''), w: p.width, h: p.height, type: 'painting',
+    pd: null, license: 'WikiArt (obra con o sin derechos de autor)'
+  }));
+}
+
 const GENERIC = ['landscape', 'portrait', 'flowers', 'sea', 'garden', 'still life', 'river', 'mountains', 'figure', 'city', 'harbor', 'winter', 'horse', 'woman', 'sky', 'forest', 'village', 'ship', 'night', 'mother'];
 
 const SOURCE_LIST = [
@@ -674,6 +778,8 @@ const SOURCE_LIST = [
   { id: 'smk', name: 'SMK', place: 'Copenhague', fetch: smkFetch, note: 'Arte nórdico y europeo' },
   { id: 'mia', name: 'Minneapolis Institute of Art', place: 'Minneapolis', fetch: miaFetch, note: 'Dominio público' },
   { id: 'wiki', name: 'Wikidata y Commons (por movimiento)', place: 'Todo el mundo', fetch: wikiFetch, note: 'Filtra bien por movimiento artístico' },
+  { id: 'commons', name: 'Wikimedia Commons (búsqueda)', place: 'Todo el mundo', fetch: commonsFetch, note: 'Busca por estilo, artista o tema' },
+  { id: 'wikiart', name: 'WikiArt (por estilo)', place: 'Todo el mundo', fetch: wikiartFetch, note: 'Muchas obras por estilo (experimental)' },
   { id: 'europeana', name: 'Europeana', place: 'Europa', fetch: europeanaFetch, note: 'Calidad variable. Necesita clave', key: 'europeana', keyUrl: 'https://pro.europeana.eu/pages/get-api' },
   { id: 'si', name: 'Smithsonian', place: 'Washington', fetch: siFetch, note: 'Necesita clave gratuita', key: 'si', keyUrl: 'https://api.data.gov/signup/' },
   { id: 'harvard', name: 'Harvard Art Museums', place: 'Cambridge (EE. UU.)', fetch: harvardFetch, note: 'Necesita clave gratuita', key: 'harvard', keyUrl: 'https://harvardartmuseums.org/collections/api' }
@@ -686,20 +792,26 @@ const MUSEUM_SOURCES = MUSEUMS.map(m => ({
 }));
 MUSEUM_SOURCES.forEach(x => SOURCE_LIST.push(x));
 
-/* Ejecuta una fuente: consulta concreta y, si no hay resultados, una versión relajada. */
+/* Ejecuta una fuente: consulta concreta y, si no hay resultados, versiones cada vez más relajadas. */
 async function runSource(src, f, ctx) {
   const plan = makePlan(f);
   if (plan.empty) return [];
-  let w = await src.fetch(plan, f, ctx);
-  if (!w.length && (plan.keyword || plan.hintArtist)) w = await src.fetch(Object.assign({}, plan, { keyword: null, hintArtist: null }), f, ctx);
-  return w;
+  const loose = Object.assign({}, plan, { keyword: null, hintArtist: null });
+  const tries = [plan];
+  if (plan.keyword || plan.hintArtist) tries.push(loose);
+  if (plan.style && plan.range && !allowedRanges(f)) tries.push(Object.assign({}, loose, { range: null }));
+  for (const p of tries) {
+    const w = await src.fetch(p, f, ctx);
+    if (w.length) return w;
+  }
+  return [];
 }
 
 const api = {
   rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
   ERAS, STYLES, TYPES, KEYWORDS, MUSEUMS, DEFAULT_MUSEUMS, MUSEUM_SOURCES, ARTIST_SUGGESTIONS, keywordToQuery,
   defaultFilters, allowedRanges, makePlan, accept, mk, SOURCE_LIST, SOURCE_DEFAULTS, runSource,
-  adapters: { metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }
+  adapters: { commonsFetch, wikiartFetch, metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }
 };
 if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.ArtCore = api;
 })(typeof self !== 'undefined' ? self : globalThis);
