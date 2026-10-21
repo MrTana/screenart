@@ -98,6 +98,25 @@ body.active #menuBtn,#menuBtn:focus-visible{opacity:1}
 .btn:hover{border-color:#44473f}
 .btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .btn[aria-pressed=true]{border-color:var(--accent);color:var(--accent)}
+
+.qs{margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.qs .fld:first-child{grid-column:1/-1}
+.fld{display:flex;flex-direction:column;gap:5px;min-width:0}
+.fld>span{font:600 12px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+select{background:var(--chip);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:.55em .7em;min-height:46px;width:100%;font:inherit;font-size:16px;color-scheme:dark}
+@media (max-width:330px){.qs{grid-template-columns:1fr}}
+.qs select{font-size:15px;padding:.5em .5em}
+section.acc{margin-top:10px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.015)}
+.acch{display:grid;grid-template-columns:1fr auto;grid-template-rows:auto auto;column-gap:12px;align-items:center;width:100%;text-align:left;background:none;border:0;padding:12px 14px;min-height:56px;color:var(--fg);scroll-margin-top:72px}
+.acch .at{grid-column:1;font-weight:600;font-size:17px}
+.acch .as{grid-column:1;grid-row:2;color:var(--muted);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.acch .ac{grid-column:2;grid-row:1/3;font-size:26px;color:var(--muted);transition:transform .2s}
+section.acc.open{border-color:#3a3d38}
+section.acc.open .ac{transform:rotate(90deg)}
+.accb{display:none;padding:2px 14px 16px}
+section.acc.open .accb{display:block}
+.accb .hint{margin:8px 0 0;font-size:14px;color:var(--muted)}
+.lbl{display:block;margin:12px 0 4px;font-size:14px;color:var(--muted)}
 section.sec{margin-top:22px}
 section.sec h2{margin:0 0 9px;font:600 12.5px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 section.sec .hint{margin:8px 0 0;font-size:14px;color:var(--muted)}
@@ -153,34 +172,62 @@ details.adv label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut
     <button class="btn" data-act="fs">Pantalla completa</button>
   </div>
 
-  <section class="sec"><h2>Colecciones rápidas</h2><div class="chips" id="c-presets"></div></section>
-  <section class="sec"><h2>Museos</h2>
-    <p class="hint" style="margin-top:0">Cada museo se busca a la vez en su API directa (si la tiene), Wikidata, Wikimedia Commons y Wikipedia. «Colecciones abiertas» añade WikiArt y Europeana, que no distinguen museos.</p>
-    <div class="row"><input type="search" id="museumFilter" placeholder="Filtrar la lista (ej. París, Prado, moderno)" autocomplete="off"></div>
-    <div class="srcs" id="c-msrcs" style="margin-top:10px"></div>
-    <div class="row" style="margin-top:10px"><button class="btn" data-act="mus-all">Marcar los de la lista</button><button class="btn" data-act="mus-none">Quitar los de la lista</button></div>
-    <div class="row" style="margin-top:10px"><input type="text" id="museumIn" placeholder="Añadir otro museo por su nombre" autocomplete="off"><button class="btn" data-act="add-museum">Añadir</button></div>
-    <p class="hint" id="museumMsg"></p>
+  <section class="qs" aria-label="Ajustes rápidos">
+    <label class="fld"><span>Colección rápida</span><select id="c-presets"></select></label>
+    <label class="fld"><span>Tiempo por obra</span><select id="c-interval"></select></label>
+    <label class="fld"><span>Presentación</span><select id="c-mode"></select></label>
+    <label class="fld"><span>Formato de la imagen</span><select id="c-orient"></select></label>
+    <label class="fld"><span>Ficha de la obra</span><select id="c-caption"></select></label>
   </section>
-  <section class="sec"><h2>Época</h2><div class="chips" id="c-eras"></div>
-    <div class="row" style="margin-top:10px"><input type="number" id="yFrom" placeholder="Desde (año)" inputmode="numeric"><input type="number" id="yTo" placeholder="Hasta (año)" inputmode="numeric"></div></section>
-  <section class="sec"><h2>Estilo o movimiento</h2><div class="chips" id="c-styles"></div></section>
-  <section class="sec"><h2>Tipo de obra</h2><div class="chips" id="c-types"></div><p class="hint">Sin elegir ninguno se muestra pintura, dibujo, grabado, fotografía y escultura.</p></section>
-  <section class="sec"><h2>Artistas</h2><div class="chips" id="c-artists"></div>
-    <div class="row" style="margin-top:10px"><input type="text" id="artistIn" list="artistList" placeholder="Escribe un artista" autocomplete="off"><button class="btn" data-act="add-artist">Añadir</button></div>
-    <datalist id="artistList"></datalist><div class="chips" id="c-artist-sug" style="margin-top:10px"></div></section>
-  <section class="sec"><h2>Tema</h2><div class="chips" id="c-kws"></div>
-    <div class="row" style="margin-top:10px"><input type="text" id="kwIn" placeholder="Otro tema (ej. caballos, nieve)" autocomplete="off"><button class="btn" data-act="add-kw">Añadir</button></div></section>
-  <section class="sec"><h2>Formato de la imagen</h2><div class="chips" id="c-orient"></div></section>
-  <section class="sec"><h2>Presentación</h2><div class="chips" id="c-mode"></div></section>
-  <section class="sec"><h2>Tiempo por obra</h2><div class="chips" id="c-interval"></div></section>
-  <section class="sec"><h2>Ficha de la obra</h2><div class="chips" id="c-caption"></div></section>
-  <section class="sec"><h2>Opciones</h2><div class="chips" id="c-opts"></div><p class="hint">Con «Solo dominio público» apagado se usan todas las imágenes que cada museo entrega, con o sin derechos de autor. Si un museo no sirve la imagen de una obra protegida, la app la salta.</p></section>
-  <details class="adv"><summary>Claves de API (opcional)</summary>
-    <label for="k-europeana">Europeana (clave gratuita)</label><input type="password" id="k-europeana" autocomplete="off">
-    <label for="k-si">Smithsonian (clave de api.data.gov)</label><input type="password" id="k-si" autocomplete="off">
-    <label for="k-harvard">Harvard Art Museums</label><input type="password" id="k-harvard" autocomplete="off">
-    <p class="hint" style="font-size:13.5px;color:var(--muted)">Se guardan solo en este navegador. Con una clave puedes activar esas fuentes arriba.</p></details>
+
+  <section class="acc" data-acc="museos">
+    <button class="acch" data-act="acc" data-id="museos" aria-expanded="false"><span class="at">Museos</span><span class="as" data-sum="museos"></span><span class="ac">›</span></button>
+    <div class="accb">
+      <p class="hint" style="margin-top:0">Cada museo se busca a la vez en su API directa (si la tiene), Wikidata, Wikimedia Commons y Wikipedia. «Colecciones abiertas» añade WikiArt y Europeana, que no distinguen museos.</p>
+      <div class="row"><input type="search" id="museumFilter" placeholder="Filtrar la lista (ej. París, Prado, México)" autocomplete="off"></div>
+      <div class="srcs" id="c-msrcs" style="margin-top:10px"></div>
+      <div class="row" style="margin-top:10px"><button class="btn" data-act="mus-all">Marcar los de la lista</button><button class="btn" data-act="mus-none">Quitar los de la lista</button></div>
+      <div class="row" style="margin-top:10px"><input type="text" id="museumIn" placeholder="Añadir otro museo por su nombre" autocomplete="off"><button class="btn" data-act="add-museum">Añadir</button></div>
+      <p class="hint" id="museumMsg"></p>
+    </div>
+  </section>
+  <section class="acc" data-acc="epoca">
+    <button class="acch" data-act="acc" data-id="epoca" aria-expanded="false"><span class="at">Época</span><span class="as" data-sum="epoca"></span><span class="ac">›</span></button>
+    <div class="accb"><div class="chips" id="c-eras"></div>
+      <div class="row" style="margin-top:10px"><input type="number" id="yFrom" placeholder="Desde (año)" inputmode="numeric"><input type="number" id="yTo" placeholder="Hasta (año)" inputmode="numeric"></div></div>
+  </section>
+  <section class="acc" data-acc="estilo">
+    <button class="acch" data-act="acc" data-id="estilo" aria-expanded="false"><span class="at">Estilo o movimiento</span><span class="as" data-sum="estilo"></span><span class="ac">›</span></button>
+    <div class="accb"><div class="chips" id="c-styles"></div></div>
+  </section>
+  <section class="acc" data-acc="tipo">
+    <button class="acch" data-act="acc" data-id="tipo" aria-expanded="false"><span class="at">Tipo de obra</span><span class="as" data-sum="tipo"></span><span class="ac">›</span></button>
+    <div class="accb"><div class="chips" id="c-types"></div><p class="hint">Sin elegir ninguno se muestra pintura, dibujo, grabado, fotografía y escultura.</p></div>
+  </section>
+  <section class="acc" data-acc="artistas">
+    <button class="acch" data-act="acc" data-id="artistas" aria-expanded="false"><span class="at">Artistas</span><span class="as" data-sum="artistas"></span><span class="ac">›</span></button>
+    <div class="accb"><div class="chips" id="c-artists"></div>
+      <div class="row" style="margin-top:10px"><input type="text" id="artistIn" list="artistList" placeholder="Escribe un artista" autocomplete="off"><button class="btn" data-act="add-artist">Añadir</button></div>
+      <datalist id="artistList"></datalist><div class="chips" id="c-artist-sug" style="margin-top:10px"></div></div>
+  </section>
+  <section class="acc" data-acc="tema">
+    <button class="acch" data-act="acc" data-id="tema" aria-expanded="false"><span class="at">Tema</span><span class="as" data-sum="tema"></span><span class="ac">›</span></button>
+    <div class="accb"><div class="chips" id="c-kws"></div>
+      <div class="row" style="margin-top:10px"><input type="text" id="kwIn" placeholder="Otro tema (ej. caballos, nieve)" autocomplete="off"><button class="btn" data-act="add-kw">Añadir</button></div></div>
+  </section>
+  <section class="acc" data-acc="opciones">
+    <button class="acch" data-act="acc" data-id="opciones" aria-expanded="false"><span class="at">Opciones</span><span class="as" data-sum="opciones"></span><span class="ac">›</span></button>
+    <div class="accb"><div class="chips" id="c-opts"></div><p class="hint">Con «Solo dominio público» apagado se usan todas las imágenes que cada museo entrega, con o sin derechos de autor. Si un museo no sirve la imagen de una obra protegida, la app la salta.</p></div>
+  </section>
+  <section class="acc" data-acc="claves">
+    <button class="acch" data-act="acc" data-id="claves" aria-expanded="false"><span class="at">Claves de API</span><span class="as" data-sum="claves"></span><span class="ac">›</span></button>
+    <div class="accb">
+      <label class="lbl" for="k-europeana">Europeana (clave gratuita)</label><input type="password" id="k-europeana" autocomplete="off">
+      <label class="lbl" for="k-si">Smithsonian (clave de api.data.gov)</label><input type="password" id="k-si" autocomplete="off">
+      <label class="lbl" for="k-harvard">Harvard Art Museums</label><input type="password" id="k-harvard" autocomplete="off">
+      <p class="hint">Se guardan solo en este navegador. Con una clave puedes activar esas fuentes.</p>
+    </div>
+  </section>
   <div class="foot">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><button class="btn pri" id="installBtn" data-act="install" style="margin-top:10px" hidden>Instalar la app</button> <button class="btn" data-act="diag" style="margin-top:10px">Probar fuentes</button> <button class="btn" data-act="reset" style="margin-top:10px">Restablecer filtros</button></div>
 </aside>
 <script>

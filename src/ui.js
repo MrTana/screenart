@@ -22,7 +22,7 @@ const S = {
   keys: Object.assign({ europeana: 'api2demo', si: 'DEMO_KEY', harvard: '' }, lsGet('keys', {})),
   favs: lsGet('favs', []),
   pool: [], seen: new Set(), seenKey: new Set(), hist: [], hi: -1,
-  paused: false, menu: false, epoch: 0, refilling: 0, adv: false, advAt: 0, flight: new Map(), cool: {}, streak: {}, warned: false, recycleAfter: 6000, mfilter: '', detail: {},
+  paused: false, menu: false, epoch: 0, refilling: 0, adv: false, advAt: 0, flight: new Map(), cool: {}, streak: {}, warned: false, recycleAfter: 6000, mfilter: '', detail: {}, acc: null,
   status: {}, counts: {}, layer: 0, nextP: null, nextEpoch: -1,
   timer: null, capT: null, idleT: null, waiters: [], current: null, shown: 0
 };
@@ -322,6 +322,33 @@ function applyChange() {
   }, 700);
 }
 
+
+/* ───────── secciones plegables ───────── */
+const names = (list, ids) => ids.map(id => { const x = list.find(y => y.id === id); return x ? x.es : id; });
+function accSummary(id) {
+  const f = S.f, j = a => a.join(', ');
+  switch (id) {
+    case 'museos': { const n = C.SOURCE_LIST.filter(s => f.sources[s.id]).length; return n + ' de ' + C.SOURCE_LIST.length + ' activos'; }
+    case 'epoca': return f.yearFrom || f.yearTo ? (f.yearFrom || '…') + ' a ' + (f.yearTo || '…') : f.eras.length ? j(names(C.ERAS, f.eras)) : 'Todas las épocas';
+    case 'estilo': return f.styles.length ? j(names(C.STYLES, f.styles)) : 'Todos los estilos';
+    case 'tipo': return f.types.length ? j(names(C.TYPES, f.types)) : 'Todos los tipos';
+    case 'artistas': return f.artists.length ? j(f.artists) : 'Todos los artistas';
+    case 'tema': return f.keywords.length ? j(f.keywords.map(q => { const k = C.KEYWORDS.find(x => x.q === q); return k ? k.es : q; })) : 'Cualquier tema';
+    case 'opciones': { const o = []; if (S.st.kenburns) o.push('zoom lento'); if (S.st.quality === 'high') o.push('alta calidad'); if (f.soloPD) o.push('solo dominio público'); if (f.onlyFavs) o.push('solo favoritas'); return o.length ? j(o) : 'Ninguna activada'; }
+    case 'claves': { const n = ['europeana', 'si', 'harvard'].filter(k => S.keys[k] && !/^(api2demo|DEMO_KEY)$/.test(S.keys[k])).length; return n ? n + ' configuradas' : 'Opcional'; }
+  }
+  return '';
+}
+function updateSums() { document.querySelectorAll('[data-sum]').forEach(el => { el.textContent = accSummary(el.dataset.sum); }); }
+function toggleAcc(id) {
+  S.acc = S.acc === id ? null : id;
+  document.querySelectorAll('section.acc').forEach(s => {
+    const on = s.dataset.acc === S.acc; s.classList.toggle('open', on);
+    const h = s.querySelector('.acch'); if (h) h.setAttribute('aria-expanded', on ? 'true' : 'false');
+  });
+  if (S.acc) { const h = document.querySelector('section.acc.open .acch'); if (h && h.scrollIntoView) h.scrollIntoView({ block: 'start' }); }
+}
+
 /* ───────── menú ───────── */
 const PRESETS = [
   { es: 'Todo el arte', patch: {} },
@@ -341,13 +368,14 @@ const PRESETS = [
   { es: 'Grandes museos de Europa', only: ['m:louvre', 'm:orsay', 'm:prado', 'm:uffizi', 'm:hermitage', 'm:nationalgallery', 'm:vangogh', 'm:mauritshuis', 'm:kunsthistorisches', 'm:versailles'], patch: {} }
 ];
 const ORIENT = [['any', 'Cualquiera'], ['landscape', 'Horizontal'], ['portrait', 'Vertical'], ['square', 'Cuadrada']];
-const MODES = [['gallery', 'Galería con fondo difuminado'], ['frame', 'Marco y paspartú'], ['fill', 'Llenar la pantalla (recorta)']];
+const MODES = [['gallery', 'Fondo difuminado'], ['frame', 'Marco y paspartú'], ['fill', 'Llenar (recorta)']];
 const INTERVALS = [[10, '10 s'], [15, '15 s'], [30, '30 s'], [60, '1 min'], [300, '5 min'], [900, '15 min'], [3600, '1 h']];
 const CAPTIONS = [['auto', 'Al cambiar de obra'], ['always', 'Siempre visible'], ['never', 'Oculta']];
 
 const chip = (act, id, label, on, cls) => '<button class="chip' + (cls ? ' ' + cls : '') + '" data-act="' + act + '" data-id="' + esc(id) + '" aria-pressed="' + !!on + '">' + esc(label) + '</button>';
+const opts = (list, cur) => list.map(o => '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(cur) ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join('');
 const R = {
-  presets: () => PRESETS.map((p, i) => chip('preset', i, p.es, false)).join(''),
+  presets: () => '<option value="">Elegir una colección…</option>' + PRESETS.map((p, i) => '<option value="' + i + '">' + esc(p.es) + '</option>').join(''),
   eras: () => C.ERAS.map(e => chip('era', e.id, e.es, S.f.eras.includes(e.id))).join(''),
   styles: () => C.STYLES.map(s => chip('style', s.id, s.es, S.f.styles.includes(s.id))).join(''),
   types: () => C.TYPES.map(t => chip('type', t.id, t.es, S.f.types.includes(t.id))).join(''),
@@ -355,10 +383,10 @@ const R = {
   artistsug: () => C.ARTIST_SUGGESTIONS.filter(a => !S.f.artists.includes(a)).slice(0, 14).map(a => chip('add-sug', a, a, false)).join(''),
   kws: () => C.KEYWORDS.map(k => chip('kw', k.q, k.es, S.f.keywords.includes(k.q))).join('') +
     S.f.keywords.filter(q => !C.KEYWORDS.some(k => k.q === q)).map(q => chip('kw', q, q, true, 'rm')).join(''),
-  orient: () => ORIENT.map(o => chip('orient', o[0], o[1], S.f.orientation === o[0])).join(''),
-  mode: () => MODES.map(o => chip('mode', o[0], o[1], S.st.mode === o[0])).join(''),
-  interval: () => INTERVALS.map(o => chip('interval', o[0], o[1], S.st.interval === o[0])).join(''),
-  caption: () => CAPTIONS.map(o => chip('caption', o[0], o[1], S.st.caption === o[0])).join(''),
+  orient: () => opts(ORIENT, S.f.orientation),
+  mode: () => opts(MODES, S.st.mode),
+  interval: () => opts(INTERVALS, S.st.interval),
+  caption: () => opts(CAPTIONS, S.st.caption),
   opts: () => chip('opt', 'kb', 'Zoom lento', S.st.kenburns) + chip('opt', 'hq', 'Imágenes en alta calidad', S.st.quality === 'high') +
     chip('opt', 'pd', 'Solo dominio público', S.f.soloPD) + chip('opt', 'favs', 'Solo mis favoritas (' + S.favs.length + ')', S.f.onlyFavs)
 };
@@ -403,6 +431,7 @@ function render(name) {
   const d = $('#drawer'), a = document.activeElement;
   const key = a && a.dataset && a.dataset.act ? a.dataset.act + '|' + a.dataset.id : null;
   if (name === 'srcs') renderSrcs(); else $('#' + BOX[name]).innerHTML = R[name]();
+  updateSums();
   if (key) { const el = Array.prototype.find.call(d.querySelectorAll('[data-act]'), e => e.dataset.act + '|' + e.dataset.id === key); if (el) el.focus({ preventScroll: true }); }
 }
 function renderAll() {
@@ -411,7 +440,7 @@ function renderAll() {
   $('#artistList').innerHTML = C.ARTIST_SUGGESTIONS.map(a => '<option value="' + esc(a) + '">').join('');
   $('#yFrom').value = S.f.yearFrom; $('#yTo').value = S.f.yearTo;
   ['europeana', 'si', 'harvard'].forEach(k => { $('#k-' + k).value = S.keys[k] || ''; });
-  $('#playBtn').textContent = S.paused ? 'Reanudar' : 'Pausar'; updateFavBtn();
+  $('#playBtn').textContent = S.paused ? 'Reanudar' : 'Pausar'; updateFavBtn(); updateSums();
 }
 function openMenu() { if (S.menu) return; S.menu = true; clearTimeout(S.timer); renderAll(); $('#drawer').hidden = false; const b = $('#drawer [data-act=next]'); if (b) b.focus({ preventScroll: true }); }
 function closeMenu() { if (!S.menu) return; S.menu = false; $('#drawer').hidden = true; schedule(); try { document.activeElement.blur(); } catch (e) { /* nada */ } }
@@ -424,6 +453,7 @@ function onAct(act, id) {
   const f = S.f;
   switch (act) {
     case 'close': closeMenu(); break;
+    case 'acc': toggleAcc(id); break;
     case 'diag': diagnose(); break;
     case 'install': installApp(); break;
     case 'diag-close': $('#diag').hidden = true; diagRun++; break;
@@ -518,11 +548,18 @@ document.addEventListener('keydown', e => {
   else if (k === 'i' || k === 'I') { const c = $('#caption'); c.classList.toggle('show'); clearTimeout(S.capT); }
   else if (k === 'l' || k === 'L') toggleFav();
 });
+[['presets', 'preset'], ['orient', 'orient'], ['mode', 'mode'], ['interval', 'interval'], ['caption', 'caption']].forEach(([box, act]) => {
+  $('#' + BOX[box]).addEventListener('change', e => {
+    const v = e.target.value;
+    if (act === 'preset') { if (v === '') return; onAct('preset', v); e.target.value = ''; return; }
+    onAct(act, v);
+  });
+});
 $('#museumFilter').addEventListener('input', e => { S.mfilter = e.target.value; renderSrcs(); });
 $('#yFrom').addEventListener('change', e => { S.f.yearFrom = e.target.value; S.f.eras = []; render('eras'); applyChange(); });
 $('#yTo').addEventListener('change', e => { S.f.yearTo = e.target.value; S.f.eras = []; render('eras'); applyChange(); });
 ['europeana', 'si', 'harvard'].forEach(k => {
-  $('#k-' + k).addEventListener('change', e => { S.keys[k] = e.target.value.trim(); saveAll(); if (S.f.sources[k]) applyChange(); });
+  $('#k-' + k).addEventListener('change', e => { S.keys[k] = e.target.value.trim(); saveAll(); updateSums(); if (S.f.sources[k]) applyChange(); });
 });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); });
 let lock = null;

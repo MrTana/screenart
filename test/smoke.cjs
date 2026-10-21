@@ -31,12 +31,25 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   console.log('menu abierto:', !d.getElementById('drawer').hidden, '| chips estilos:', d.querySelectorAll('#c-styles .chip').length, '| filas:', d.querySelectorAll('#c-msrcs .src').length, '| sección antigua:', !!d.getElementById('c-srcs'));
   // clic en estilo Impresionismo y en una fuente
   d.querySelector('#c-styles [data-id=impressionism]').click();
-  d.querySelector('#c-presets [data-id="2"]').click(); // Maestros holandeses
+  const pick = name => { const sel = d.getElementById('c-presets'); const o = Array.from(sel.options).find(x => x.textContent === name); sel.value = o.value; sel.dispatchEvent(new w.Event('change')); return !!o; };
+  pick('Maestros holandeses');
   console.log('filtros tras preset:', JSON.stringify({ styles: S.f.styles, types: S.f.types }));
   d.querySelector('#c-artist-sug [data-act=add-sug]').click();
   console.log('artistas:', JSON.stringify(S.f.artists), '| chips artista:', d.querySelectorAll('#c-artists .chip').length);
   d.getElementById('kwIn').value = 'caballos'; d.querySelector('[data-act=add-kw]').click();
   console.log('temas:', JSON.stringify(S.f.keywords));
+  // selectores y secciones plegables
+  const sel = (id, v) => { const el = d.getElementById(id); el.value = v; el.dispatchEvent(new w.Event('change')); };
+  sel('c-interval', '60'); sel('c-mode', 'fill'); sel('c-orient', 'landscape'); sel('c-caption', 'always');
+  console.log('selectores ->', S.st.interval, S.st.mode, S.f.orientation, S.st.caption);
+  if (S.st.interval !== 60 || S.st.mode !== 'fill' || S.f.orientation !== 'landscape' || S.st.caption !== 'always') { console.error('FALLO selectores'); process.exit(1); }
+  sel('c-orient', 'any'); sel('c-caption', 'auto');
+  const open = () => Array.from(d.querySelectorAll('section.acc.open')).map(x => x.dataset.acc);
+  console.log('secciones abiertas al inicio:', open().length);
+  d.querySelector('[data-id=estilo]').click(); d.querySelector('[data-id=epoca]').click();
+  console.log('abierta:', open().join(','), '| resumen estilo:', d.querySelector('[data-sum=estilo]').textContent, '| museos:', d.querySelector('[data-sum=museos]').textContent);
+  if (open().join() !== 'epoca' || open().length !== 1) { console.error('FALLO acordeón'); process.exit(1); }
+  d.querySelector('[data-id=epoca]').click(); if (open().length) { console.error('FALLO cerrar'); process.exit(1); }
   A.onAct('interval', '10'); A.onAct('mode', 'frame'); A.onAct('opt', 'kb'); A.onAct('fav', '');
   console.log('modo:', d.getElementById('stage').className, '| favoritas:', S.favs.length);
   const on = () => Object.keys(S.f.sources).filter(k => k.startsWith('m:') && S.f.sources[k]).length;
@@ -50,12 +63,12 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   d.getElementById('museumIn').value = 'Museo de Prueba'; d.querySelector('[data-act=add-museum]').click(); await wait(300);
   console.log('museo añadido:', d.getElementById('museumMsg').textContent, '| guardado:', S.custom.length, '| activo:', !!S.f.sources['m:cQ4242'], '| en lista:', /Museo de Prueba/.test(d.getElementById('c-msrcs').textContent));
   for (const [name, n] of [['Museos de México', 18], ['Museos de Bélgica', 28], ['Surrealismo en museos', 63]]) {
-    const i2 = Array.from(d.querySelectorAll('#c-presets .chip')).findIndex(c => c.textContent === name); d.querySelectorAll('#c-presets .chip')[i2].click();
+    pick(name);
     const act = Object.keys(S.f.sources).filter(k => S.f.sources[k]).length;
     console.log('preset', name, '->', act, 'museos activos', name.startsWith('Surr') ? '| estilo: ' + S.f.styles : '');
     if (act !== n) { console.error('FALLO preset', name, act, 'esperaba', n); process.exit(1); }
   }
-  const pi = Array.from(d.querySelectorAll('#c-presets .chip')).findIndex(c => c.textContent === 'Museos de París'); d.querySelectorAll('#c-presets .chip')[pi].click();
+  pick('Museos de París');
   console.log('preset Museos de París -> fuentes activas:', Object.keys(S.f.sources).filter(k => S.f.sources[k]).join(','), );
   A.closeMenu();
   await wait(1500);
