@@ -4,7 +4,7 @@ Una sola página web que muestra obras de museos en pantalla completa y cambia s
 
 ## Museos
 
-El menú ya no tiene una lista de fuentes: solo **museos**. Hay unos 160 (Louvre, Orsay, Versalles, Prado, Uffizi, Hermitage, The Met, Rijksmuseum, MoMA, Tate, Städel, Pushkin, Tokio, Buenos Aires, Sídney…), con un filtro para encontrarlos y botones para marcar o quitar los de la lista. Hay 18 de México, 28 de Bélgica (Bruselas, Brujas, Amberes, Gante…) y unos 60 con obras surrealistas (Museo Magritte, Teatro-Museo Dalí, MoMA, Peggy Guggenheim, Menil, Max Ernst…), con colecciones rápidas «Museos de México», «Museos de Bélgica» y «Surrealismo en museos». Para cualquier otro, escribe su nombre en «Añadir otro museo»: la app lo busca en Wikidata y lo guarda en el navegador.
+El menú ya no tiene una lista de fuentes: solo **museos**. Hay unos 160 (Louvre, Orsay, Versalles, Prado, Uffizi, Hermitage, The Met, Rijksmuseum, MoMA, Tate, Städel, Pushkin, Tokio, Buenos Aires, Sídney…), con un filtro para encontrarlos y botones para marcar o quitar los de la lista. Hay 18 de México, 28 de Bélgica (Bruselas, Brujas, Amberes, Gante…) y unos 60 con obras surrealistas (Museo Magritte, Teatro-Museo Dalí, MoMA, Peggy Guggenheim, Menil, Max Ernst…). **Colecciones rápidas:** una por país con museos (Museos de México, de España, de Francia, del Reino Unido…, cada una con su número de museos) más «Museos de París». Se generan solas a partir de los museos que hay: cada museo tiene su país (en `core.js`, columna país o tabla `CITY_COUNTRY`) y, al añadir un museo de un país nuevo —en el código o con «Añadir otro museo», que lee el país en Wikidata—, aparece su colección. Para cualquier otro, escribe su nombre en «Añadir otro museo»: la app lo busca en Wikidata y lo guarda en el navegador.
 
 **Cada museo se consulta a la vez en todas sus fuentes:**
 - **Directa**: la API del propio museo, cuando tiene una abierta (The Met, Art Institute of Chicago, Cleveland, Rijksmuseum, V&A, SMK, Minneapolis; Smithsonian y Harvard con clave gratuita).
@@ -33,7 +33,7 @@ Si una fuente de un museo falla, las demás siguen. El punto de color y la líne
 
 **Artistas y estilos**
 
-- Más de 260 artistas agrupados en 13 grupos (menú Artistas). Cada nombre se busca en todas las fuentes anteriores. Hay colecciones rápidas para Remedios Varo, surrealistas de Latinoamérica, mujeres artistas y «Los grandes maestros».
+- Más de 260 artistas agrupados en 13 grupos (menú Artistas). Cada nombre se busca en todas las fuentes anteriores.
 - 59 estilos (antes 23): gótico, primitivos flamencos, bizantino, orientalismo, neoimpresionismo, futurismo, dadá, constructivismo, Bauhaus, art déco, realismo mágico, muralismo mexicano, campos de color, minimalismo, fotorrealismo, neoexpresionismo, arte urbano, pintura china, miniaturas persas y mogolas, etc.
 
 **No integrados**
@@ -51,7 +51,7 @@ Es un proyecto de uso personal, así que por defecto se usan todas las imágenes
 
 ## Filtros
 
-Época (o años exactos), estilo o movimiento (23), artistas, tema, formato horizontal o vertical, solo dominio público y favoritas. Los filtros de época, estilo y artista de los museos famosos dependen de que Wikidata tenga fecha y autor de cada obra. La app es para ver pinturas, dibujos, estampas, grabados, tapices y fotografías: no hay selector de tipo y las esculturas, los muebles y otros objetos en 3D se descartan siempre. Hay colecciones rápidas como Impresionismo, Maestros holandeses, Museos de París o Grandes museos de Europa.
+Época (o años exactos), estilo o movimiento (23), artistas, tema, formato horizontal o vertical, solo dominio público y favoritas. Los filtros de época, estilo y artista de los museos famosos dependen de que Wikidata tenga fecha y autor de cada obra. La app es para ver pinturas, dibujos, estampas, grabados, tapices y fotografías: no hay selector de tipo y las esculturas, los muebles y otros objetos en 3D se descartan siempre.
 
 ## Si las imágenes no cambian o un estilo sale vacío
 

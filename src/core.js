@@ -815,6 +815,35 @@ MUSEUMS.forEach(m => { if (m.tags && m.tags.length && !DEFAULT_MUSEUMS.includes(
 DEFAULT_MUSEUMS.forEach(id => { SOURCE_DEFAULTS['m:' + id] = true; });
 const museumIdsByTag = tag => MUSEUMS.filter(m => (m.tags || []).includes(tag)).map(m => 'm:' + m.id);
 
+/* País de cada museo → una colección rápida «Museos de <país>» por país. Los museos con país explícito lo usan; el resto, por su ciudad.
+   Al añadir un museo de un país nuevo (aquí o desde el menú) aparece sola su colección. */
+const COUNTRY_ALIAS = { 'ee. uu.': 'Estados Unidos', 'eeuu': 'Estados Unidos', 'usa': 'Estados Unidos', 'estados unidos de america': 'Estados Unidos', 'united states': 'Estados Unidos', 'united kingdom': 'Reino Unido', 'gran bretana': 'Reino Unido', 'holanda': 'Países Bajos', 'netherlands': 'Países Bajos', 'mexico': 'México', 'spain': 'España', 'france': 'Francia', 'germany': 'Alemania', 'belgium': 'Bélgica', 'italy': 'Italia', 'japan': 'Japón', 'rusia': 'Rusia', 'russia': 'Rusia' };
+const CITY_COUNTRY = {
+  'Nueva York': 'Estados Unidos', 'Chicago': 'Estados Unidos', 'Cleveland': 'Estados Unidos', 'Minneapolis': 'Estados Unidos', 'Washington': 'Estados Unidos', 'Cambridge (EE. UU.)': 'Estados Unidos', 'Boston': 'Estados Unidos', 'Los Ángeles': 'Estados Unidos', 'Filadelfia': 'Estados Unidos',
+  'Ámsterdam': 'Países Bajos', 'La Haya': 'Países Bajos', 'Róterdam': 'Países Bajos', 'Otterlo': 'Países Bajos',
+  'Londres': 'Reino Unido', 'Edimburgo': 'Reino Unido', 'Copenhague': 'Dinamarca', 'Estocolmo': 'Suecia', 'Oslo': 'Noruega', 'Helsinki': 'Finlandia', 'Dublín': 'Irlanda', 'Lisboa': 'Portugal',
+  'París': 'Francia', 'Versalles': 'Francia', 'Lille': 'Francia', 'Lyon': 'Francia', 'Montpellier': 'Francia', 'Ruan': 'Francia',
+  'Florencia': 'Italia', 'Milán': 'Italia', 'Roma': 'Italia', 'Venecia': 'Italia',
+  'Madrid': 'España', 'Bilbao': 'España', 'Barcelona': 'España',
+  'Fráncfort': 'Alemania', 'Dresde': 'Alemania', 'Múnich': 'Alemania',
+  'Basilea': 'Suiza', 'Zúrich': 'Suiza', 'Berna': 'Suiza', 'Viena': 'Austria',
+  'Moscú': 'Rusia', 'San Petersburgo': 'Rusia', 'Tokio': 'Japón', 'Melbourne': 'Australia', 'Sídney': 'Australia', 'Ottawa': 'Canadá',
+  'Buenos Aires': 'Argentina', 'São Paulo': 'Brasil', 'Ciudad de México': 'México', 'Monterrey': 'México', 'Guadalajara': 'México'
+};
+function museumCountry(m) {
+  const c = m && m.country ? String(m.country).trim() : '';
+  if (c) return COUNTRY_ALIAS[norm(c)] || c;
+  return (m && CITY_COUNTRY[m.city]) || null;
+}
+/* «Museos de México», «Museos del Reino Unido», «Museos de los Países Bajos» */
+const COUNTRY_ART = { 'Reino Unido': 'del ', 'Países Bajos': 'de los ' };
+const countryCollectionName = c => 'Museos ' + (COUNTRY_ART[c] || 'de ') + c;
+function countryCollections() {
+  const by = {};
+  MUSEUMS.forEach(m => { if (m.open) return; const c = museumCountry(m); if (c) (by[c] = by[c] || []).push('m:' + m.id); });
+  return Object.keys(by).sort((a, b) => a.localeCompare(b, 'es')).map(c => ({ country: c, es: countryCollectionName(c), ids: by[c] }));
+}
+
 /* Máximo 2 consultas a Wikidata a la vez: el servicio corta a quien abusa. Si responde 429 (o corta la conexión, que es lo mismo
    cuando el 429 no trae cabeceras CORS), todas las consultas esperan unos segundos. */
 const TUNING = Object.assign({ sparqlPause: 6000 }, typeof globalThis !== 'undefined' && typeof globalThis.__ART_TUNING === 'object' ? globalThis.__ART_TUNING : {});
@@ -1200,7 +1229,14 @@ async function resolveMuseum(name) {
   }
   const hit = found.find(r => MUSEUM_DESC.test(r.description || '')) || found[0];
   if (!hit) throw new Error('No encuentro ese museo en Wikidata');
-  return { id: 'c' + hit.id, es: hit.label || text, city: (hit.description || 'Museo añadido').slice(0, 50), ids: [hit.id], labels: [[hit.label || text, 'es'], [hit.label || text, 'en']], q: hit.label || text, custom: true };
+  let country = '';
+  try { // país del museo (P17), para que aparezca su colección «Museos de <país>»
+    const e = await getJSON('https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&origin=*&props=claims&ids=' + hit.id);
+    const cl = (((e.entities || {})[hit.id] || {}).claims || {}).P17 || [];
+    const cq = cl[0] && cl[0].mainsnak && cl[0].mainsnak.datavalue && cl[0].mainsnak.datavalue.value && cl[0].mainsnak.datavalue.value.id;
+    if (cq) { const l = await getJSON('https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&origin=*&props=labels&languages=es|en&ids=' + cq); const lb = ((l.entities || {})[cq] || {}).labels || {}; country = (lb.es || lb.en || {}).value || ''; }
+  } catch (e) { /* sin país: no entra en ninguna colección por país */ }
+  return { id: 'c' + hit.id, es: hit.label || text, city: (hit.description || 'Museo añadido').slice(0, 50), country: country || undefined, ids: [hit.id], labels: [[hit.label || text, 'es'], [hit.label || text, 'en']], q: hit.label || text, custom: true };
 }
 const MUSEUM_DESC = /museum|museo|musée|museu|galler|galería|galerie|pinacoteca|collection|colección|art\b|arte\b/i;
 
@@ -1277,7 +1313,7 @@ async function runSource(src, f, ctx) {
 const api = {
   rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
   ERAS, STYLES, TYPES, KEYWORDS, EXCLUDES, excluded, MUSEUMS, DEFAULT_MUSEUMS, MUSEUM_SOURCES, ARTIST_SUGGESTIONS, ARTIST_GROUPS, TUNING, keywordToQuery,
-  defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC, museumIdsByTag,
+  museumCountry, countryCollections, countryCollectionName, defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC, museumIdsByTag,
   adapters: { momaFetch, ngaFetch, tateFetch, shardFetch, commonsSpecial, wikidataMuseum, wikipediaFetch, commonsFetch, wikiartFetch, metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }
 };
 if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.ArtCore = api;

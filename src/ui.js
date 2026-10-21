@@ -377,28 +377,14 @@ function toggleAcc(id) {
 }
 
 /* ───────── menú ───────── */
-const PRESETS = [
-  { es: 'Todo el arte', patch: {} },
-  { es: 'Impresionismo', patch: { styles: ['impressionism', 'postimpressionism'] } },
-  { es: 'Maestros holandeses', patch: { styles: ['dutch'] } },
-  { es: 'Japón: ukiyo-e', patch: { styles: ['ukiyoe'] } },
-  { es: 'Barroco', patch: { styles: ['baroque'] } },
-  { es: 'Arte moderno', patch: { eras: ['mod'] } },
-  { es: 'Siglo XIX', patch: { eras: ['s19a', 's19b'] } },
-  { es: 'Paisajes', patch: { keywords: ['landscape'] } },
-  { es: 'Retratos', patch: { keywords: ['portrait'] } },
-  { es: 'París', patch: { keywords: ['Paris'] } },
-  { es: 'Remedios Varo', patch: { artists: ['Remedios Varo'] } },
-  { es: 'Surrealistas de Latinoamérica', patch: { artists: ['Remedios Varo', 'Leonora Carrington', 'Frida Kahlo', 'Wifredo Lam', 'Roberto Matta', 'Maruja Mallo', 'Alice Rahon', 'Óscar Domínguez'] } },
-  { es: 'Mujeres artistas', patch: { artists: ['Artemisia Gentileschi', 'Sofonisba Anguissola', 'Judith Leyster', 'Rachel Ruysch', 'Clara Peeters', 'Angelica Kauffman', 'Élisabeth Vigée Le Brun', 'Rosa Bonheur', 'Berthe Morisot', 'Mary Cassatt', 'Suzanne Valadon', 'Hilma af Klint', 'Paula Modersohn-Becker', 'Gabriele Münter', 'Tamara de Lempicka', 'Marie Laurencin', 'Georgia O\'Keeffe', 'Frida Kahlo', 'Remedios Varo', 'Leonora Carrington', 'Lee Krasner', 'Joan Mitchell', 'Helen Frankenthaler', 'Louise Bourgeois', 'Yayoi Kusama', 'Agnes Martin'] } },
-  { es: 'Los grandes maestros (cientos de artistas)', patch: { artists: [].concat(...C.ARTIST_GROUPS.map(g => g.names)).filter((n, i, a) => a.indexOf(n) === i) } },
-  { es: 'Museos de un solo artista', only: C.museumIdsByTag('artist'), patch: {} },
-  { es: 'Museos de México', only: C.museumIdsByTag('mx'), patch: {} },
-  { es: 'Museos de Bélgica', only: C.museumIdsByTag('be'), patch: {} },
-  { es: 'Surrealismo en museos', only: C.museumIdsByTag('surreal').concat(['m:open']), patch: { styles: ['surrealism'] } },
-  { es: 'Museos de París', only: ['m:louvre', 'm:orsay', 'm:orangerie', 'm:versailles', 'm:marmottan', 'm:petitpalais', 'm:carnavalet'], patch: {} },
-  { es: 'Grandes museos de Europa', only: ['m:louvre', 'm:orsay', 'm:prado', 'm:uffizi', 'm:hermitage', 'm:nationalgallery', 'm:vangogh', 'm:mauritshuis', 'm:kunsthistorisches', 'm:versailles'], patch: {} }
-];
+/* Colecciones rápidas: una por país con museos («Museos de México», «Museos de España»…), generadas a partir de los museos que
+   hay (incluidos los que se añaden desde el menú), más «Museos de París». */
+function presetList() {
+  const out = C.countryCollections().map(c => ({ key: 'pais:' + c.country, es: c.es + ' (' + c.ids.length + ')', only: c.ids, patch: {} }));
+  const paris = C.SOURCE_LIST.filter(s => s.museum && s.museum.city === 'París').map(s => s.id);
+  if (paris.length) out.push({ key: 'ciudad:París', es: 'Museos de París (' + paris.length + ')', only: paris, patch: {} });
+  return out;
+}
 const ORIENT = [['any', 'Cualquiera'], ['landscape', 'Horizontal'], ['portrait', 'Vertical'], ['square', 'Cuadrada']];
 const MODES = [['gallery', 'Obra completa'], ['frame', 'Con marco'], ['fill', 'Llenar (recorta)']];
 const INTERVALS = [[10, '10 s'], [15, '15 s'], [30, '30 s'], [60, '1 min'], [300, '5 min'], [900, '15 min'], [3600, '1 h']];
@@ -409,7 +395,7 @@ const CAPTIONS = [['auto', 'Al inicio de cada obra'], ['always', 'Siempre visibl
 const chip = (act, id, label, on, cls) => '<button class="chip' + (cls ? ' ' + cls : '') + '" data-act="' + act + '" data-id="' + esc(id) + '" aria-pressed="' + !!on + '">' + esc(label) + '</button>';
 const opts = (list, cur) => list.map(o => '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(cur) ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join('');
 const R = {
-  presets: () => '<option value="">Elegir una colección…</option>' + PRESETS.map((p, i) => '<option value="' + i + '">' + esc(p.es) + '</option>').join(''),
+  presets: () => '<option value="">Elegir una colección…</option>' + presetList().map(p => '<option value="' + esc(p.key) + '">' + esc(p.es) + '</option>').join(''),
   eras: () => C.ERAS.map(e => chip('era', e.id, e.es, S.f.eras.includes(e.id))).join(''),
   styles: () => C.STYLES.map(s => chip('style', s.id, s.es, S.f.styles.includes(s.id))).join(''),
   artists: () => S.f.artists.map(a => chip('rm-artist', a, a, true, 'rm')).join('') || '<span class="hint" style="font-size:14px;color:var(--muted)">Ninguno. Se muestran todos los artistas.</span>',
@@ -456,7 +442,7 @@ async function addMuseumByName() {
     S.custom = S.custom.filter(x => x.id !== m.id).concat([m]); lsSet('custom', S.custom);
     S.f.sources[src.id] = true; S.mfilter = ''; $('#museumFilter').value = ''; el.value = '';
     msg.textContent = 'Añadido: ' + m.es + ' (' + m.city + ')';
-    renderSrcs(); applyChange();
+    renderSrcs(); render('presets'); applyChange();
   } catch (e) { msg.textContent = e && e.message && !e.status ? e.message : 'No pude buscar el museo: ' + errText(e); }
 }
 function updateSrc(id) {
@@ -534,7 +520,8 @@ function onAct(act, id) {
       const keep = { sources: f.sources }; S.f = Object.assign(C.defaultFilters(), keep); renderAll(); applyChange(); toast('Filtros restablecidos'); break;
     }
     case 'preset': {
-      const p = PRESETS[+id]; const keep = { sources: f.sources, orientation: f.orientation, soloPD: f.soloPD, exclude: f.exclude, noWords: f.noWords };
+      const p = presetList().find(x => x.key === id || x.es === id); if (!p) break;
+      const keep = { sources: f.sources, orientation: f.orientation, soloPD: f.soloPD, exclude: f.exclude, noWords: f.noWords };
       if (p.only) { keep.sources = {}; Object.keys(f.sources).forEach(k => { keep.sources[k] = p.only.includes(k); }); }
       S.f = Object.assign(C.defaultFilters(), keep, JSON.parse(JSON.stringify(p.patch)));
       renderAll(); applyChange(); break;

@@ -271,5 +271,7 @@ globalThis.fetch = async (url, init) => {
   // clave ausente
   try { await C.adapters.harvardFetch(plan, {}, { keys: {} }); assert.fail('debía fallar'); } catch (e) { assert.ok(e.noKey); }
   console.log('Peticiones de ejemplo:'); [0, 1, 3].forEach(i => console.log(' ', calls[i].slice(0, 150)));
+  { const sin = C.SOURCE_LIST.filter(s => s.museum && !s.museum.open && !s.museum.custom && !C.museumCountry(s.museum)).map(s => s.id); assert.deepStrictEqual(sin, [], 'todo museo debe tener país (así tiene su colección «Museos de …»): ' + sin);
+    assert.ok(C.countryCollections().some(c => c.es === 'Museos de España' && c.ids.length >= 10), 'Museos de España'); assert.strictEqual(C.countryCollectionName('Reino Unido'), 'Museos del Reino Unido'); }
   console.log('TODO OK');
 })().catch(e => { console.error('FALLO', e); process.exit(1); });

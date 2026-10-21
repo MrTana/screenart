@@ -406,7 +406,7 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
     <button class="acch" data-act="acc" data-id="skin" aria-expanded="false"><span class="at">Skin</span><span class="as" data-sum="skin"></span><span class="ac">›</span></button>
     <div class="accb"><label class="fld"><span>Aspecto de la interfaz</span><select id="c-skin"></select></label><p class="hint">Material Design 3 y Material 3 Expressive, en claro y oscuro. Solo cambia el menú, el mando y los avisos; la obra y su ficha no cambian.</p></div>
   </section>
-  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 4255cf2538 · 2026-10-21 23:03 UTC</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
+  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión cdab767ab6 · 2026-10-21 23:11 UTC</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
   <div id="rcfoot" hidden><button class="btn pri" data-act="rc-update">Buscar actualización</button><p id="rcver"></p></div>
 <div id="tvConnect"><button class="btn pri" data-act="tv-connect">Conectar a la TV</button><div class="row" id="tvRow" hidden><input type="text" id="tvCode" placeholder="Código de la TV (ej. abcd-efgh-jkmn)" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn pri" data-act="tv-go">Abrir mando</button></div><p class="hint" id="tvMsg">El código sale bajo el QR en la pantalla de la TV.</p></div>
 </aside>
@@ -1232,6 +1232,35 @@ MUSEUMS.forEach(m => { if (m.tags && m.tags.length && !DEFAULT_MUSEUMS.includes(
 DEFAULT_MUSEUMS.forEach(id => { SOURCE_DEFAULTS['m:' + id] = true; });
 const museumIdsByTag = tag => MUSEUMS.filter(m => (m.tags || []).includes(tag)).map(m => 'm:' + m.id);
 
+/* País de cada museo → una colección rápida «Museos de <país>» por país. Los museos con país explícito lo usan; el resto, por su ciudad.
+   Al añadir un museo de un país nuevo (aquí o desde el menú) aparece sola su colección. */
+const COUNTRY_ALIAS = { 'ee. uu.': 'Estados Unidos', 'eeuu': 'Estados Unidos', 'usa': 'Estados Unidos', 'estados unidos de america': 'Estados Unidos', 'united states': 'Estados Unidos', 'united kingdom': 'Reino Unido', 'gran bretana': 'Reino Unido', 'holanda': 'Países Bajos', 'netherlands': 'Países Bajos', 'mexico': 'México', 'spain': 'España', 'france': 'Francia', 'germany': 'Alemania', 'belgium': 'Bélgica', 'italy': 'Italia', 'japan': 'Japón', 'rusia': 'Rusia', 'russia': 'Rusia' };
+const CITY_COUNTRY = {
+  'Nueva York': 'Estados Unidos', 'Chicago': 'Estados Unidos', 'Cleveland': 'Estados Unidos', 'Minneapolis': 'Estados Unidos', 'Washington': 'Estados Unidos', 'Cambridge (EE. UU.)': 'Estados Unidos', 'Boston': 'Estados Unidos', 'Los Ángeles': 'Estados Unidos', 'Filadelfia': 'Estados Unidos',
+  'Ámsterdam': 'Países Bajos', 'La Haya': 'Países Bajos', 'Róterdam': 'Países Bajos', 'Otterlo': 'Países Bajos',
+  'Londres': 'Reino Unido', 'Edimburgo': 'Reino Unido', 'Copenhague': 'Dinamarca', 'Estocolmo': 'Suecia', 'Oslo': 'Noruega', 'Helsinki': 'Finlandia', 'Dublín': 'Irlanda', 'Lisboa': 'Portugal',
+  'París': 'Francia', 'Versalles': 'Francia', 'Lille': 'Francia', 'Lyon': 'Francia', 'Montpellier': 'Francia', 'Ruan': 'Francia',
+  'Florencia': 'Italia', 'Milán': 'Italia', 'Roma': 'Italia', 'Venecia': 'Italia',
+  'Madrid': 'España', 'Bilbao': 'España', 'Barcelona': 'España',
+  'Fráncfort': 'Alemania', 'Dresde': 'Alemania', 'Múnich': 'Alemania',
+  'Basilea': 'Suiza', 'Zúrich': 'Suiza', 'Berna': 'Suiza', 'Viena': 'Austria',
+  'Moscú': 'Rusia', 'San Petersburgo': 'Rusia', 'Tokio': 'Japón', 'Melbourne': 'Australia', 'Sídney': 'Australia', 'Ottawa': 'Canadá',
+  'Buenos Aires': 'Argentina', 'São Paulo': 'Brasil', 'Ciudad de México': 'México', 'Monterrey': 'México', 'Guadalajara': 'México'
+};
+function museumCountry(m) {
+  const c = m && m.country ? String(m.country).trim() : '';
+  if (c) return COUNTRY_ALIAS[norm(c)] || c;
+  return (m && CITY_COUNTRY[m.city]) || null;
+}
+/* «Museos de México», «Museos del Reino Unido», «Museos de los Países Bajos» */
+const COUNTRY_ART = { 'Reino Unido': 'del ', 'Países Bajos': 'de los ' };
+const countryCollectionName = c => 'Museos ' + (COUNTRY_ART[c] || 'de ') + c;
+function countryCollections() {
+  const by = {};
+  MUSEUMS.forEach(m => { if (m.open) return; const c = museumCountry(m); if (c) (by[c] = by[c] || []).push('m:' + m.id); });
+  return Object.keys(by).sort((a, b) => a.localeCompare(b, 'es')).map(c => ({ country: c, es: countryCollectionName(c), ids: by[c] }));
+}
+
 /* Máximo 2 consultas a Wikidata a la vez: el servicio corta a quien abusa. Si responde 429 (o corta la conexión, que es lo mismo
    cuando el 429 no trae cabeceras CORS), todas las consultas esperan unos segundos. */
 const TUNING = Object.assign({ sparqlPause: 6000 }, typeof globalThis !== 'undefined' && typeof globalThis.__ART_TUNING === 'object' ? globalThis.__ART_TUNING : {});
@@ -1617,7 +1646,14 @@ async function resolveMuseum(name) {
   }
   const hit = found.find(r => MUSEUM_DESC.test(r.description || '')) || found[0];
   if (!hit) throw new Error('No encuentro ese museo en Wikidata');
-  return { id: 'c' + hit.id, es: hit.label || text, city: (hit.description || 'Museo añadido').slice(0, 50), ids: [hit.id], labels: [[hit.label || text, 'es'], [hit.label || text, 'en']], q: hit.label || text, custom: true };
+  let country = '';
+  try { // país del museo (P17), para que aparezca su colección «Museos de <país>»
+    const e = await getJSON('https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&origin=*&props=claims&ids=' + hit.id);
+    const cl = (((e.entities || {})[hit.id] || {}).claims || {}).P17 || [];
+    const cq = cl[0] && cl[0].mainsnak && cl[0].mainsnak.datavalue && cl[0].mainsnak.datavalue.value && cl[0].mainsnak.datavalue.value.id;
+    if (cq) { const l = await getJSON('https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&origin=*&props=labels&languages=es|en&ids=' + cq); const lb = ((l.entities || {})[cq] || {}).labels || {}; country = (lb.es || lb.en || {}).value || ''; }
+  } catch (e) { /* sin país: no entra en ninguna colección por país */ }
+  return { id: 'c' + hit.id, es: hit.label || text, city: (hit.description || 'Museo añadido').slice(0, 50), country: country || undefined, ids: [hit.id], labels: [[hit.label || text, 'es'], [hit.label || text, 'en']], q: hit.label || text, custom: true };
 }
 const MUSEUM_DESC = /museum|museo|musée|museu|galler|galería|galerie|pinacoteca|collection|colección|art\b|arte\b/i;
 
@@ -1694,7 +1730,7 @@ async function runSource(src, f, ctx) {
 const api = {
   rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
   ERAS, STYLES, TYPES, KEYWORDS, EXCLUDES, excluded, MUSEUMS, DEFAULT_MUSEUMS, MUSEUM_SOURCES, ARTIST_SUGGESTIONS, ARTIST_GROUPS, TUNING, keywordToQuery,
-  defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC, museumIdsByTag,
+  museumCountry, countryCollections, countryCollectionName, defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC, museumIdsByTag,
   adapters: { momaFetch, ngaFetch, tateFetch, shardFetch, commonsSpecial, wikidataMuseum, wikipediaFetch, commonsFetch, wikiartFetch, metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }
 };
 if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.ArtCore = api;
@@ -2081,28 +2117,14 @@ function toggleAcc(id) {
 }
 
 /* ───────── menú ───────── */
-const PRESETS = [
-  { es: 'Todo el arte', patch: {} },
-  { es: 'Impresionismo', patch: { styles: ['impressionism', 'postimpressionism'] } },
-  { es: 'Maestros holandeses', patch: { styles: ['dutch'] } },
-  { es: 'Japón: ukiyo-e', patch: { styles: ['ukiyoe'] } },
-  { es: 'Barroco', patch: { styles: ['baroque'] } },
-  { es: 'Arte moderno', patch: { eras: ['mod'] } },
-  { es: 'Siglo XIX', patch: { eras: ['s19a', 's19b'] } },
-  { es: 'Paisajes', patch: { keywords: ['landscape'] } },
-  { es: 'Retratos', patch: { keywords: ['portrait'] } },
-  { es: 'París', patch: { keywords: ['Paris'] } },
-  { es: 'Remedios Varo', patch: { artists: ['Remedios Varo'] } },
-  { es: 'Surrealistas de Latinoamérica', patch: { artists: ['Remedios Varo', 'Leonora Carrington', 'Frida Kahlo', 'Wifredo Lam', 'Roberto Matta', 'Maruja Mallo', 'Alice Rahon', 'Óscar Domínguez'] } },
-  { es: 'Mujeres artistas', patch: { artists: ['Artemisia Gentileschi', 'Sofonisba Anguissola', 'Judith Leyster', 'Rachel Ruysch', 'Clara Peeters', 'Angelica Kauffman', 'Élisabeth Vigée Le Brun', 'Rosa Bonheur', 'Berthe Morisot', 'Mary Cassatt', 'Suzanne Valadon', 'Hilma af Klint', 'Paula Modersohn-Becker', 'Gabriele Münter', 'Tamara de Lempicka', 'Marie Laurencin', 'Georgia O\'Keeffe', 'Frida Kahlo', 'Remedios Varo', 'Leonora Carrington', 'Lee Krasner', 'Joan Mitchell', 'Helen Frankenthaler', 'Louise Bourgeois', 'Yayoi Kusama', 'Agnes Martin'] } },
-  { es: 'Los grandes maestros (cientos de artistas)', patch: { artists: [].concat(...C.ARTIST_GROUPS.map(g => g.names)).filter((n, i, a) => a.indexOf(n) === i) } },
-  { es: 'Museos de un solo artista', only: C.museumIdsByTag('artist'), patch: {} },
-  { es: 'Museos de México', only: C.museumIdsByTag('mx'), patch: {} },
-  { es: 'Museos de Bélgica', only: C.museumIdsByTag('be'), patch: {} },
-  { es: 'Surrealismo en museos', only: C.museumIdsByTag('surreal').concat(['m:open']), patch: { styles: ['surrealism'] } },
-  { es: 'Museos de París', only: ['m:louvre', 'm:orsay', 'm:orangerie', 'm:versailles', 'm:marmottan', 'm:petitpalais', 'm:carnavalet'], patch: {} },
-  { es: 'Grandes museos de Europa', only: ['m:louvre', 'm:orsay', 'm:prado', 'm:uffizi', 'm:hermitage', 'm:nationalgallery', 'm:vangogh', 'm:mauritshuis', 'm:kunsthistorisches', 'm:versailles'], patch: {} }
-];
+/* Colecciones rápidas: una por país con museos («Museos de México», «Museos de España»…), generadas a partir de los museos que
+   hay (incluidos los que se añaden desde el menú), más «Museos de París». */
+function presetList() {
+  const out = C.countryCollections().map(c => ({ key: 'pais:' + c.country, es: c.es + ' (' + c.ids.length + ')', only: c.ids, patch: {} }));
+  const paris = C.SOURCE_LIST.filter(s => s.museum && s.museum.city === 'París').map(s => s.id);
+  if (paris.length) out.push({ key: 'ciudad:París', es: 'Museos de París (' + paris.length + ')', only: paris, patch: {} });
+  return out;
+}
 const ORIENT = [['any', 'Cualquiera'], ['landscape', 'Horizontal'], ['portrait', 'Vertical'], ['square', 'Cuadrada']];
 const MODES = [['gallery', 'Obra completa'], ['frame', 'Con marco'], ['fill', 'Llenar (recorta)']];
 const INTERVALS = [[10, '10 s'], [15, '15 s'], [30, '30 s'], [60, '1 min'], [300, '5 min'], [900, '15 min'], [3600, '1 h']];
@@ -2113,7 +2135,7 @@ const CAPTIONS = [['auto', 'Al inicio de cada obra'], ['always', 'Siempre visibl
 const chip = (act, id, label, on, cls) => '<button class="chip' + (cls ? ' ' + cls : '') + '" data-act="' + act + '" data-id="' + esc(id) + '" aria-pressed="' + !!on + '">' + esc(label) + '</button>';
 const opts = (list, cur) => list.map(o => '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(cur) ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join('');
 const R = {
-  presets: () => '<option value="">Elegir una colección…</option>' + PRESETS.map((p, i) => '<option value="' + i + '">' + esc(p.es) + '</option>').join(''),
+  presets: () => '<option value="">Elegir una colección…</option>' + presetList().map(p => '<option value="' + esc(p.key) + '">' + esc(p.es) + '</option>').join(''),
   eras: () => C.ERAS.map(e => chip('era', e.id, e.es, S.f.eras.includes(e.id))).join(''),
   styles: () => C.STYLES.map(s => chip('style', s.id, s.es, S.f.styles.includes(s.id))).join(''),
   artists: () => S.f.artists.map(a => chip('rm-artist', a, a, true, 'rm')).join('') || '<span class="hint" style="font-size:14px;color:var(--muted)">Ninguno. Se muestran todos los artistas.</span>',
@@ -2160,7 +2182,7 @@ async function addMuseumByName() {
     S.custom = S.custom.filter(x => x.id !== m.id).concat([m]); lsSet('custom', S.custom);
     S.f.sources[src.id] = true; S.mfilter = ''; $('#museumFilter').value = ''; el.value = '';
     msg.textContent = 'Añadido: ' + m.es + ' (' + m.city + ')';
-    renderSrcs(); applyChange();
+    renderSrcs(); render('presets'); applyChange();
   } catch (e) { msg.textContent = e && e.message && !e.status ? e.message : 'No pude buscar el museo: ' + errText(e); }
 }
 function updateSrc(id) {
@@ -2238,7 +2260,8 @@ function onAct(act, id) {
       const keep = { sources: f.sources }; S.f = Object.assign(C.defaultFilters(), keep); renderAll(); applyChange(); toast('Filtros restablecidos'); break;
     }
     case 'preset': {
-      const p = PRESETS[+id]; const keep = { sources: f.sources, orientation: f.orientation, soloPD: f.soloPD, exclude: f.exclude, noWords: f.noWords };
+      const p = presetList().find(x => x.key === id || x.es === id); if (!p) break;
+      const keep = { sources: f.sources, orientation: f.orientation, soloPD: f.soloPD, exclude: f.exclude, noWords: f.noWords };
       if (p.only) { keep.sources = {}; Object.keys(f.sources).forEach(k => { keep.sources[k] = p.only.includes(k); }); }
       S.f = Object.assign(C.defaultFilters(), keep, JSON.parse(JSON.stringify(p.patch)));
       renderAll(); applyChange(); break;
