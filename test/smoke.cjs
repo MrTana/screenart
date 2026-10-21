@@ -93,10 +93,20 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   flt.value = ''; flt.dispatchEvent(new w.Event('input'));
   d.getElementById('museumIn').value = 'Museo de Prueba'; d.querySelector('[data-act=add-museum]').click(); await wait(300);
   console.log('museo añadido:', d.getElementById('museumMsg').textContent, '| guardado:', S.custom.length, '| activo:', !!S.f.sources['m:cQ4242'], '| en lista:', /Museo de Prueba/.test(d.getElementById('c-msrcs').textContent));
+  const C0 = () => w.ArtCore; const favs0 = S.favs; S.favs = []; A.render('presets');
   { const opts = Array.from(d.querySelectorAll('#c-presets option')).map(o => o.textContent);
     for (const n of ['Museos de España (12)', 'Museos de México (18)', 'Museos del Reino Unido (8)', 'Museos de los Países Bajos (5)', 'Museos de Chile (1)', 'Museos de París (13)']) assert.ok(opts.includes(n), 'falta la colección ' + n + ' en ' + opts.join(' | '));
     for (const old of ['Impresionismo', 'Retratos', 'Mujeres artistas', 'Surrealismo en museos', 'Museos de un solo artista']) assert.ok(!opts.some(o => o.startsWith(old)), 'se quitaron las colecciones antiguas: ' + old);
     assert.strictEqual(opts[1], 'Todo el arte'); assert.ok(opts.slice(2).every(o => /^Museos de/.test(o)), 'las demás son «Museos de …»'); }
+  { S.favs = [{ uid: 'f1', artist: 'Salvador Dalí', year: 1931 }, { uid: 'f2', artist: 'Claude Monet', year: 1890 }, { uid: 'f3', artist: 'Anónimo', year: 1500 }]; A.render('presets');
+    const opts = Array.from(d.querySelectorAll('#c-presets option')).map(o => o.textContent);
+    assert.ok(opts.includes('Surrealismo') && opts.includes('Impresionismo'), 'colecciones por estilo de las favoritas: ' + opts.join(' | '));
+    assert.ok(!opts.includes('Renacimiento'), 'una obra sin artista conocido no crea colección');
+    pick('Surrealismo'); { const on = Object.keys(S.f.sources).filter(k => S.f.sources[k]);
+      assert.strictEqual(JSON.stringify(S.f.styles), '["surrealism"]'); assert.ok(on.includes('m:open') && on.includes('m:magritte') && on.includes('m:moma') && !on.includes('m:louvre'), 'Surrealismo: museos con obras surrealistas + colecciones abiertas'); }
+    pick('Impresionismo'); { const on = Object.keys(S.f.sources).filter(k => S.f.sources[k]); assert.strictEqual(JSON.stringify(S.f.styles), '["impressionism"]'); assert.ok(on.includes('m:louvre') && on.includes('m:open') && on.length > 150, 'Impresionismo: todos los museos'); }
+    assert.strictEqual(C0().styleIdsOf({ artist: 'Vincent van Gogh', year: 1888 }).join(), 'postimpressionism'); assert.strictEqual(C0().styleIdsOf({ artist: 'Vermeer', year: 1660 }).join(), 'dutch');
+    S.favs = favs0; A.render('presets'); }
   { A.onAct('era', 'mod'); S.f.orientation = 'landscape'; S.f.soloPD = true; S.f.artists = ['Monet']; pick('Todo el arte');
     const f = S.f, off = Object.keys(f.sources).filter(k => !f.sources[k]);
     assert.ok(!f.eras.length && !f.styles.length && !f.artists.length && !f.keywords.length && !f.exclude.length && !f.noWords.length && f.orientation === 'any' && !f.soloPD, 'Todo el arte: sin ningún filtro');

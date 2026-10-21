@@ -93,6 +93,11 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   ph.ArtApp.onAct('fav'); await wait(300);
   assert.strictEqual(tvA.S.favs.length, 1, 'favorita en la TV');
   assert.ok(/Quitar/.test(p.getElementById('favBtn').textContent), 'el móvil refleja la favorita');
+  { // la favorita de la TV crea su colección por estilo también en el mando
+    tvA.S.favs = []; Object.assign(tvA.S.current, { artist: 'Salvador Dalí', year: 1931 });
+    ph.ArtApp.onAct('fav'); await wait(600);
+    const opts = Array.from(p.querySelectorAll('#c-presets option')).map(o => o.textContent);
+    assert.ok(opts.includes('Surrealismo'), 'el mando muestra «Surrealismo» por las favoritas de la TV: ' + opts.join(' | ')); }
 
   // filtros desde el móvil
   p.querySelector('#c-styles [data-id=impressionism]').click();

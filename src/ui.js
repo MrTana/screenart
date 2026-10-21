@@ -279,7 +279,7 @@ function toggleFav() {
   const w = S.current; if (!w) return;
   if (isFav(w)) { S.favs = S.favs.filter(x => x.uid !== w.uid); toast('Quitada de favoritas'); }
   else { S.favs.unshift({ uid: w.uid, src: w.src, museum: w.museum, title: w.title, artist: w.artist, date: w.date, year: w.year, imgs: [w.url].concat(w.imgs.filter(u => u !== w.url)), thumb: w.thumb, url: w.url_page || w.url, type: w.type, pd: w.pd, license: w.license, w: w.w, h: w.h }); toast('Guardada en favoritas'); }
-  saveAll(); updateFavBtn(); tvNowSoon(true);
+  saveAll(); updateFavBtn(); render('presets'); tvNowSoon(true);
 }
 function updateFavBtn() { $('#favBtn').textContent = isFav(S.current) ? 'Quitar favorita' : 'Guardar favorita'; }
 function toggleFS() {
@@ -384,8 +384,22 @@ function toggleAcc(id) {
 /* ───────── menú ───────── */
 /* Colecciones rápidas: una por país con museos («Museos de México», «Museos de España»…), generadas a partir de los museos que
    hay (incluidos los que se añaden desde el menú), más «Museos de París». */
+/* Colecciones por estilo o movimiento según las pinturas favoritas: p. ej. con una favorita surrealista aparece «Surrealismo», que activa
+   los museos con obras surrealistas y las colecciones abiertas. El resto de estilos usa todos los museos. */
+const hasKey = k => REMOTE ? !!(S.tvKeyset || {})[k] : !!S.keys[k]; // en el mando, las claves están en la TV
+function favStyleIds() {
+  if (REMOTE) return S.tvFavStyles || [];
+  const ids = []; S.favs.forEach(w => C.styleIdsOf(w).forEach(id => { if (!ids.includes(id)) ids.push(id); }));
+  return ids;
+}
+function favStyleCollections() {
+  return favStyleIds().map(id => C.STYLES.find(s => s.id === id)).filter(Boolean).sort((a, b) => a.range[0] - b.range[0]).map(s => {
+    const tag = C.STYLE_MUSEUM_TAG[s.id];
+    return { key: 'estilo:' + s.id, es: s.es, patch: { styles: [s.id] }, only: tag ? C.museumIdsByTag(tag).concat(C.SOURCE_LIST.filter(x => x.museum && x.museum.open).map(x => x.id)) : null, allSources: !tag };
+  });
+}
 function presetList() {
-  const out = [{ key: 'todo', es: 'Todo el arte', all: true, patch: {} }].concat(C.countryCollections().map(c => ({ key: 'pais:' + c.country, es: c.es + ' (' + c.ids.length + ')', only: c.ids, patch: {} })));
+  const out = [{ key: 'todo', es: 'Todo el arte', all: true, patch: {} }].concat(favStyleCollections(), C.countryCollections().map(c => ({ key: 'pais:' + c.country, es: c.es + ' (' + c.ids.length + ')', only: c.ids, patch: {} })));
   const paris = C.SOURCE_LIST.filter(s => s.museum && s.museum.city === 'París').map(s => s.id);
   if (paris.length) out.push({ key: 'ciudad:París', es: 'Museos de París (' + paris.length + ')', only: paris, patch: {} });
   return out;
@@ -527,7 +541,8 @@ function onAct(act, id) {
     case 'preset': {
       const p = presetList().find(x => x.key === id || x.es === id); if (!p) break;
       const keep = p.all ? { sources: {} } : { sources: f.sources, orientation: f.orientation, soloPD: f.soloPD, exclude: f.exclude, noWords: f.noWords };
-      if (p.all) C.SOURCE_LIST.forEach(s => { const nk = s.museum && s.museum.needsKey; keep.sources[s.id] = !(nk && !S.keys[nk]); }); // todos los museos y fuentes abiertas (salvo los que piden una clave que no hay)
+      if (p.all || p.allSources) { if (p.allSources) keep.sources = {}; }
+      if (p.all || p.allSources) C.SOURCE_LIST.forEach(s => { const nk = s.museum && s.museum.needsKey; keep.sources[s.id] = !(nk && !hasKey(nk)); }); // todos los museos y fuentes abiertas (salvo los que piden una clave que no hay)
       if (p.only) { keep.sources = {}; Object.keys(f.sources).forEach(k => { keep.sources[k] = p.only.includes(k); }); }
       S.f = Object.assign(C.defaultFilters(), keep, JSON.parse(JSON.stringify(p.patch)));
       renderAll(); applyChange(); break;
@@ -778,10 +793,10 @@ function relayInfo() {
 function buildVer() { const v = document.querySelector('.ver'); const m = v && /Versión\s+(\w+)/.exec(v.textContent); return m ? m[1] : ''; }
 // Solo viajan los museos que difieren de los predeterminados: el mensaje cabe en un solo paquete.
 function slimF(f) { const d = C.defaultFilters().sources, s = {}; Object.keys(f.sources).forEach(k => { if (!!f.sources[k] !== !!d[k]) s[k] = !!f.sources[k]; }); return Object.assign({}, f, { sources: s }); }
-function tvState() { return { t: 'state', f: slimF(S.f), st: S.st, custom: S.custom, paused: S.paused, now: tvNow(), ver: buildVer(), keyset: { europeana: !!S.keys.europeana, si: !!S.keys.si, harvard: !!S.keys.harvard } }; }
+function tvState() { return { t: 'state', f: slimF(S.f), st: S.st, custom: S.custom, paused: S.paused, now: tvNow(), ver: buildVer(), favStyles: favStyleIds(), keyset: { europeana: !!S.keys.europeana, si: !!S.keys.si, harvard: !!S.keys.harvard } }; }
 function tvNow() {
   const w = S.current; if (!w) return null;
-  return { uid: w.uid, title: w.title, artist: w.artist, date: w.date, museum: w.museum, thumb: w.thumb || w.url, fav: isFav(w), paused: S.paused };
+  return { uid: w.uid, title: w.title, artist: w.artist, date: w.date, museum: w.museum, thumb: w.thumb || w.url, fav: isFav(w), paused: S.paused, favStyles: favStyleIds() };
 }
 // Con un móvil conectado la TV le cuenta cada obra nueva (como mucho una cada 8 s) para no agotar el límite diario de ntfy.
 function tvNowSoon(force) {
@@ -845,14 +860,20 @@ function initTV() {
 
 /* — lado móvil — */
 function remoteStat(text, ok, retry) { const s = $('#rcstat'); s.textContent = text; s.classList.toggle('ok', !!ok); $('#rcRetry').hidden = !retry; }
+function remoteFavStyles(ids) {
+  if (!Array.isArray(ids) || JSON.stringify(ids) === JSON.stringify(S.tvFavStyles || [])) return;
+  S.tvFavStyles = ids; render('presets');
+}
 function remoteNow(n) {
   if (!n) return;
+  remoteFavStyles(n.favStyles);
   S.current = { uid: n.uid }; S.favs = n.fav ? [{ uid: n.uid }] : []; S.paused = !!n.paused;
   $('#rcnow').hidden = false; $('#rcT').textContent = n.title || ''; $('#rcA').textContent = [n.artist, n.date].filter(Boolean).join(' · ');
   const im = $('#rcImg'); if (n.thumb && im.dataset.u !== n.thumb) { im.dataset.u = n.thumb; im.src = n.thumb; }
   $('#playBtn').textContent = S.paused ? 'Reanudar' : 'Pausar'; updateFavBtn();
 }
 function remoteKeys(ks) {
+  S.tvKeyset = ks || {};
   ['europeana', 'si', 'harvard'].forEach(k => { const el = $('#k-' + k); el.value = ''; el.placeholder = ks && ks[k] ? '•••••• guardada en la TV (escribe para cambiarla)' : 'sin clave en la TV'; });
 }
 function remoteDiag() {
@@ -881,6 +902,7 @@ function remoteHandle(m) {
     RC.gotState = true; clearTimeout(RC.helloT);
     (m.custom || []).forEach(c => { try { if (c && c.id) { C.addMuseum(c); if (!S.custom.some(x => x.id === c.id)) S.custom.push(c); } } catch (e) { /* museo dañado */ } });
     S.f = normFilters(m.f); if (m.st) S.st = Object.assign(S.st, m.st);
+    S.tvFavStyles = Array.isArray(m.favStyles) ? m.favStyles : (S.tvFavStyles || []);
     renderAll(); remoteNow(m.now); remoteVer(m.ver); remoteKeys(m.keyset);
     remoteStat('Conectado a la TV. Lo que cambies aquí se aplica en la pantalla.', true, false);
   } else if (m.t === 'diag') { $('#diagOut').textContent = m.text || ''; $('#diag').hidden = false;
