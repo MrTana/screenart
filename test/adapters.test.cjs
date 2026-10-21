@@ -172,7 +172,7 @@ globalThis.fetch = async (url, init) => {
   commonsEmpty = ['incategory:']; commonsLog.length = 0;
   const fs2 = C.defaultFilters(); fs2.styles = ['surrealism']; fs2.keywords = ['landscape'];
   const cm2 = await C.runSource(C.SOURCE_LIST.find(x => x.id === 'commons'), fs2, anyCtx); commonsEmpty = [];
-  assert.ok(cm2.length === 2 && commonsLog.some(x => /^Surrealism painting/.test(x)), 'Commons: sin categoría usa el texto');
+  assert.ok(cm2.length === 2 && commonsLog.some(x => /^Surrealism \w+ landscape/.test(x)), 'Commons: sin categoría usa el texto');
   const wa = await C.runSource(C.SOURCE_LIST.find(x => x.id === 'wikiart'), fs, anyCtx);
   assert.ok(wa.length === 1 && wa[0].year === 1911 && wa[0].url === 'https://www.wikiart.org/en/marc-chagall/the-big-wheel' && wa[0].imgs[0].endsWith('.jpg'), 'WikiArt');
   const fa = C.defaultFilters(); fa.artists = ['Dalí']; assert.deepStrictEqual(await C.adapters.wikiartFetch(C.makePlan(fa), fa, anyCtx), [], 'WikiArt no sirve para artistas');
