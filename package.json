@@ -1,0 +1,11 @@
+{
+  "name": "screenart",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Galería de arte para la TV: obras de museos abiertos que cambian solas",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node test/adapters.test.cjs && node test/smoke.cjs"
+  },
+  "devDependencies": { "jsdom": "^25.0.0" }
+}
