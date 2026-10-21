@@ -88,6 +88,15 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
 
   assert.ok(!p.getElementById('rcfoot').hidden && /Buscar actualización/.test(p.getElementById('rcfoot').textContent), 'botón de actualización al final del mando');
   assert.ok(/Versión de la TV/.test(p.getElementById('rcver').textContent), 'versiones visibles');
+  assert.ok(/Código: [a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}/.test(d.getElementById('pairCode').textContent), 'la TV muestra el código en texto');
+  // el móvil en modo normal conecta a la TV con el código
+  const ph2 = make('https://example.test/');
+  await wait(300);
+  assert.strictEqual(ph2.ArtApp.parseCode('ABCD-efgh jkmn'), 'abcdefghjkmn');
+  assert.strictEqual(ph2.ArtApp.parseCode('https://x.test/?c=abcdefghjkmn'), 'abcdefghjkmn');
+  assert.strictEqual(ph2.ArtApp.parseCode('abc'), '');
+  ph2.ArtApp.onAct('tv-connect'); assert.ok(!ph2.document.getElementById('tvRow').hidden, 'aparece el campo del código');
+  ph2.ArtApp.onAct('tv-go'); assert.ok(/no es válido/.test(ph2.document.getElementById('tvMsg').textContent), 'rechaza un código vacío');
   // en el móvil nada cierra el menú
   ph.ArtApp.closeMenu(); assert.ok(!p.getElementById('drawer').hidden, 'el menú del móvil no se cierra');
   console.log('mando OK · mensajes:', posts);

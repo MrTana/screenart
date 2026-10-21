@@ -490,6 +490,12 @@ function onAct(act, id) {
     case 'qr-close': hidePair(); break;
     case 'rc-retry': remoteHello(true); break;
     case 'rc-update': remoteUpdate(); break;
+    case 'tv-connect': { $('#tvRow').hidden = false; $('#tvCode').value = lsGet('tvcode', ''); $('#tvCode').focus(); break; }
+    case 'tv-go': {
+      const c = parseCode($('#tvCode').value);
+      if (!c) { $('#tvMsg').textContent = 'El código no es válido: son 12 letras y números y salen bajo el QR de la TV.'; break; }
+      lsSet('tvcode', c); $('#tvMsg').textContent = 'Abriendo el mando…'; location.href = location.pathname + '?c=' + c; break;
+    }
     case 'acc': toggleAcc(id); break;
     case 'diag': diagnose(); break;
     case 'install': installApp(); break;
@@ -575,7 +581,7 @@ document.addEventListener('keydown', e => {
   activity();
   const tag = (e.target.tagName || '').toLowerCase(), typing = tag === 'input' || tag === 'textarea';
   if (typing) {
-    if (e.key === 'Enter') { if (e.target.id === 'artistIn') { addArtist(e.target.value); e.target.value = ''; } if (e.target.id === 'kwIn') { addKeyword(e.target.value); e.target.value = ''; } if (e.target.id === 'museumIn') addMuseumByName(); }
+    if (e.key === 'Enter') { if (e.target.id === 'artistIn') { addArtist(e.target.value); e.target.value = ''; } if (e.target.id === 'kwIn') { addKeyword(e.target.value); e.target.value = ''; } if (e.target.id === 'museumIn') addMuseumByName(); if (e.target.id === 'tvCode') onAct('tv-go'); }
     if (e.key === 'Escape') e.target.blur();
     return;
   }
@@ -726,6 +732,8 @@ function tvHandle(m) {
     relaySend(tvState());
   }
 }
+// Acepta «abcd-efgh-jkmn», con espacios, en mayúsculas o el enlace completo del QR.
+function parseCode(v) { v = String(v || ''); const m = /[?&]c=([a-z0-9]+)/i.exec(v); if (m) v = m[1]; v = v.toLowerCase().replace(/[^a-z0-9]/g, ''); return /^[a-z0-9]{6,24}$/.test(v) ? v : ''; }
 function pairUrl() { return location.origin + location.pathname + '?c=' + RC.code; }
 function showPair(manual) {
   if (REMOTE || !/^https?:$/.test(location.protocol)) { if (manual) toast('El mando necesita abrir la galería desde su dirección https'); return; }
@@ -733,6 +741,7 @@ function showPair(manual) {
   relayListen(tvHandle);
   const url = pairUrl();
   try { const q = qrcode(0, 'M'); q.addData(url); q.make(); $('#pairQR').innerHTML = q.createSvgTag({ cellSize: 4, margin: 2, scalable: true }); } catch (e) { $('#pairQR').textContent = ''; }
+  $('#pairCode').textContent = 'Código: ' + RC.code.replace(/(.{4})(?=.)/g, '$1-');
   $('#pairUrl').textContent = url.replace(/^https?:\/\//, '');
   $('#pair').hidden = false;
   clearTimeout(RC.hideT); RC.hideT = setTimeout(hidePair, manual ? 120000 : (lsGet('paired', false) ? 20000 : 150000));
@@ -819,6 +828,6 @@ function init() {
   advance();
   initTV();
 }
-window.ArtApp = { S, next, prev, advance, openMenu, closeMenu, refill, onAct, render, renderAll, applyChange, present, pullNext, captionMs, Remote: () => RC };
+window.ArtApp = { S, next, prev, advance, openMenu, closeMenu, refill, onAct, render, renderAll, applyChange, present, pullNext, captionMs, parseCode, Remote: () => RC };
 init();
 })();
