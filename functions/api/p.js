@@ -5,6 +5,7 @@
 const ALLOWED = [
   /^https:\/\/www\.wikiart\.org\/en\/[^?#]*\?[^#]*json=2/,
   /^https:\/\/dpul\.princeton\.edu\/catalog\.json\?/,
+  /^https:\/\/dpul\.princeton\.edu\/catalog\/[0-9a-f-]{32,36}\/manifest$/,
   /^https:\/\/api\.artic\.edu\/api\/v1\/artworks\/search\?/
 ];
 export async function onRequestGet({ request }) {
