@@ -79,6 +79,11 @@ const idx = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/moma/index.
   const viaWa = await C.adapters.wikiartFetch(Object.assign({}, plan, { artist: 'Leonora Carrington' }), Object.assign(C.defaultFilters(), { artists: ['Leonora Carrington'] }), ctx);
   assert.ok(viaWa.length === 1 && /wikiart\.org\/en\/leonora-carrington\/mode\/all-paintings\?json=2/.test(prox[0]), 'WikiArt por el intermediario');
   delete globalThis.location;
+  // WikiArt primero: la fila de colecciones abiertas entrega sus obras en cuanto llegan
+  globalThis.fetch = async u => { u = String(u); if (u.includes('wikiart.org')) return J({ AllPaintingsCount: 1, PageSize: 60, Paintings: [{ id: 'z', title: 'Prioridad', artistName: 'X', year: 1950, image: 'https://uploads.wikiart.org/p.jpg!Large.jpg', paintingUrl: '/en/x/p' }] }); await new Promise(r => setTimeout(r, 60)); return J({ query: { pages: [] } }); };
+  const earlyGot = []; const fsw = Object.assign(C.defaultFilters(), { styles: ['surrealism'] });
+  const t0 = Date.now(); await C.runSource(C.SOURCE_LIST.find(x => x.id === 'm:open'), fsw, Object.assign({}, ctx, { early: l => earlyGot.push(l.length) }));
+  assert.ok(earlyGot.length >= 1 && earlyGot[0] >= 1, 'WikiArt entrega antes de terminar la fila');
   const ids = C.MUSEUMS.map(m => m.id); assert.strictEqual(new Set(ids).size, ids.length, 'ids de museo únicos');
   assert.ok(C.museumIdsByTag('artist').length >= 20, 'museos de un solo artista');
   console.log('MoMA', l.length, '· Commons especial OK');

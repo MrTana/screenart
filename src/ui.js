@@ -55,6 +55,13 @@ function ctx() { return { hq: S.st.quality === 'high', keys: S.keys, anyRights: 
 function wake() { S.waiters.splice(0).forEach(r => r()); }
 function waitPool(ms) { return new Promise(res => { let d = false; const fin = () => { if (!d) { d = true; res(); } }; S.waiters.push(fin); setTimeout(fin, ms); }); }
 function insertRandom(list) { list.forEach(w => S.pool.splice(C.rand(S.pool.length + 1), 0, w)); wake(); }
+/* WikiArt tiene prioridad: sus obras se ponen al principio de la cola (mezcladas entre sí) y el resto entra al azar. */
+function insertPriority(list) {
+  const wa = C.shuffle(list.filter(w => w.src === 'wikiart')), rest = list.filter(w => w.src !== 'wikiart');
+  if (wa.length) S.pool.unshift(...wa);
+  insertRandom(rest);
+}
+const fresh = (w, f) => C.accept(w, f) && !S.seen.has(w.uid) && !S.seenKey.has(wkey(w)) && !S.pool.some(x => x.uid === w.uid);
 
 function setStatus(id, state, msg) {
   S.status[id] = { state, msg: msg || '' };
@@ -78,7 +85,10 @@ function refill() {
   if (!enabled.length) { if (!S.warned) { S.warned = true; toast('Activa al menos un museo'); } return; }
   const ready = enabled.filter(s => !S.flight.has(s.id) && (S.cool[s.id] || 0) <= now);
   // Cada museo lanza varias consultas (y Wikidata aguanta pocas a la vez): nunca más de 4 museos en marcha.
-  C.sampleN(ready, Math.max(0, 4 - S.flight.size)).forEach(s => launch(s, epoch));
+  // La fila que incluye WikiArt (colecciones abiertas) sale siempre la primera.
+  const wa = ready.filter(s => s.id === 'm:open'), others = ready.filter(s => s.id !== 'm:open');
+  const room = Math.max(0, 4 - S.flight.size);
+  wa.slice(0, room).concat(C.sampleN(others, Math.max(0, room - wa.length))).forEach(s => launch(s, epoch));
 }
 
 async function launch(s, epoch) {
@@ -87,12 +97,15 @@ async function launch(s, epoch) {
   let added = 0, fail = null;
   try {
     const d = S.detail[s.id] = {};
-    const cx = Object.assign(ctx(), { report: (name, n, err) => { d[name] = err ? '✖ ' + errText(err) : n; } });
+    const cx = Object.assign(ctx(), {
+      report: (name, n, err) => { d[name] = err ? '✖ ' + errText(err) : n; },
+      early: l => { if (epoch === S.epoch) { const x = l.filter(w => fresh(w, f)); if (x.length) { insertPriority(x); wake(); } } }
+    });
     let list = await C.runSource(s, f, cx);
     if (epoch === S.epoch) {
-      list = list.filter(w => C.accept(w, f) && !S.seen.has(w.uid) && !S.seenKey.has(wkey(w)) && !S.pool.some(x => x.uid === w.uid));
+      list = list.filter(w => fresh(w, f));
       added = list.length;
-      if (added) insertRandom(list);
+      if (added) insertPriority(list);
     }
   } catch (e) { fail = e; }
   S.refilling--; busy();
@@ -188,7 +201,7 @@ function setCaption(w) {
   const c = $('#caption');
   c.querySelector('.t').textContent = w.title;
   c.querySelector('.m').textContent = [w.artist, w.date].filter(Boolean).join(' · ');
-  c.querySelector('.s').textContent = [w.museum, w.license].filter(Boolean).join(' · ') + (isFav(w) ? ' · ♥ favorita' : '');
+  c.querySelector('.s').textContent = [w.museum].filter(Boolean).join(' · ') + (isFav(w) ? ' · ♥ favorita' : '');
   clearTimeout(S.capT);
   if (S.st.caption === 'never') { c.classList.remove('show'); return; }
   c.classList.add('show');

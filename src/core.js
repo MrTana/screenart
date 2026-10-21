@@ -1133,7 +1133,8 @@ async function museumFetch(m, plan, f, ctx) {
     if (m.direct && DIRECT[m.direct]) jobs.push(['Directa', () => DIRECT[m.direct](plan, f, ctx)]);
     jobs.push(['Wikidata', () => wikidataMuseum(m, plan, f, ctx)], ['Commons', () => commonsFetch(plan, f, ctx, m)], ['Wikipedia', () => wikipediaFetch(plan, f, ctx, m)]);
   }
-  const res = await Promise.allSettled(jobs.map(j => j[1]()));
+  // WikiArt va primero: sus obras se entregan en cuanto llegan, sin esperar a las demás fuentes de la fila.
+  const res = await Promise.allSettled(jobs.map(j => j[1]().then(v => { if (j[0] === 'WikiArt' && ctx.early && v.length) ctx.early(v); return v; })));
   const out = [], seen = new Set(); let firstErr = null;
   res.forEach((r, i) => {
     if (r.status === 'rejected') { rep(jobs[i][0], 0, r.reason); if (!firstErr || firstErr.noKey) firstErr = r.reason; return; }

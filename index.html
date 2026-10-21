@@ -234,7 +234,7 @@ details.adv label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut
       <p class="hint">Se guardan solo en este navegador. Con una clave puedes activar esas fuentes.</p>
     </div>
   </section>
-  <div class="foot">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 11d18ad9f1 · 2026-10-21 18:28 UTC</span><br><button class="btn" data-act="update" style="margin-top:10px">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" style="margin-top:10px" hidden>Instalar la app</button> <button class="btn" data-act="diag" style="margin-top:10px">Probar fuentes</button> <button class="btn" data-act="reset" style="margin-top:10px">Restablecer filtros</button></div>
+  <div class="foot">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 9d8b211785 · 2026-10-21 19:11 UTC</span><br><button class="btn" data-act="update" style="margin-top:10px">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" style="margin-top:10px" hidden>Instalar la app</button> <button class="btn" data-act="diag" style="margin-top:10px">Probar fuentes</button> <button class="btn" data-act="reset" style="margin-top:10px">Restablecer filtros</button></div>
 </aside>
 <script>
 /* Núcleo: catálogos de filtros, utilidades y adaptadores de museos.
@@ -1372,7 +1372,8 @@ async function museumFetch(m, plan, f, ctx) {
     if (m.direct && DIRECT[m.direct]) jobs.push(['Directa', () => DIRECT[m.direct](plan, f, ctx)]);
     jobs.push(['Wikidata', () => wikidataMuseum(m, plan, f, ctx)], ['Commons', () => commonsFetch(plan, f, ctx, m)], ['Wikipedia', () => wikipediaFetch(plan, f, ctx, m)]);
   }
-  const res = await Promise.allSettled(jobs.map(j => j[1]()));
+  // WikiArt va primero: sus obras se entregan en cuanto llegan, sin esperar a las demás fuentes de la fila.
+  const res = await Promise.allSettled(jobs.map(j => j[1]().then(v => { if (j[0] === 'WikiArt' && ctx.early && v.length) ctx.early(v); return v; })));
   const out = [], seen = new Set(); let firstErr = null;
   res.forEach((r, i) => {
     if (r.status === 'rejected') { rep(jobs[i][0], 0, r.reason); if (!firstErr || firstErr.noKey) firstErr = r.reason; return; }
@@ -1549,6 +1550,13 @@ function ctx() { return { hq: S.st.quality === 'high', keys: S.keys, anyRights: 
 function wake() { S.waiters.splice(0).forEach(r => r()); }
 function waitPool(ms) { return new Promise(res => { let d = false; const fin = () => { if (!d) { d = true; res(); } }; S.waiters.push(fin); setTimeout(fin, ms); }); }
 function insertRandom(list) { list.forEach(w => S.pool.splice(C.rand(S.pool.length + 1), 0, w)); wake(); }
+/* WikiArt tiene prioridad: sus obras se ponen al principio de la cola (mezcladas entre sí) y el resto entra al azar. */
+function insertPriority(list) {
+  const wa = C.shuffle(list.filter(w => w.src === 'wikiart')), rest = list.filter(w => w.src !== 'wikiart');
+  if (wa.length) S.pool.unshift(...wa);
+  insertRandom(rest);
+}
+const fresh = (w, f) => C.accept(w, f) && !S.seen.has(w.uid) && !S.seenKey.has(wkey(w)) && !S.pool.some(x => x.uid === w.uid);
 
 function setStatus(id, state, msg) {
   S.status[id] = { state, msg: msg || '' };
@@ -1572,7 +1580,10 @@ function refill() {
   if (!enabled.length) { if (!S.warned) { S.warned = true; toast('Activa al menos un museo'); } return; }
   const ready = enabled.filter(s => !S.flight.has(s.id) && (S.cool[s.id] || 0) <= now);
   // Cada museo lanza varias consultas (y Wikidata aguanta pocas a la vez): nunca más de 4 museos en marcha.
-  C.sampleN(ready, Math.max(0, 4 - S.flight.size)).forEach(s => launch(s, epoch));
+  // La fila que incluye WikiArt (colecciones abiertas) sale siempre la primera.
+  const wa = ready.filter(s => s.id === 'm:open'), others = ready.filter(s => s.id !== 'm:open');
+  const room = Math.max(0, 4 - S.flight.size);
+  wa.slice(0, room).concat(C.sampleN(others, Math.max(0, room - wa.length))).forEach(s => launch(s, epoch));
 }
 
 async function launch(s, epoch) {
@@ -1581,12 +1592,15 @@ async function launch(s, epoch) {
   let added = 0, fail = null;
   try {
     const d = S.detail[s.id] = {};
-    const cx = Object.assign(ctx(), { report: (name, n, err) => { d[name] = err ? '✖ ' + errText(err) : n; } });
+    const cx = Object.assign(ctx(), {
+      report: (name, n, err) => { d[name] = err ? '✖ ' + errText(err) : n; },
+      early: l => { if (epoch === S.epoch) { const x = l.filter(w => fresh(w, f)); if (x.length) { insertPriority(x); wake(); } } }
+    });
     let list = await C.runSource(s, f, cx);
     if (epoch === S.epoch) {
-      list = list.filter(w => C.accept(w, f) && !S.seen.has(w.uid) && !S.seenKey.has(wkey(w)) && !S.pool.some(x => x.uid === w.uid));
+      list = list.filter(w => fresh(w, f));
       added = list.length;
-      if (added) insertRandom(list);
+      if (added) insertPriority(list);
     }
   } catch (e) { fail = e; }
   S.refilling--; busy();
@@ -1682,7 +1696,7 @@ function setCaption(w) {
   const c = $('#caption');
   c.querySelector('.t').textContent = w.title;
   c.querySelector('.m').textContent = [w.artist, w.date].filter(Boolean).join(' · ');
-  c.querySelector('.s').textContent = [w.museum, w.license].filter(Boolean).join(' · ') + (isFav(w) ? ' · ♥ favorita' : '');
+  c.querySelector('.s').textContent = [w.museum].filter(Boolean).join(' · ') + (isFav(w) ? ' · ♥ favorita' : '');
   clearTimeout(S.capT);
   if (S.st.caption === 'never') { c.classList.remove('show'); return; }
   c.classList.add('show');
