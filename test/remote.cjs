@@ -6,22 +6,27 @@ const html = fs.readFileSync(__dirname + '/../index.html', 'utf8');
 const scripts = Array.from(html.matchAll(/<script>\n([\s\S]*?)<\/script>/g), m => m[1]).join('\n');
 const J = o => ({ ok: true, status: 200, json: async () => o });
 const subs = {}; let posts = 0;
-function make(url) {
+const queue = {};
+function make(url, opt) {
+  opt = opt || {};
   const dom = new JSDOM(html, { runScripts: 'outside-only', pretendToBeVisual: true, url });
   const w = dom.window; w.__ART_TUNING = { sparqlPause: 5 };
   w.fetch = async (u, init) => {
     u = String(u);
     const m = /^https:\/\/ntfy\.sh\/([\w-]+)$/.exec(u);
     if (m && init && init.method === 'POST') {
+      (queue[m[1]] = queue[m[1]] || []).push({ id: 'n' + Math.random(), event: 'message', message: init.body });
       posts++; assert.ok(init.body.length < 3100 && !/[^\x00-\x7f]/.test(init.body), 'mensaje ASCII y pequeño');
       (subs[m[1]] || []).forEach(es => setTimeout(() => es.onmessage && es.onmessage({ data: JSON.stringify({ event: 'message', message: init.body }) }), 3));
       return { ok: true, status: 200 };
     }
+    const pm = /^https:\/\/ntfy\.sh\/([\w-]+)\/json\?poll=1/.exec(u);
+    if (pm) { const q = (queue[pm[1]] || []).splice(0); return { ok: true, status: 200, text: async () => q.map(x => JSON.stringify(x)).join('\n') }; }
     if (u.includes('metmuseum') && u.includes('/search')) return J({ total: 3, objectIDs: [1, 2, 3] });
     if (u.includes('metmuseum') && u.includes('/objects/')) { const id = +u.split('/').pop(); return J({ objectID: id, isPublicDomain: true, primaryImage: 'https://img/met' + id + '.jpg', primaryImageSmall: 'https://img/s' + id + '.jpg', title: 'Obra á' + id, artistDisplayName: 'Artista ñ', objectDate: '1880', objectBeginDate: 1880, objectEndDate: 1880, department: 'Paintings', classification: 'Paintings', objectName: 'Painting', objectURL: 'https://met/' + id, medium: 'oil', creditLine: 'x', tags: [] }); }
     throw new TypeError('Failed to fetch');
   };
-  w.EventSource = function (u) { const t = String(u).replace(/^https:\/\/ntfy\.sh\//, '').replace(/\/sse$/, ''); (subs[t] = subs[t] || []).push(this); setTimeout(() => this.onopen && this.onopen(), 2); };
+  if (opt.noSSE) w.EventSource = function () { /* nunca abre: simula un navegador de TV que corta SSE */ }; else w.EventSource = function (u) { const t = String(u).replace(/^https:\/\/ntfy\.sh\//, '').replace(/\/sse$/, ''); (subs[t] = subs[t] || []).push(this); setTimeout(() => this.onopen && this.onopen(), 2); };
   w.Image = function () { const o = { set src(v) { this._s = v; setTimeout(() => { o.naturalWidth = 1600; o.naturalHeight = 1000; o.onload && o.onload(); }, 5); }, get src() { return this._s; } }; return o; };
   w.AbortController = AbortController;
   w.eval(scripts);
@@ -47,7 +52,9 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   assert.strictEqual(ph.ArtApp.S.shown, 0, 'el móvil no carga obras');
   assert.ok(/Conectado/.test(p.getElementById('rcstat').textContent), 'conectado: ' + p.getElementById('rcstat').textContent);
   assert.ok(p.getElementById('rcT').textContent.includes('Obra'), 'el móvil ve la obra actual');
-  assert.ok(tv.document.getElementById('pair').hidden, 'la TV oculta el QR al emparejar');
+  assert.ok(!tv.document.getElementById('pair').hidden, 'el QR sigue hasta que el móvil manda una orden');
+  assert.ok(posts <= 3, 'hello y estado caben en pocos mensajes: ' + posts);
+  assert.ok(/Relé conectado/.test(tv.document.getElementById('pairSt').textContent), 'la TV muestra el estado del relé: ' + tv.document.getElementById('pairSt').textContent);
   assert.strictEqual(ph.localStorage.length, 1, 'el móvil solo guarda el código (no pisa filtros)');
 
   // órdenes
@@ -55,6 +62,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   ph.ArtApp.onAct('next'); await wait(400);
   assert.ok(tvA.S.hist.length > h0 || tvA.S.hi < tvA.S.hist.length, 'siguiente llega a la TV');
   assert.ok(tvA.S.shown > shownTv, 'la TV cambió de obra: ' + tvA.S.shown);
+  assert.ok(tv.document.getElementById('pair').hidden, 'la TV oculta el QR al emparejar');
   ph.ArtApp.onAct('play'); await wait(300);
   assert.strictEqual(tvA.S.paused, true, 'pausa llega a la TV');
   assert.ok(/Reanudar/.test(p.getElementById('playBtn').textContent), 'el móvil refleja la pausa');
@@ -97,6 +105,15 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   assert.strictEqual(ph2.ArtApp.parseCode('abc'), '');
   ph2.ArtApp.onAct('tv-connect'); assert.ok(!ph2.document.getElementById('tvRow').hidden, 'aparece el campo del código');
   ph2.ArtApp.onAct('tv-go'); assert.ok(/no es válido/.test(ph2.document.getElementById('tvMsg').textContent), 'rechaza un código vacío');
+  // móvil que reaparece tras actualizar: la TV conserva todos los museos
+  assert.ok(Object.keys(tvA.S.f.sources).length > 100, 'la TV conserva la lista completa de museos');
+  // TV cuyo navegador no abre SSE: funciona por sondeo
+  const tv2 = make('https://example.test/?tv=1', { noSSE: true });
+  await wait(2200);
+  const code2 = tv2.document.getElementById('pairUrl').textContent.split('=')[1];
+  const ph3 = make('https://example.test/?c=' + code2);
+  for (let i = 0; i < 70 && !/Conectado/.test(ph3.document.getElementById('rcstat').textContent); i++) await wait(250);
+  assert.ok(/Conectado/.test(ph3.document.getElementById('rcstat').textContent), 'conecta por sondeo: ' + ph3.document.getElementById('rcstat').textContent);
   // en el móvil nada cierra el menú
   ph.ArtApp.closeMenu(); assert.ok(!p.getElementById('drawer').hidden, 'el menú del móvil no se cierra');
   console.log('mando OK · mensajes:', posts);

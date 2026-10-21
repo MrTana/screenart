@@ -14,10 +14,10 @@ function lsSet(k, v) { if (REMOTE && k !== 'rc') return; try { localStorage.setI
 /* ───────── estado ───────── */
 function loadFilters() { return normFilters(lsGet('f', {})); }
 function normFilters(s) {
-  const d = C.defaultFilters();
+  const d = C.defaultFilters(), dsrc = Object.assign({}, d.sources);
   s = s && typeof s === 'object' ? s : {};
   const f = Object.assign(d, s);
-  f.sources = Object.assign({}, d.sources, s.sources || {});
+  f.sources = Object.assign({}, dsrc, s.sources || {});
   ['eras', 'styles', 'types', 'artists', 'keywords'].forEach(k => { if (!Array.isArray(f[k])) f[k] = []; });
   return f;
 }
@@ -641,7 +641,7 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
    La TV y el móvil se hablan a través de un canal público de ntfy.sh con un código aleatorio
    (sin cuentas ni servidor propio). La TV escucha, muestra un QR con ?c=<código> y obedece. */
 const RELAY = (Q.get('relay') || 'https://ntfy.sh').replace(/\/+$/, '');
-const RC = { code: '', es: null, poll: null, buf: {}, listening: false, lastPhone: 0, lastNow: 0, pingT: null, helloT: null, helloN: 0, connected: false, setT: null, forceNow: false, nowT: null, sent: 0 };
+const RC = { code: '', es: null, poll: null, buf: {}, listening: false, lastPhone: 0, lastNow: 0, pingT: null, helloT: null, helloN: 0, connected: false, setT: null, forceNow: false, nowT: null, sent: 0, err: 0, seen: {}, polled: false, lastState: 0, hellos: 0 };
 const asciiJSON = o => JSON.stringify(o).replace(/[\u0080-￿]/g, c => '\\u' + ('0000' + c.charCodeAt(0).toString(16)).slice(-4));
 const myTopic = () => 'galeria-arte-' + RC.code + (REMOTE ? '-ph' : '-tv');
 const peerTopic = () => 'galeria-arte-' + RC.code + (REMOTE ? '-tv' : '-ph');
@@ -654,15 +654,21 @@ function relaySend(obj) {
   const s = asciiJSON(obj), id = Math.random().toString(36).slice(2, 7), N = 3000, n = Math.max(1, Math.ceil(s.length / N));
   for (let i = 0; i < n; i++) {
     RC.sent++;
-    try { fetch(RELAY + '/' + peerTopic(), { method: 'POST', body: id + '|' + i + '|' + n + '|' + s.slice(i * N, (i + 1) * N) }).catch(() => { /* sin red: se reintenta con la siguiente orden */ }); } catch (e) { /* fetch no disponible */ }
+    try {
+      fetch(RELAY + '/' + peerTopic(), { method: 'POST', body: id + '|' + i + '|' + n + '|' + s.slice(i * N, (i + 1) * N) })
+        .then(r => { RC.err = r && r.ok === false ? r.status : 0; }).catch(() => { RC.err = -1; });
+    } catch (e) { RC.err = -1; }
   }
 }
 function relayRecv(text, fn) {
   const m = /^([a-z0-9]+)\|(\d+)\|(\d+)\|([\s\S]*)$/.exec(text || ''); if (!m) return;
   const id = m[1], i = +m[2], n = +m[3];
+  const seen = id + '|' + i; if (RC.seen[seen]) return; // el mismo mensaje por SSE y por sondeo
+  RC.seen[seen] = Date.now();
   const b = RC.buf[id] || (RC.buf[id] = { n, parts: [], got: 0, t: Date.now() });
   if (b.parts[i] == null) { b.parts[i] = m[4]; b.got++; }
   Object.keys(RC.buf).forEach(k => { if (Date.now() - RC.buf[k].t > 60000) delete RC.buf[k]; });
+  Object.keys(RC.seen).forEach(k => { if (Date.now() - RC.seen[k] > 120000) delete RC.seen[k]; });
   if (b.got < b.n) return;
   delete RC.buf[id];
   let o; try { o = JSON.parse(b.parts.join('')); } catch (e) { return; }
@@ -672,26 +678,33 @@ function relayListen(fn) {
   if (RC.listening || !RC.code) return; RC.listening = true;
   const url = RELAY + '/' + myTopic();
   const onData = d => { let m; try { m = typeof d === 'string' ? JSON.parse(d) : d; } catch (e) { return; } if (m && m.event === 'message') relayRecv(m.message, fn); };
-  if (typeof EventSource === 'function') {
-    const es = RC.es = new EventSource(url + '/sse');
-    es.onmessage = e => onData(e.data);
-    es.onopen = () => { RC.connected = true; if (REMOTE && !RC.helloN) remoteHello(); };
-    es.onerror = () => { RC.connected = false; };
-  } else {
-    // Navegadores sin EventSource: se consulta cada 3 s.
-    let since = String(Math.floor(Date.now() / 1000)); RC.connected = true; if (REMOTE) remoteHello();
+  // Sondeo de reserva: algunos navegadores de TV o redes cortan las conexiones SSE. Una consulta cada 5 s cabe en el límite de ntfy.
+  let since = String(Math.floor(Date.now() / 1000) - 30), polling = false;
+  const startPoll = () => {
+    if (polling) return; polling = true;
     RC.poll = setInterval(async () => {
       try {
         const r = await fetch(url + '/json?poll=1&since=' + since); const t = await r.text();
+        RC.polled = true; RC.err = r.ok ? RC.err : r.status;
         t.split('\n').forEach(l => { if (!l.trim()) return; let m; try { m = JSON.parse(l); } catch (e) { return; } if (m.id) since = m.id; onData(m); });
       } catch (e) { /* se reintenta */ }
-    }, 3000);
-  }
+    }, 5000);
+  };
+  if (typeof EventSource === 'function') {
+    const es = RC.es = new EventSource(url + '/sse');
+    es.onmessage = e => { RC.connected = true; onData(e.data); };
+    es.onopen = () => { RC.connected = true; if (REMOTE) { if (!RC.helloN) remoteHello(); } else if (!$('#pair').hidden) pairStatus(); };
+    es.onerror = () => { RC.connected = false; setTimeout(() => { if (!RC.connected) startPoll(); }, 8000); };
+    setTimeout(() => { if (!RC.connected) startPoll(); }, 6000);
+  } else { RC.connected = true; startPoll(); if (REMOTE) remoteHello(); }
 }
+function relayInfo() { return 'Relé ' + (RC.connected ? 'conectado' : RC.polled ? 'por sondeo' : 'sin conexión') + ' · enviados ' + RC.sent + (RC.err ? ' · error ' + (RC.err === -1 ? 'de red' : 'HTTP ' + RC.err) : ''); }
 
 /* — lado TV — */
 function buildVer() { const v = document.querySelector('.ver'); const m = v && /Versión\s+(\w+)/.exec(v.textContent); return m ? m[1] : ''; }
-function tvState() { return { t: 'state', f: S.f, st: S.st, custom: S.custom, paused: S.paused, now: tvNow(), ver: buildVer(), keyset: { europeana: !!S.keys.europeana, si: !!S.keys.si, harvard: !!S.keys.harvard } }; }
+// Solo viajan los museos que difieren de los predeterminados: el mensaje cabe en un solo paquete.
+function slimF(f) { const d = C.defaultFilters().sources, s = {}; Object.keys(f.sources).forEach(k => { if (!!f.sources[k] !== !!d[k]) s[k] = !!f.sources[k]; }); return Object.assign({}, f, { sources: s }); }
+function tvState() { return { t: 'state', f: slimF(S.f), st: S.st, custom: S.custom, paused: S.paused, now: tvNow(), ver: buildVer(), keyset: { europeana: !!S.keys.europeana, si: !!S.keys.si, harvard: !!S.keys.harvard } }; }
 function tvNow() {
   const w = S.current; if (!w) return null;
   return { uid: w.uid, title: w.title, artist: w.artist, date: w.date, museum: w.museum, thumb: w.thumb || w.url, fav: isFav(w), paused: S.paused };
@@ -706,10 +719,10 @@ function tvNowSoon(force) {
   RC.nowT = setTimeout(() => { RC.forceNow = false; RC.lastNow = Date.now(); relaySend({ t: 'now', now: tvNow() }); }, wait);
 }
 function tvHandle(m) {
-  if (m.t === 'hello' || m.t === 'ping' || m.t === 'cmd' || m.t === 'set') {
-    RC.lastPhone = Date.now(); lsSet('paired', true); hidePair();
-  }
-  if (m.t === 'hello') { relaySend(tvState()); return; }
+  if (m.t === 'hello' || m.t === 'ping' || m.t === 'cmd' || m.t === 'set') RC.lastPhone = Date.now();
+  // El QR se oculta solo cuando el móvil ya recibió el estado y manda órdenes (conexión de ida y vuelta).
+  if (m.t === 'ping' || m.t === 'cmd' || m.t === 'set') { lsSet('paired', true); hidePair(); }
+  if (m.t === 'hello') { RC.hellos++; if (Date.now() - RC.lastState > 2500) { RC.lastState = Date.now(); relaySend(tvState()); } return; }
   if (m.t === 'ping') { RC.forceNow = true; tvNowSoon(); return; }
   if (m.t === 'cmd') {
     RC.forceNow = true;
@@ -729,7 +742,7 @@ function tvHandle(m) {
     if (keyChanged || JSON.stringify(S.f) !== before) applyChange(); else { saveAll(); schedule(); }
     if (S.menu) renderAll();
     toast('Ajustes cambiados desde el móvil');
-    relaySend(tvState());
+    RC.lastState = Date.now(); relaySend(tvState());
   }
 }
 // Acepta «abcd-efgh-jkmn», con espacios, en mayúsculas o el enlace completo del QR.
@@ -743,10 +756,14 @@ function showPair(manual) {
   try { const q = qrcode(0, 'M'); q.addData(url); q.make(); $('#pairQR').innerHTML = q.createSvgTag({ cellSize: 4, margin: 2, scalable: true }); } catch (e) { $('#pairQR').textContent = ''; }
   $('#pairCode').textContent = 'Código: ' + RC.code.replace(/(.{4})(?=.)/g, '$1-');
   $('#pairUrl').textContent = url.replace(/^https?:\/\//, '');
-  $('#pair').hidden = false;
+  $('#pair').hidden = false; pairStatus(); clearInterval(RC.stT); RC.stT = setInterval(pairStatus, 2000);
   clearTimeout(RC.hideT); RC.hideT = setTimeout(hidePair, manual ? 120000 : (lsGet('paired', false) ? 20000 : 150000));
 }
-function hidePair() { const p = $('#pair'); if (p) p.hidden = true; clearTimeout(RC.hideT); }
+function pairStatus() {
+  const keep = lsGet('rc', '') === RC.code;
+  $('#pairSt').textContent = relayInfo() + ' · avisos de móviles: ' + RC.hellos + (keep ? '' : ' · este navegador no guarda el código: cambiará al recargar');
+}
+function hidePair() { const p = $('#pair'); if (p) p.hidden = true; clearTimeout(RC.hideT); clearInterval(RC.stT); }
 function initTV() {
   if (Q.get('tv') === '0') return;
   if (Q.get('tv') === '1' || (window.innerWidth || 1024) > 820) setTimeout(() => showPair(false), 1500);
@@ -780,9 +797,9 @@ function remoteHello(again) {
   if (again) RC.helloN = 0;
   clearTimeout(RC.helloT);
   if (RC.gotState) return;
-  if (RC.helloN >= 10) { remoteStat('No encuentro la TV. Comprueba que tiene abierta la galería y que ambos tenéis internet.', false, true); return; }
+  if (RC.helloN >= 10) { remoteStat('No encuentro la TV. Comprueba que tiene abierta la galería, que el código es el que muestra ahora (' + relayInfo() + ').', false, true); return; }
   RC.helloN++; relaySend({ t: 'hello' });
-  remoteStat('Conectando con la TV…', false, false);
+  remoteStat('Conectando con la TV…' + (RC.helloN > 1 ? ' (' + relayInfo() + ')' : ''), false, false);
   RC.helloT = setTimeout(() => remoteHello(false), Math.min(60000, 3000 * Math.pow(2, RC.helloN - 1)));
 }
 function remoteHandle(m) {
@@ -803,7 +820,7 @@ function remoteCmd(c) {
 function remoteSetSoon() {
   if (!REMOTE) return;
   clearTimeout(RC.setT);
-  RC.setT = setTimeout(() => { relaySend({ t: 'set', f: S.f, st: S.st, custom: S.custom, keys: S.keys }); toast('Enviado a la TV'); }, 900);
+  RC.setT = setTimeout(() => { relaySend({ t: 'set', f: slimF(S.f), st: S.st, custom: S.custom, keys: S.keys }); toast('Enviado a la TV'); }, 900);
 }
 function initRemote() {
   RC.code = REMOTE; lsSet('rc', REMOTE);
@@ -814,6 +831,7 @@ function initRemote() {
   document.title = 'Mando · Galería de arte';
   remoteStat('Conectando con la TV…', false, false);
   relayListen(remoteHandle);
+  setTimeout(() => { if (!RC.helloN) remoteHello(); }, 1500);
   RC.pingT = setInterval(() => { if (document.visibilityState === 'visible' && RC.gotState) relaySend({ t: 'ping' }); }, 90000);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && RC.gotState) relaySend({ t: 'ping' }); });
 }

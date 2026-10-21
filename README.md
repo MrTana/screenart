@@ -81,6 +81,7 @@ Al abrir la galería en una pantalla grande aparece un **código QR** en la esqu
 - **Fondo:** negro por defecto; en el menú (también desde el mando), «Fondo» permite volver al blanco.
 - **Todo el menú en el móvil:** además de los filtros, el mando tiene «Probar fuentes» (se ejecuta en la TV y el informe llega al móvil), «Restablecer filtros», las claves de API (se envían a la TV por el mismo canal) e «Instalar la app».
 - **Actualizar:** al final del mando hay «Buscar actualización»: la TV borra su copia guardada y recarga la última versión, y el móvil se actualiza después. Muestra la versión de cada uno.
+- Si no conecta: bajo el QR, la TV muestra el estado del relé (conectado, por sondeo o sin conexión) y cuántos avisos de móviles ha recibido; el móvil muestra lo mismo mientras conecta. Si el navegador de la TV corta la conexión continua, pasa solo a consultar cada 5 s. El QR se oculta cuando el móvil ya manda órdenes (conexión de ida y vuelta).
 - Pruebas: `test/remote.cjs` simula TV y móvil.
 
 ## Instalarla como app (PWA)

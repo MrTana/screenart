@@ -99,6 +99,7 @@ body.active #menuBtn,#menuBtn:focus-visible{opacity:1}
 #pair b{font:italic 500 clamp(20px,2.2vw,36px) var(--serif)}
 #pair span{font-size:clamp(14px,1.4vw,22px);color:#4d4d46}
 #pair strong{font:600 clamp(18px,1.9vw,30px) ui-monospace,monospace;letter-spacing:.06em}
+#pair small{font-size:clamp(11px,1vw,15px);color:#8a8a80}
 #pair code{font:500 clamp(12px,1.1vw,17px) ui-monospace,monospace;color:#6e6e66;word-break:break-all}
 body.rc #stage,body.rc #menuBtn,body.rc #caption,body.rc .edge,body.rc #loader,body.rc #pair,body.rc #busy{display:none!important}
 body.rc [data-act=close],body.rc [data-act=fs],body.rc [data-act=qr],body.rc .foot .keys,body.rc .foot [data-act=update]{display:none!important}
@@ -193,7 +194,7 @@ details.adv label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut
 <div id="toast" role="status"></div>
 <div class="edge" id="edgeL" aria-hidden="true">‹</div><div class="edge" id="edgeR" aria-hidden="true">›</div>
 <button id="menuBtn" aria-label="Abrir menú de filtros">Menú</button>
-<div id="pair" hidden><div class="pq" id="pairQR"></div><div class="pt"><b>Mándala desde el móvil</b><span>Apunta la cámara del móvil a este código y manejarás los filtros sin el mando.</span><strong id="pairCode"></strong><code id="pairUrl"></code></div></div>
+<div id="pair" hidden><div class="pq" id="pairQR"></div><div class="pt"><b>Mándala desde el móvil</b><span>Apunta la cámara del móvil a este código y manejarás los filtros sin el mando.</span><strong id="pairCode"></strong><code id="pairUrl"></code><small id="pairSt"></small></div></div>
 
 <aside id="drawer" hidden aria-label="Filtros y ajustes">
   <div class="dhead"><h1>Galería de arte</h1><button class="btn" data-act="close">Cerrar</button></div>
