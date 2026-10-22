@@ -492,10 +492,10 @@ function photoToB64(file) {
       const url = URL.createObjectURL(file), im = new Image();
       im.onload = () => {
         try {
-          const k = Math.min(1, 1280 / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement('canvas');
+          const k = Math.min(1, 1024 / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement('canvas');
           c.width = Math.max(1, Math.round(im.naturalWidth * k)); c.height = Math.max(1, Math.round(im.naturalHeight * k));
           c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
-          const d = c.toDataURL('image/jpeg', 0.85); URL.revokeObjectURL(url);
+          const d = c.toDataURL('image/jpeg', 0.8); URL.revokeObjectURL(url);
           if (!/^data:image\/jpeg;base64,/.test(d)) throw new Error('sin canvas');
           resolve({ b64: d.split(',')[1], mime: 'image/jpeg' });
         } catch (e) { resolve(raw()); }
@@ -527,7 +527,7 @@ async function searchByPhoto(file) {
     S.tres = rankByArtist(res, id.artist); renderTres();
     msg.textContent = S.tres.length ? 'Parece ser ' + label + '. Toca una para verla ahora.' : 'Parece ser ' + label + ', pero no encuentro esa obra con imagen. Prueba a buscarla por su nombre.';
   } catch (e) {
-    msg.textContent = e && e.noKey ? 'Falta la clave para reconocer fotos.' : e && (e.status === 400 || e.status === 401 || e.status === 403) ? 'La clave no es válida o no tiene permiso para reconocer imágenes (' + e.status + ').' : e && e.status === 429 ? 'Se acabó la cuota de la clave por ahora; prueba más tarde.' : 'No pude reconocer la foto: ' + errText(e);
+    msg.textContent = e && e.noKey ? 'Falta la clave para reconocer fotos.' : e && (e.status === 400 || e.status === 401 || e.status === 403) ? 'La clave no es válida o no tiene permiso para reconocer imágenes (' + e.status + ').' : e && e.status === 429 ? 'Se acabó la cuota de la clave por ahora; prueba más tarde.' : e && e.timeout ? 'No pude reconocer la foto: ' + e.message + '. Prueba de nuevo; si sigue igual, usa la otra clave o una foto más pequeña.' : 'No pude reconocer la foto: ' + errText(e);
   }
 }
 function rankByArtist(list, artist) {

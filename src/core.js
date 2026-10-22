@@ -1372,25 +1372,29 @@ function parseIdJSON(text) {
 }
 async function identifyArtwork(b64, mime, keys) {
   keys = keys || {};
+  const named = (p, e) => { if (e && e.timeout) e.message = 'Tiempo de espera agotado esperando a ' + p; return e; };
   if (keys.gemini) {
     let last;
+    const body = think => JSON.stringify({ contents: [{ parts: [{ text: ID_PROMPT }, { inline_data: { mime_type: mime || 'image/jpeg', data: b64 } }] }], generationConfig: Object.assign({ responseMimeType: 'application/json', temperature: 0 }, think ? { thinkingConfig: { thinkingLevel: 'low' } } : {}) });
     for (const model of GEMINI_MODELS) {
+      const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(keys.gemini);
+      const call = think => getJSON(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body(think) }, 60000);
       try {
-        const j = await getJSON('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(keys.gemini), {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts: [{ text: ID_PROMPT }, { inline_data: { mime_type: mime || 'image/jpeg', data: b64 } }] }], generationConfig: { responseMimeType: 'application/json', temperature: 0 } })
-        }, 40000);
+        let j;
+        // Los modelos 3.x «piensan» antes de responder y pueden tardar mucho: se pide poco razonamiento (si el modelo no lo admite, se repite sin eso).
+        try { j = await call(true); } catch (e) { if (e && e.status === 400) j = await call(false); else throw e; }
         const parts = (((j.candidates || [])[0] || {}).content || {}).parts || [];
         return parseIdJSON(parts.map(p => p.text || '').join(''));
-      } catch (e) { last = e; if (!(e && e.status === 404)) throw e; } // si el modelo ya no existe se prueba el siguiente
+      } catch (e) { last = e; if (!(e && e.status === 404)) throw named('Gemini (' + model + ')', e); } // si el modelo ya no existe se prueba el siguiente
     }
     throw last;
   }
   if (keys.anthropic) {
-    const j = await getJSON('https://api.anthropic.com/v1/messages', {
+    let j;
+    try { j = await getJSON('https://api.anthropic.com/v1/messages', {
       method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': keys.anthropic, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify({ model: 'claude-sonnet-5-5', max_tokens: 400, messages: [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: mime || 'image/jpeg', data: b64 } }, { type: 'text', text: ID_PROMPT }] }] })
-    }, 40000);
+    }, 60000); } catch (e) { throw named('Claude', e); }
     return parseIdJSON((j.content || []).map(p => p.text || '').join(''));
   }
   const e = new Error('Falta la clave para reconocer fotos'); e.noKey = true; throw e;

@@ -297,6 +297,13 @@ globalThis.fetch = async (url, init) => {
     let id = await C.identifyArtwork('QUJD', 'image/jpeg', { gemini: 'k1' });
     assert.strictEqual(id.title_en, 'The Starry Night'); assert.strictEqual(id.artist, 'Vincent van Gogh'); assert.strictEqual(id.confidence, 0.97);
     assert.ok(urls.some(x => /gemini-3\.6-flash/.test(x[0])), 'si un modelo ya no existe, prueba el siguiente'); assert.ok(/inline_data/.test(urls[urls.length - 1][1].body) && /QUJD/.test(urls[urls.length - 1][1].body), 'manda la imagen');
+    { const before = urls.length; urls.length = 0; const old = globalThis.fetch;
+      globalThis.fetch = async (u, i) => { u = String(u); urls.push([u, i]); if (u.includes('generativelanguage')) { if (/thinkingConfig/.test(i.body)) return { ok: false, status: 400, json: async () => ({}) }; return J({ candidates: [{ content: { parts: [{ text: answer }] } }] }); } return old(u, i); };
+      const r2 = await C.identifyArtwork('QUJD', 'image/jpeg', { gemini: 'k1' }); assert.strictEqual(r2.title_en, 'The Starry Night');
+      assert.ok(/thinkingLevel/.test(urls[0][1].body) && !/thinkingConfig/.test(urls[1][1].body), 'pide poco razonamiento y, si el modelo no lo admite, repite sin eso');
+      globalThis.fetch = async () => { const e = new Error('Tiempo de espera agotado'); e.timeout = true; throw e; };
+      await assert.rejects(() => C.identifyArtwork('QUJD', 'image/jpeg', { anthropic: 'k' }), e => e.timeout && /Claude/.test(e.message), 'el error de tiempo dice quién no respondió');
+      globalThis.fetch = old; }
     id = await C.identifyArtwork('QUJD', 'image/jpeg', { anthropic: 'sk-ant-x' });
     assert.strictEqual(id.title, 'La noche estrellada'); { const c = urls[urls.length - 1][1]; assert.strictEqual(c.headers['x-api-key'], 'sk-ant-x'); assert.strictEqual(c.headers['anthropic-dangerous-direct-browser-access'], 'true'); assert.ok(/"type":"image"/.test(c.body)); }
     await assert.rejects(() => C.identifyArtwork('QUJD', 'image/jpeg', {}), e => e.noKey);
