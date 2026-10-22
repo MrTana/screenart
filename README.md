@@ -51,7 +51,7 @@ Es un proyecto de uso personal, así que por defecto se usan todas las imágenes
 
 ## Filtros
 
-Época (o años exactos), estilo o movimiento (23), artistas, tema, formato horizontal o vertical, solo dominio público y favoritas. Los filtros de época, estilo y artista de los museos famosos dependen de que Wikidata tenga fecha y autor de cada obra. La app es para ver pinturas, dibujos, estampas, grabados, tapices y fotografías: no hay selector de tipo y las esculturas, los muebles y otros objetos en 3D se descartan siempre.
+**Buscar por título:** escribe el nombre de una pintura (en español, inglés o francés) y elige una de las obras encontradas en Wikidata (con artista, año y museo) para verla al momento; desde el mando del móvil se envía a la TV. Época (o años exactos), estilo o movimiento (23), artistas, tema, formato horizontal o vertical, solo dominio público y favoritas. Los filtros de época, estilo y artista de los museos famosos dependen de que Wikidata tenga fecha y autor de cada obra. La app es para ver pinturas, dibujos, estampas, grabados, tapices y fotografías: no hay selector de tipo y las esculturas, los muebles y otros objetos en 3D se descartan siempre.
 
 ## Si las imágenes no cambian o un estilo sale vacío
 

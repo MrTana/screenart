@@ -93,6 +93,16 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   flt.value = ''; flt.dispatchEvent(new w.Event('input'));
   d.getElementById('museumIn').value = 'Museo de Prueba'; d.querySelector('[data-act=add-museum]').click(); await wait(300);
   console.log('museo añadido:', d.getElementById('museumMsg').textContent, '| guardado:', S.custom.length, '| activo:', !!S.f.sources['m:cQ4242'], '| en lista:', /Museo de Prueba/.test(d.getElementById('c-msrcs').textContent));
+  { const J2 = o => ({ ok: true, status: 200, json: async () => o }), f0 = w.fetch;
+    w.fetch = async (u, i) => { u = String(u);
+      if (/wbsearchentities/.test(u)) return J2({ search: /language=es/.test(u) ? [{ id: 'Q45585', label: 'La noche estrellada', description: 'pintura de Vincent van Gogh' }] : [] });
+      if (/props=claims/.test(u)) return J2({ entities: { Q45585: { id: 'Q45585', labels: { es: { value: 'La noche estrellada' } }, descriptions: { es: { value: 'pintura de Vincent van Gogh' } }, claims: { P18: [{ mainsnak: { datavalue: { value: 'Starry.jpg' } } }], P571: [{ mainsnak: { datavalue: { value: { time: '+1889-06-00T00:00:00Z' } } } }] } } } });
+      return f0(u, i); };
+    A.openMenu(); d.getElementById('titleIn').value = 'noche estrellada'; d.querySelector('[data-act=title-search]').click(); await wait(300);
+    assert.strictEqual(d.querySelectorAll('#c-tres .tres').length, 1, 'resultado de la búsqueda por título');
+    d.querySelector('#c-tres .tres').click(); await wait(100);
+    assert.strictEqual(S.current.title, 'La noche estrellada', 'la obra elegida se muestra'); assert.ok(!S.menu, 'el menú se cierra al elegirla'); assert.strictEqual(d.querySelector('#caption .t').textContent, 'La noche estrellada');
+    w.fetch = f0; }
   const C0 = () => w.ArtCore; const favs0 = S.favs; S.favs = []; A.render('presets');
   { const opts = Array.from(d.querySelectorAll('#c-presets option')).map(o => o.textContent);
     for (const n of ['Museos de España (12)', 'Museos de México (18)', 'Museos del Reino Unido (8)', 'Museos de los Países Bajos (5)', 'Museos de Chile (1)', 'Museos de París (13)']) assert.ok(opts.includes(n), 'falta la colección ' + n + ' en ' + opts.join(' | '));

@@ -1250,6 +1250,58 @@ async function resolveMuseum(name) {
 }
 const MUSEUM_DESC = /museum|museo|musée|museu|galler|galería|galerie|pinacoteca|collection|colección|art\b|arte\b/i;
 
+/* ───────── buscar una obra por su título ─────────
+   Busca en Wikidata (en español, inglés y francés, así que «La noche estrellada» y «The Starry Night» dan lo mismo) las obras de arte con
+   imagen y devuelve hasta 10, ya normalizadas, con su artista, año y museo. */
+const WD_ARTWORK = /painting|pintura|peinture|schilderij|gem[aä]lde|dipinto|drawing|dibujo|dessin|print\b|grabado|gravure|estampa|tapestry|tapiz|tapisserie|watercolou?r|acuarela|fresco|mural|triptych|tr[ií]ptico|altarpiece|retablo|artwork|work of art|obra de arte|oeuvre d'art|oil on|aquarelle|pastel|ukiyo/i;
+const WD_NOT_ART = /sculpture|escultura|statue|estatua|building|edificio|album|film|pel[ií]cula|song|canci[oó]n|novel|novela|book|libro|museum\b|museo\b|musée|painter\b|pintor\b|peintre|artist\b|artista\b|writer\b|escritor\b|village|pueblo|city\b|ciudad\b|family name|apellido|given name|nombre|tv series|serie de/i;
+async function searchPaintings(text, ctx) {
+  const q = String(text || '').trim();
+  if (q.length < 2) throw new Error('Escribe al menos dos letras del título');
+  const api = 'https://www.wikidata.org/w/api.php?format=json&origin=*&';
+  const found = [];
+  for (const lang of ['es', 'en', 'fr']) {
+    try {
+      const j = await getJSON(api + 'action=wbsearchentities&type=item&limit=12&language=' + lang + '&uselang=' + lang + '&search=' + encodeURIComponent(q));
+      (j.search || []).forEach(r => { if (r.id && !found.some(x => x.id === r.id) && (!r.description || !WD_NOT_ART.test(r.description) || WD_ARTWORK.test(r.description))) found.push(r); });
+    } catch (e) { if (lang === 'es') throw e; }
+  }
+  if (!found.length) return [];
+  const ids = found.slice(0, 40).map(r => r.id);
+  const ents = {};
+  for (let i = 0; i < ids.length; i += 25) {
+    const j = await getJSON(api + 'action=wbgetentities&props=claims|labels|descriptions&languages=es|en|fr&ids=' + ids.slice(i, i + 25).join('|'));
+    Object.assign(ents, j.entities || {});
+  }
+  const val = (e, p) => { const c = (e.claims || {})[p], s = c && c[0] && c[0].mainsnak; return s && s.datavalue ? s.datavalue.value : null; };
+  const rows = ids.map(id => ents[id]).filter(e => e && e.claims && val(e, 'P18')).map(e => {
+    const desc = ((e.descriptions || {}).es || (e.descriptions || {}).en || (e.descriptions || {}).fr || {}).value || '';
+    return { e, desc, img: String(val(e, 'P18')), time: val(e, 'P571'), creator: (val(e, 'P170') || {}).id, coll: (val(e, 'P195') || {}).id };
+  }).filter(r => /\.(jpe?g|png|webp|gif)$/i.test(r.img) && (WD_ARTWORK.test(r.desc) || r.creator) && !/^(sculpture|decorative)$/.test(classifyType(r.desc) || '')).slice(0, 10);
+  const need = Array.from(new Set([].concat(...rows.map(r => [r.creator, r.coll]).filter(Boolean)).filter(Boolean)));
+  const names = {};
+  if (need.length) {
+    try {
+      const j = await getJSON(api + 'action=wbgetentities&props=labels&languages=es|en|fr&ids=' + need.slice(0, 50).join('|'));
+      Object.keys(j.entities || {}).forEach(k => { const l = j.entities[k].labels || {}; names[k] = (l.es || l.en || l.fr || {}).value || ''; });
+    } catch (e) { /* sin nombres de artista o museo: se usa la descripción */ }
+  }
+  const w = ctx && ctx.hq ? 3840 : 2000;
+  return rows.map(r => {
+    const lb = r.e.labels || {}, title = (lb.es || lb.en || lb.fr || {}).value || '';
+    const ym = r.time && r.time.time ? String(r.time.time).match(/^([+-])0*(\d+)/) : null;
+    const year = ym ? (ym[1] === '-' ? -1 : 1) * parseInt(ym[2], 10) : null;
+    const raw = 'https://commons.wikimedia.org/wiki/Special:FilePath/' + encodeURIComponent(r.img.replace(/ /g, '_'));
+    const byDesc = (r.desc.match(/\b(?:by|de|par|door|von)\s+([^,;(]+)/i) || [])[1];
+    return mk({
+      src: 'wiki', museum: names[r.coll] || 'Wikimedia Commons', id: r.e.id, title,
+      artist: names[r.creator] || (byDesc ? byDesc.trim() : ''), date: year != null ? String(year) : '', year,
+      imgs: [raw + '?width=' + w, raw + '?width=1200'], thumb: raw + '?width=300',
+      url: 'https://www.wikidata.org/wiki/' + r.e.id, type: classifyType(r.desc) || 'painting', pd: null, license: 'Imagen de Wikimedia Commons'
+    });
+  });
+}
+
 /* Colecciones sin API pública, pero con datos abiertos: MoMA, National Gallery of Art y Tate. Los datos se convirtieron en trozos
    pequeños en data/<museo>/ (ver tools/*-shards.py). Cada fila: [id, título, artista, año, clave de imagen, ...]. */
 const momaToken = id => btoa('[["f","' + id + '"],["p","convert","-resize 1024x1024\\u003e"]]').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -1323,7 +1375,7 @@ async function runSource(src, f, ctx) {
 const api = {
   rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
   ERAS, STYLES, TYPES, KEYWORDS, EXCLUDES, excluded, MUSEUMS, DEFAULT_MUSEUMS, MUSEUM_SOURCES, ARTIST_SUGGESTIONS, ARTIST_GROUPS, TUNING, keywordToQuery,
-  museumCountry, countryCollections, styleIdsOf, countryCollectionName, defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC, museumIdsByTag,
+  museumCountry, countryCollections, styleIdsOf, searchPaintings, countryCollectionName, defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC, museumIdsByTag,
   adapters: { momaFetch, ngaFetch, tateFetch, shardFetch, commonsSpecial, wikidataMuseum, wikipediaFetch, commonsFetch, wikiartFetch, metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }
 };
 if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.ArtCore = api;

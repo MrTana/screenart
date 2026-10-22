@@ -271,6 +271,18 @@ globalThis.fetch = async (url, init) => {
   // clave ausente
   try { await C.adapters.harvardFetch(plan, {}, { keys: {} }); assert.fail('debía fallar'); } catch (e) { assert.ok(e.noKey); }
   console.log('Peticiones de ejemplo:'); [0, 1, 3].forEach(i => console.log(' ', calls[i].slice(0, 150)));
+  { const prev = globalThis.fetch; const wdMock = (prev2) => async (u, i) => { u = String(u);
+  const J = o => ({ ok: true, status: 200, json: async () => o });
+  if (u.includes('wikidata.org/w/api.php') && /wbsearchentities/.test(u)) return J({ search: /language=es/.test(u) ? [{ id: 'Q45585', label: 'La noche estrellada', description: 'pintura de Vincent van Gogh' }, { id: 'Q1', label: 'Noche', description: 'escultura de alguien' }] : [] });
+  if (u.includes('wikidata.org/w/api.php') && /props=claims/.test(u) && /Q45585/.test(u)) return J({ entities: { Q45585: { id: 'Q45585', labels: { es: { value: 'La noche estrellada' }, en: { value: 'The Starry Night' } }, descriptions: { es: { value: 'pintura de Vincent van Gogh' } }, claims: { P18: [{ mainsnak: { datavalue: { value: 'Van Gogh - Starry Night.jpg' } } }], P571: [{ mainsnak: { datavalue: { value: { time: '+1889-06-00T00:00:00Z' } } } }], P170: [{ mainsnak: { datavalue: { value: { id: 'Q5582' } } } }], P195: [{ mainsnak: { datavalue: { value: { id: 'Q188740' } } } }] } }, Q1: { id: 'Q1', labels: { es: { value: 'Noche' } }, descriptions: { es: { value: 'escultura de alguien' } }, claims: {} } } });
+  if (u.includes('wikidata.org/w/api.php') && /props=labels/.test(u) && /Q5582/.test(u)) return J({ entities: { Q5582: { labels: { es: { value: 'Vincent van Gogh' } } }, Q188740: { labels: { es: { value: 'Museo de Arte Moderno de Nueva York' } } } } });
+  return prev2(u, i); };
+    globalThis.fetch = wdMock(prev);
+    const r = await C.searchPaintings('la noche estrellada', {});
+    assert.strictEqual(r.length, 1, 'una obra con imagen'); assert.strictEqual(r[0].title, 'La noche estrellada'); assert.strictEqual(r[0].artist, 'Vincent van Gogh'); assert.strictEqual(r[0].year, 1889); assert.strictEqual(r[0].museum, 'Museo de Arte Moderno de Nueva York');
+    assert.ok(/^https:\/\/commons\.wikimedia\.org\/wiki\/Special:FilePath\/Van_Gogh_-_Starry_Night\.jpg\?width=2000/.test(r[0].imgs[0]), r[0].imgs[0]); assert.strictEqual(r[0].type, 'painting');
+    await assert.rejects(() => C.searchPaintings('a', {}), /dos letras/);
+    globalThis.fetch = prev; }
   { const sin = C.SOURCE_LIST.filter(s => s.museum && !s.museum.open && !s.museum.custom && !C.museumCountry(s.museum)).map(s => s.id); assert.deepStrictEqual(sin, [], 'todo museo debe tener país (así tiene su colección «Museos de …»): ' + sin);
     assert.ok(C.countryCollections().some(c => c.es === 'Museos de España' && c.ids.length >= 10), 'Museos de España'); assert.strictEqual(C.countryCollectionName('Reino Unido'), 'Museos del Reino Unido'); }
   console.log('TODO OK');

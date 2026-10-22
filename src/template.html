@@ -131,6 +131,10 @@ button{cursor:pointer}
 #caption .t{font:var(--cap-tw) clamp(18px,2.1vw,32px)/1.25 var(--sans);letter-spacing:0;text-wrap:balance;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 #caption .m{font:400 clamp(14px,1.4vw,22px)/1.4 var(--sans);letter-spacing:.25px;color:var(--cap-fg2)}
 #caption .m:empty{display:none}
+.tres{display:flex;align-items:center;gap:16px;text-align:left;background:transparent;border:0;border-radius:var(--r-sm);padding:8px 12px;min-height:72px;width:100%;color:var(--md-on-surface);position:relative;overflow:hidden}
+.tres img{width:56px;height:56px;object-fit:cover;border-radius:var(--r-sm);flex:none;background:var(--md-sc-highest)}
+.tres b{display:block;font:500 16px/24px var(--sans);letter-spacing:.15px}
+.tres span{display:block;font:400 14px/20px var(--sans);letter-spacing:.25px;color:var(--md-on-surface-variant)}
 #caption .s{margin-top:2px;font:500 clamp(12px,1.15vw,18px)/1.4 var(--sans);letter-spacing:.5px;color:var(--cap-fg2);opacity:.9}
 #caption .s:empty{display:none}
 
@@ -195,9 +199,9 @@ body.rc #drawer{width:100vw;left:0;border-radius:0;box-shadow:none}
 
 /* botones: tonal (por defecto), relleno (.pri), con contorno (.out) e icono (.ibtn) */
 .btn,.ibtn,.chip,.src,.acch{position:relative;overflow:hidden;-webkit-tap-highlight-color:transparent}
-.btn::after,.ibtn::after,.chip::after,.src::after,.acch::after{content:"";position:absolute;inset:0;background:currentColor;opacity:0;pointer-events:none;transition:opacity .2s var(--ease)}
-.btn:hover::after,.ibtn:hover::after,.chip:hover::after,.src:hover::after,.acch:hover::after{opacity:.08}
-.btn:focus-visible::after,.ibtn:focus-visible::after,.chip:focus-visible::after,.src:focus-visible::after,.acch:focus-visible::after{opacity:.1}
+.btn::after,.ibtn::after,.chip::after,.src::after,.tres::after,.acch::after{content:"";position:absolute;inset:0;background:currentColor;opacity:0;pointer-events:none;transition:opacity .2s var(--ease)}
+.btn:hover::after,.ibtn:hover::after,.chip:hover::after,.src:hover::after,.tres:hover::after,.acch:hover::after{opacity:.08}
+.btn:focus-visible::after,.ibtn:focus-visible::after,.chip:focus-visible::after,.src:focus-visible::after,.tres:focus-visible::after,.acch:focus-visible::after{opacity:.1}
 .btn:active::after,.ibtn:active::after,.chip:active::after,.src:active::after,.acch:active::after{opacity:.12}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 24px;border:1px solid transparent;border-radius:999px;background:var(--md-secondary-container);color:var(--md-on-secondary-container);font:500 14px/20px var(--sans);letter-spacing:.1px;text-align:center;transition:box-shadow .2s var(--ease)}
 .btn.pri{background:var(--md-primary);color:var(--md-on-primary)}
@@ -338,6 +342,15 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
     <label class="fld"><span>Ficha de la obra</span><select id="c-caption"></select></label>
   </section>
 
+  <section class="acc" data-acc="titulo">
+    <button class="acch" data-act="acc" data-id="titulo" aria-expanded="false"><span class="at">Buscar por título</span><span class="as" data-sum="titulo"></span><span class="ac">›</span></button>
+    <div class="accb">
+      <p class="hint" style="margin-top:0">Escribe el nombre de una pintura (en español, inglés o francés) y elige una para verla ahora en la pantalla.</p>
+      <div class="row"><input type="search" id="titleIn" placeholder="Ej. La noche estrellada, Las meninas" autocomplete="off"><button class="btn" data-act="title-search">Buscar</button></div>
+      <p class="hint" id="titleMsg"></p>
+      <div class="srcs" id="c-tres"></div>
+    </div>
+  </section>
   <section class="acc" data-acc="museos">
     <button class="acch" data-act="acc" data-id="museos" aria-expanded="false"><span class="at">Museos</span><span class="as" data-sum="museos"></span><span class="ac">›</span></button>
     <div class="accb">

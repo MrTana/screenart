@@ -93,6 +93,10 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   ph.ArtApp.onAct('fav'); await wait(300);
   assert.strictEqual(tvA.S.favs.length, 1, 'favorita en la TV');
   assert.ok(/Quitar/.test(p.getElementById('favBtn').textContent), 'el móvil refleja la favorita');
+  { // buscar por título en el móvil → la TV muestra la obra
+    ph.ArtApp.S.tres = [{ uid: 'wiki:Q45585', src: 'wiki', museum: 'MoMA', title: 'La noche estrellada', artist: 'Vincent van Gogh', year: 1889, date: '1889', imgs: ['https://example.org/s.jpg'], thumb: 'https://example.org/t.jpg', url: 'https://www.wikidata.org/wiki/Q45585' }];
+    ph.ArtApp.onAct('title-show', '0'); await wait(600);
+    assert.strictEqual(tvA.S.current.title, 'La noche estrellada', 'la TV muestra la obra buscada desde el móvil'); assert.strictEqual(tvA.S.current.museum, 'MoMA'); }
   { // la favorita de la TV crea su colección por estilo también en el mando
     tvA.S.favs = []; Object.assign(tvA.S.current, { artist: 'Salvador Dalí', year: 1931 });
     ph.ArtApp.onAct('fav'); await wait(600);

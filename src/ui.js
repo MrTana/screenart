@@ -363,6 +363,7 @@ function accSummary(id) {
     case 'epoca': return f.yearFrom || f.yearTo ? (f.yearFrom || '…') + ' a ' + (f.yearTo || '…') : f.eras.length ? j(names(C.ERAS, f.eras)) : 'Todas las épocas';
     case 'estilo': return f.styles.length ? j(names(C.STYLES, f.styles)) : 'Todos los estilos';
     case 'artistas': return f.artists.length ? j(f.artists) : 'Todos los artistas';
+    case 'titulo': return S.tres && S.tres.length ? S.tres.length + ' resultados' : 'Escribe el nombre de una pintura';
     case 'skin': return (SKINS.find(x => x[0] === S.st.skin) || SKINS[0])[1];
     case 'noquiero': { const n = f.exclude.map(id => (C.EXCLUDES.find(x => x.id === id) || { es: id }).es).concat(f.noWords); return n.length ? j(n) : 'Nada excluido'; }
     case 'tema': return f.keywords.length ? j(f.keywords.map(q => { const k = C.KEYWORDS.find(x => x.q === q); return k ? k.es : q; })) : 'Cualquier tema';
@@ -450,6 +451,35 @@ function srcRow(s) {
 function visibleMuseums() { const q = C.norm(S.mfilter); return C.SOURCE_LIST.filter(s => !q || C.norm(s.name + ' ' + s.place + ' ' + (s.tags || '')).includes(q)); }
 function renderSrcs() {
   $('#c-msrcs').innerHTML = visibleMuseums().map(srcRow).join('') || '<p class="hint">Ningún museo coincide. Puedes añadirlo con su nombre aquí abajo.</p>';
+}
+/* ───────── buscar por título ───────── */
+const slimWork = w => ({ uid: w.uid, src: w.src, museum: w.museum, title: w.title, artist: w.artist, date: w.date, year: w.year, imgs: (w.imgs || []).slice(0, 2), thumb: w.thumb, url: w.url, type: w.type, pd: w.pd, license: w.license });
+function okWork(w) { // lo que llega por el relé se valida: solo imágenes https
+  return w && typeof w === 'object' && typeof w.title === 'string' && Array.isArray(w.imgs) && w.imgs.length && w.imgs.every(u => typeof u === 'string' && /^https:\/\//i.test(u));
+}
+function showFound(w) {
+  const item = C.mk({ src: String(w.src || 'wiki'), id: String(w.uid || '').replace(/^[^:]*:/, '') || String(Date.now()), museum: w.museum, title: w.title, artist: w.artist, date: w.date, year: w.year, imgs: w.imgs, thumb: w.thumb || w.imgs[0], url: w.url, type: w.type, pd: w.pd, license: w.license });
+  item.uid = w.uid || item.uid;
+  S.found = item; present(item); schedule();
+}
+function renderTres() {
+  $('#c-tres').innerHTML = (S.tres || []).map((w, i) => '<button class="tres" data-act="title-show" data-id="' + i + '"><img alt="" loading="lazy" src="' + esc(w.thumb) + '"><span><b>' + esc(w.title) + '</b>' + esc([w.artist, w.date || w.year, w.museum].filter(Boolean).join(' · ')) + '</span></button>').join('');
+  updateSums();
+}
+async function searchTitle() {
+  const el = $('#titleIn'), msg = $('#titleMsg'), q = el.value.trim();
+  if (!q) return;
+  msg.textContent = 'Buscando «' + q + '» en Wikidata…'; S.tres = []; renderTres();
+  try {
+    S.tres = await C.searchPaintings(q, ctx());
+    msg.textContent = S.tres.length ? 'Toca una obra para verla ahora.' : 'No encuentro obras con ese título y con imagen. Prueba con el nombre en inglés o en el idioma original.';
+    renderTres();
+  } catch (e) { msg.textContent = e && e.message && !e.status && !(e instanceof TypeError) ? e.message : 'No pude buscar: ' + errText(e); }
+}
+function showTitleResult(i) {
+  const w = (S.tres || [])[+i]; if (!w) return;
+  if (REMOTE) { if (!RC.gotState) { toast('Todavía no hay conexión con la TV'); return; } relaySend({ t: 'cmd', c: 'show', w: slimWork(w) }); toast('Enviada a la TV: ' + w.title); return; }
+  closeMenu(); showFound(w);
 }
 async function addMuseumByName() {
   const el = $('#museumIn'), msg = $('#museumMsg'), name = el.value.trim();
@@ -553,6 +583,8 @@ function onAct(act, id) {
     case 'src': f.sources[id] = !f.sources[id]; render('srcs'); applyChange(); break;
     case 'mus-all': case 'mus-none': visibleMuseums().forEach(x => { f.sources[x.id] = act === 'mus-all'; }); render('srcs'); applyChange(); break;
     case 'add-museum': addMuseumByName(); break;
+    case 'title-search': searchTitle(); break;
+    case 'title-show': showTitleResult(id); break;
     case 'era': toggleArr(f.eras, id); f.yearFrom = f.yearTo = ''; $('#yFrom').value = $('#yTo').value = ''; render('eras'); applyChange(); break;
     case 'style': toggleArr(f.styles, id); render('styles'); applyChange(); break;
     case 'kw': toggleArr(f.keywords, id); render('kws'); applyChange(); break;
@@ -619,7 +651,7 @@ document.addEventListener('keydown', e => {
   activity();
   const tag = (e.target.tagName || '').toLowerCase(), typing = tag === 'input' || tag === 'textarea';
   if (typing) {
-    if (e.key === 'Enter') { if (e.target.id === 'artistIn') { addArtist(e.target.value); e.target.value = ''; } if (e.target.id === 'kwIn') { addKeyword(e.target.value); e.target.value = ''; } if (e.target.id === 'museumIn') addMuseumByName(); if (e.target.id === 'tvCode') onAct('tv-go'); if (e.target.id === 'exwIn') { addExWord(e.target.value); e.target.value = ''; } }
+    if (e.key === 'Enter') { if (e.target.id === 'artistIn') { addArtist(e.target.value); e.target.value = ''; } if (e.target.id === 'kwIn') { addKeyword(e.target.value); e.target.value = ''; } if (e.target.id === 'museumIn') addMuseumByName(); if (e.target.id === 'titleIn') searchTitle(); if (e.target.id === 'tvCode') onAct('tv-go'); if (e.target.id === 'exwIn') { addExWord(e.target.value); e.target.value = ''; } }
     if (e.key === 'Escape') e.target.blur();
     return;
   }
@@ -820,6 +852,7 @@ function tvHandle(m) {
     RC.forceNow = true;
     if (m.c === 'update') { forceUpdate(); return; }
     if (m.c === 'diag') { RC.forceNow = false; diagnose(true).then(() => relaySend({ t: 'diag', text: $('#diagOut').textContent.slice(0, 40000) })); return; }
+    if (m.c === 'show') { if (okWork(m.w)) { showFound(m.w); } return; }
     if (m.c === 'next') next(); else if (m.c === 'prev') prev(); else if (m.c === 'play') togglePlay(); else if (m.c === 'fav') toggleFav();
     return;
   }
