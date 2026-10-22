@@ -101,7 +101,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     A.openMenu(); d.getElementById('titleIn').value = 'noche estrellada'; d.querySelector('[data-act=title-search]').click(); await wait(300);
     assert.strictEqual(d.querySelectorAll('#c-tres .tres').length, 1, 'resultado de la búsqueda por título');
     d.querySelector('#c-tres .tres').click(); await wait(100);
-    assert.strictEqual(S.current.title, 'La noche estrellada', 'la obra elegida se muestra'); assert.ok(!S.menu, 'el menú se cierra al elegirla'); assert.strictEqual(d.querySelector('#caption .t').textContent, 'La noche estrellada');
+    assert.strictEqual(S.current.title, 'La noche estrellada', 'la obra elegida se muestra'); assert.ok(!S.menu, 'el menú se cierra al elegirla'); assert.ok(/Special:FilePath\/Starry\.jpg/.test(d.querySelector('.slide.on img').getAttribute('src')), 'se muestra la imagen, no la página: ' + d.querySelector('.slide.on img').getAttribute('src')); assert.strictEqual(d.querySelector('#caption .t').textContent, 'La noche estrellada');
     w.fetch = f0; }
   const C0 = () => w.ArtCore; const favs0 = S.favs; S.favs = []; A.render('presets');
   { const opts = Array.from(d.querySelectorAll('#c-presets option')).map(o => o.textContent);

@@ -281,6 +281,9 @@ globalThis.fetch = async (url, init) => {
     const r = await C.searchPaintings('la noche estrellada', {});
     assert.strictEqual(r.length, 1, 'una obra con imagen'); assert.strictEqual(r[0].title, 'La noche estrellada'); assert.strictEqual(r[0].artist, 'Vincent van Gogh'); assert.strictEqual(r[0].year, 1889); assert.strictEqual(r[0].museum, 'Museo de Arte Moderno de Nueva York');
     assert.ok(/^https:\/\/commons\.wikimedia\.org\/wiki\/Special:FilePath\/Van_Gogh_-_Starry_Night\.jpg\?width=2000/.test(r[0].imgs[0]), r[0].imgs[0]); assert.strictEqual(r[0].type, 'painting');
+    assert.ok(calls.some(u => /metmuseum\.org.*title=true/.test(String(u))), 'la búsqueda por título también consulta al Met (por título)');
+    assert.ok(calls.some(u => /data\.rijksmuseum\.nl\/search\/collection\?.*title=/.test(String(u))), 'y al Rijksmuseum');
+    { const parts = []; await C.searchPaintings('la noche estrellada', {}, l => parts.push(l.length)); assert.ok(parts.length >= 2, 'los resultados llegan por partes: ' + parts); }
     await assert.rejects(() => C.searchPaintings('a', {}), /dos letras/);
     globalThis.fetch = prev; }
   { const sin = C.SOURCE_LIST.filter(s => s.museum && !s.museum.open && !s.museum.custom && !C.museumCountry(s.museum)).map(s => s.id); assert.deepStrictEqual(sin, [], 'todo museo debe tener país (así tiene su colección «Museos de …»): ' + sin);

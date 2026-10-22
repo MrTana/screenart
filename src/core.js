@@ -8,6 +8,9 @@ const rand = n => Math.floor(Math.random() * n);
 const pick = a => a[rand(a.length)];
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function sampleN(a, n) { return shuffle(a.slice()).slice(0, n); }
+/* En la búsqueda por título (plan.top) los museos devuelven los primeros resultados, no una muestra al azar. */
+const rnd = (plan, n) => plan && plan.top ? 0 : rand(n);
+const smp = (plan, a, n) => plan && plan.top ? a.slice(0, n) : sampleN(a, n);
 const norm = s => (s == null ? '' : String(s)).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 const num = v => { const n = parseFloat(v); return isNaN(n) ? null : n; };
 
@@ -392,14 +395,15 @@ async function metFetch(plan, f, ctx) {
   if (artist) { p.set('artistOrCulture', 'true'); q = artist; }
   else q = [plan.style && plan.style.q, plan.keyword].filter(Boolean).join(' ') || pick(GENERIC);
   p.set('q', q);
+  if (plan.top) p.set('title', 'true');
   if (plan.range) { p.set('dateBegin', plan.range[0]); p.set('dateEnd', plan.range[1]); }
   if (MET_MEDIUM[plan.type]) p.set('medium', MET_MEDIUM[plan.type]);
   const search = base.replace('/v1/', '/v1.1/') + 'search?' + p;
   const total = await memo('met:' + p, async () => (await getJSON(search + '&limit=1&offset=0')).total || 0);
   if (!total) return [];
-  const ids = (await getJSON(search + '&limit=60&offset=' + rand(Math.max(1, total - 59)))).objectIDs || [];
+  const ids = (await getJSON(search + '&limit=60&offset=' + rnd(plan, Math.max(1, total - 59)))).objectIDs || [];
   if (!ids.length) return [];
-  const chosen = sampleN(ids, 30);
+  const chosen = smp(plan, ids, plan.top ? 12 : 30);
   const objs = await mapLimit(chosen, 6, id => getJSON(base + 'objects/' + id));
   return objs.filter(o => o && (ctx.anyRights || o.isPublicDomain) && (o.primaryImage || o.primaryImageSmall)).map(o => mk({
     src: 'met', museum: 'The Met', id: o.objectID,
@@ -437,7 +441,7 @@ async function aicFetch(plan, f, ctx) {
   try { j = await memo('aic:' + gp, () => getJSONvia(url + '?' + gp, {}, 25000)); }
   catch (e) { if (!(e instanceof TypeError)) throw e; j = { data: await aicProbe(plan, ctx) }; }
   const lo = plan.range ? plan.range[0] : -Infinity, hi = plan.range ? plan.range[1] : Infinity, tw = AIC_TYPE[plan.type] ? norm(AIC_TYPE[plan.type]) : null;
-  const data = sampleN((j.data || []).filter(o => o.image_id && (o.date_start == null || (o.date_start >= lo && o.date_start <= hi)) && (!tw || !o.artwork_type_title || norm(o.artwork_type_title).includes(tw))), 24);
+  const data = smp(plan, (j.data || []).filter(o => o.image_id && (o.date_start == null || (o.date_start >= lo && o.date_start <= hi)) && (!tw || !o.artwork_type_title || norm(o.artwork_type_title).includes(tw))), 24);
   const iiif = (j.config && j.config.iiif_url) || 'https://www.artic.edu/iiif/2';
   return data.filter(o => o.image_id && (ctx.anyRights || o.is_public_domain !== false)).map(o => {
     const base = iiif + '/' + o.image_id + '/full/';
@@ -467,7 +471,7 @@ async function cmaFetch(plan, f, ctx) {
   const total = await memo('cma:' + p, async () => (await getJSON(base + '?' + p + '&limit=1')).info.total);
   if (!total) return [];
   const limit = 24;
-  const skip = rand(Math.max(1, total - limit + 1));
+  const skip = rnd(plan, Math.max(1, total - limit + 1));
   const j = await getJSON(base + '?' + p + '&limit=' + limit + '&skip=' + skip);
   return (j.data || []).filter(o => o.images && (o.images.print || o.images.web)).map(o => {
     const web = o.images.web, print = o.images.print;
@@ -495,7 +499,7 @@ async function smkFetch(plan, f, ctx) {
   catch (e) { if (keys === '*') { keys = pick(GENERIC); found = await memo('smk:' + keys, async () => (await getJSON(q(keys, 1, 0))).found); } else throw e; }
   if (!found) return [];
   const rows = 40;
-  const offset = rand(Math.max(1, Math.min(found - rows + 1, 9000)));
+  const offset = rnd(plan, Math.max(1, Math.min(found - rows + 1, 9000)));
   const j = await getJSON(q(keys, rows, offset));
   const want = SMK_WORDS[plan.type];
   return (j.items || []).filter(o => o.has_image && (ctx.anyRights || o.public_domain !== false)).map(o => {
@@ -536,7 +540,7 @@ async function vamFetch(plan, f, ctx) {
   if (!total) return [];
   const size = 24;
   const pages = Math.max(1, Math.min(Math.ceil(total / size), 400));
-  const j = await getJSON(base + '?' + use + '&page_size=' + size + '&page=' + (1 + rand(pages)));
+  const j = await getJSON(base + '?' + use + '&page_size=' + size + '&page=' + (1 + rnd(plan, pages)));
   return (j.records || []).filter(o => o._primaryImageId).map(o => {
     const root = 'https://framemark.vam.ac.uk/collections/' + o._primaryImageId + '/full/';
     return mk({
@@ -556,7 +560,7 @@ async function miaFetch(plan, f, ctx) {
   const total = await memo('mia:' + text, async () => { const j = await getJSON(url(0, 1)); return j.hits && j.hits.total ? (j.hits.total.value != null ? j.hits.total.value : j.hits.total) : 0; });
   if (!total) return [];
   const size = 60;
-  const from = rand(Math.max(1, Math.min(total - size + 1, 9000)));
+  const from = rnd(plan, Math.max(1, Math.min(total - size + 1, 9000)));
   const j = await getJSON(url(from, size));
   const want = MIA_CLASS[plan.type];
   return ((j.hits && j.hits.hits) || []).map(h => h._source).filter(o => o && o.image === 'valid' && (ctx.anyRights || o.rights_type === 'Public Domain') && o.image_width && o.image_height).map(o => {
@@ -592,14 +596,17 @@ async function rijksFetch(plan, f, ctx) {
   if (RIJKS_TYPE[plan.type]) p.set('type', RIJKS_TYPE[plan.type]);
   const artist = plan.artist || plan.hintArtist;
   if (artist) p.set('creator', artist);
-  if (plan.keyword) p.set('description', plan.keyword);
-  let y = plan.range ? plan.range[0] + rand(plan.range[1] - plan.range[0] + 1) : 1500 + rand(400);
-  y = Math.min(Math.max(y, 1000), 2020);
-  p.set('creationDate', Math.floor(y / 10) + '?');
+  if (plan.top) p.set('title', plan.keyword);
+  else {
+    if (plan.keyword) p.set('description', plan.keyword);
+    let y = plan.range ? plan.range[0] + rand(plan.range[1] - plan.range[0] + 1) : 1500 + rand(400);
+    y = Math.min(Math.max(y, 1000), 2020);
+    p.set('creationDate', Math.floor(y / 10) + '?');
+  }
   const j = await getJSON('https://data.rijksmuseum.nl/search/collection?' + p);
   const ids = (j.orderedItems || []).map(x => x.id);
   if (!ids.length) return [];
-  const chosen = sampleN(ids, 8);
+  const chosen = smp(plan, ids, 8);
   const out = await mapLimit(chosen, 4, async id => {
     const o = await rijksLD(id);
     const vis = (o.shows || [])[0];
@@ -1255,9 +1262,7 @@ const MUSEUM_DESC = /museum|museo|musée|museu|galler|galería|galerie|pinacotec
    imagen y devuelve hasta 10, ya normalizadas, con su artista, año y museo. */
 const WD_ARTWORK = /painting|pintura|peinture|schilderij|gem[aä]lde|dipinto|drawing|dibujo|dessin|print\b|grabado|gravure|estampa|tapestry|tapiz|tapisserie|watercolou?r|acuarela|fresco|mural|triptych|tr[ií]ptico|altarpiece|retablo|artwork|work of art|obra de arte|oeuvre d'art|oil on|aquarelle|pastel|ukiyo/i;
 const WD_NOT_ART = /sculpture|escultura|statue|estatua|building|edificio|album|film|pel[ií]cula|song|canci[oó]n|novel|novela|book|libro|museum\b|museo\b|musée|painter\b|pintor\b|peintre|artist\b|artista\b|writer\b|escritor\b|village|pueblo|city\b|ciudad\b|family name|apellido|given name|nombre|tv series|serie de/i;
-async function searchPaintings(text, ctx) {
-  const q = String(text || '').trim();
-  if (q.length < 2) throw new Error('Escribe al menos dos letras del título');
+async function searchWikidataTitle(q, ctx) {
   const api = 'https://www.wikidata.org/w/api.php?format=json&origin=*&';
   const found = [];
   for (const lang of ['es', 'en', 'fr']) {
@@ -1300,6 +1305,46 @@ async function searchPaintings(text, ctx) {
       url: 'https://www.wikidata.org/wiki/' + r.e.id, type: classifyType(r.desc) || 'painting', pd: null, license: 'Imagen de Wikimedia Commons'
     });
   });
+}
+
+const TITLE_STOP = new Set(['el', 'la', 'los', 'las', 'de', 'del', 'un', 'una', 'the', 'of', 'a', 'an', 'le', 'les', 'des', 'du', 'and', 'y', 'e', 'et']);
+const titleTokens = s => norm(s).split(/[^a-z0-9]+/).filter(x => x && !TITLE_STOP.has(x));
+const TITLE_SOURCES = ['m:met', 'm:aic', 'm:cma', 'm:rijks', 'm:vam', 'm:smk', 'm:mia', 'm:harvard', 'm:si'];
+/* Busca una obra por su título en Wikidata y en las API de los museos grandes, todo a la vez. onPart(lista) se llama cada vez que una fuente
+   responde, así los resultados salen según llegan. Devuelve hasta 20, las que mejor coinciden primero. */
+async function searchPaintings(text, ctx, onPart) {
+  const q = String(text || '').trim();
+  if (q.length < 2) throw new Error('Escribe al menos dos letras del título');
+  ctx = ctx || {};
+  const tok = titleTokens(q), qn = norm(q);
+  const all = []; let errors = 0, wikiErr = null;
+  const score = w => { const t = norm(w.title); return t === qn ? 0 : t.startsWith(qn) ? 1 : t.includes(qn) ? 2 : 3; };
+  const merged = () => {
+    const seen = new Set(), out = [];
+    all.slice().sort((a, b) => score(a) - score(b) || (a.src === 'wiki') - (b.src === 'wiki')).forEach(w => {
+      const k = norm(w.title) + '|' + (norm(w.artist).split(/\s+/).pop() || '');
+      if (seen.has(k)) return; seen.add(k); out.push(w);
+    });
+    return out.slice(0, 20);
+  };
+  const add = (list, strict) => {
+    (list || []).forEach(w => {
+      if (!w || !w.imgs || !w.imgs.length) return;
+      if (strict && !(tok.length ? tok.every(x => norm(w.title).includes(x)) : norm(w.title).includes(qn))) return;
+      if (/^(sculpture|decorative)$/.test(w.type || '')) return;
+      all.push(w);
+    });
+    if (onPart) { try { onPart(merged()); } catch (e) { /* la pantalla ya no escucha */ } }
+  };
+  const jobs = [searchWikidataTitle(q, ctx).then(l => add(l, false), e => { wikiErr = e; errors++; })];
+  const f = defaultFilters();
+  TITLE_SOURCES.map(id => SOURCE_LIST.find(s => s.id === id)).filter(s => s && !(s.museum && s.museum.needsKey && !(ctx.keys && ctx.keys[s.museum.needsKey]))).forEach(s => {
+    jobs.push(Promise.race([s.fetch({ keyword: q, top: true, type: null, range: null, style: null, artist: null, hintArtist: null }, f, Object.assign({ anyRights: true }, ctx)), new Promise((_, rej) => setTimeout(() => rej(new Error('tiempo')), 20000))]).then(l => add(l, true), () => { errors++; }));
+  });
+  await Promise.all(jobs);
+  const out = merged();
+  if (!out.length && wikiErr && errors >= jobs.length) throw wikiErr;
+  return out;
 }
 
 /* Colecciones sin API pública, pero con datos abiertos: MoMA, National Gallery of Art y Tate. Los datos se convirtieron en trozos

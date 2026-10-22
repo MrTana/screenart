@@ -457,10 +457,14 @@ const slimWork = w => ({ uid: w.uid, src: w.src, museum: w.museum, title: w.titl
 function okWork(w) { // lo que llega por el relé se valida: solo imágenes https
   return w && typeof w === 'object' && typeof w.title === 'string' && Array.isArray(w.imgs) && w.imgs.length && w.imgs.every(u => typeof u === 'string' && /^https:\/\//i.test(u));
 }
-function showFound(w) {
+async function showFound(w) {
   const item = C.mk({ src: String(w.src || 'wiki'), id: String(w.uid || '').replace(/^[^:]*:/, '') || String(Date.now()), museum: w.museum, title: w.title, artist: w.artist, date: w.date, year: w.year, imgs: w.imgs, thumb: w.thumb || w.imgs[0], url: w.url, type: w.type, pd: w.pd, license: w.license });
   item.uid = w.uid || item.uid;
-  S.found = item; present(item); schedule();
+  toast('Cargando «' + item.title + '»…');
+  const r = await loadImage(item.imgs); // la ficha trae la página y las imágenes: se muestra la primera imagen que carga, nunca la página
+  if (!r) { toast('No se pudo cargar la imagen de «' + item.title + '»'); return; }
+  S.seen.add(item.uid);
+  present(Object.assign({}, item, { url: r.url, url_page: item.url })); schedule();
 }
 function renderTres() {
   $('#c-tres').innerHTML = (S.tres || []).map((w, i) => '<button class="tres" data-act="title-show" data-id="' + i + '"><img alt="" loading="lazy" src="' + esc(w.thumb) + '"><span><b>' + esc(w.title) + '</b>' + esc([w.artist, w.date || w.year, w.museum].filter(Boolean).join(' · ')) + '</span></button>').join('');
@@ -469,9 +473,12 @@ function renderTres() {
 async function searchTitle() {
   const el = $('#titleIn'), msg = $('#titleMsg'), q = el.value.trim();
   if (!q) return;
-  msg.textContent = 'Buscando «' + q + '» en Wikidata…'; S.tres = []; renderTres();
+  msg.textContent = 'Buscando «' + q + '» en Wikidata y en los museos…'; S.tres = []; renderTres();
+  const mine = S.titleQ = (S.titleQ || 0) + 1;
   try {
-    S.tres = await C.searchPaintings(q, ctx());
+    const res = await C.searchPaintings(q, ctx(), list => { if (mine === S.titleQ) { S.tres = list; renderTres(); msg.textContent = 'Buscando… ' + list.length + ' encontradas'; } });
+    if (mine !== S.titleQ) return;
+    S.tres = res;
     msg.textContent = S.tres.length ? 'Toca una obra para verla ahora.' : 'No encuentro obras con ese título y con imagen. Prueba con el nombre en inglés o en el idioma original.';
     renderTres();
   } catch (e) { msg.textContent = e && e.message && !e.status && !(e instanceof TypeError) ? e.message : 'No pude buscar: ' + errText(e); }
