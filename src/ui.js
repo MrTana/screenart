@@ -9,7 +9,8 @@ const Q = (() => { try { return new URLSearchParams(location.search); } catch (e
 // Con «?c=código» la página es el mando del móvil: no muestra obras, controla la TV.
 const REMOTE = /^[a-z0-9]{6,24}$/i.test(Q.get('c') || '') ? Q.get('c').toLowerCase() : '';
 function lsGet(k, def) { try { const v = localStorage.getItem(KEY + ':' + k); return v ? JSON.parse(v) : def; } catch (e) { return def; } }
-function lsSet(k, v) { if (REMOTE && k !== 'rc') return; try { localStorage.setItem(KEY + ':' + k, JSON.stringify(v)); } catch (e) { /* sin almacenamiento */ } }
+function lsSet(k, v) { if (REMOTE && k !== 'rc' && k !== 'idkeys') return; // el mando solo guarda su código y las claves de reconocimiento de fotos (son de este móvil)
+   try { localStorage.setItem(KEY + ':' + k, JSON.stringify(v)); } catch (e) { /* sin almacenamiento */ } }
 
 /* ───────── estado ───────── */
 function loadFilters() { return normFilters(lsGet('f', {})); }
@@ -72,7 +73,7 @@ const fresh = (w, f) => C.accept(w, f) && !S.seen.has(w.uid) && !S.seenKey.has(w
 
 function setStatus(id, state, msg) {
   S.status[id] = { state, msg: msg || '' };
-  updateSrc(id); scheduleResort();
+  updateSrc(id); scheduleResort(); tvSrcsSoon();
 }
 
 function ensureRefill() { if (S.pool.length < 8) refill(); }
@@ -947,12 +948,32 @@ function tvNowSoon(force) {
   const wait = RC.forceNow ? 120 : Math.max(300, 8000 - (Date.now() - RC.lastNow));
   RC.nowT = setTimeout(() => { RC.forceNow = false; RC.lastNow = Date.now(); relaySend({ t: 'now', now: tvNow() }); }, wait);
 }
+/* Estado de cada museo (verde/amarillo/rojo, obras cargadas y detalle por fuente) para que el menú del mando sea igual que el de la TV.
+   Va en un mensaje aparte y compacto: «o12» = ok con 12 obras; l = buscando; e = sin resultados; x = error; k = falta clave. */
+const SRC_CODE = { ok: 'o', loading: 'l', empty: 'e', error: 'x', nokey: 'k' }, SRC_STATE = { o: 'ok', l: 'loading', e: 'empty', x: 'error', k: 'nokey' };
+function tvSrcsMsg() {
+  const s = {}, d = {}, m = {};
+  Object.keys(S.status).forEach(id => {
+    const st = S.status[id], k = id.replace(/^m:/, '');
+    s[k] = (SRC_CODE[st.state] || 'l') + (S.counts[id] || '');
+    if (st.state === 'error' && st.msg) m[k] = String(st.msg).slice(0, 50);
+    if (S.detail[id]) { const o = {}; Object.keys(S.detail[id]).forEach(n => { o[n] = typeof S.detail[id][n] === 'string' ? S.detail[id][n].slice(0, 40) : S.detail[id][n]; }); d[k] = o; }
+  });
+  const msg = { t: 'srcs', s, d, m };
+  if (JSON.stringify(msg).length > 3300) delete msg.d; // el mensaje debe caber en un paquete
+  if (JSON.stringify(msg).length > 3300) delete msg.m;
+  return msg;
+}
+function tvSrcsSoon(now) {
+  if (REMOTE || !RC.code || !RC.lastPhone || Date.now() - RC.lastPhone > 240000 || RC.srcsT) return;
+  RC.srcsT = setTimeout(() => { RC.srcsT = 0; relaySend(tvSrcsMsg()); }, now ? 800 : 6000);
+}
 function tvHandle(m) {
   if (m.t === 'hello' || m.t === 'ping' || m.t === 'cmd' || m.t === 'set') RC.lastPhone = Date.now();
   // El QR se oculta solo cuando el móvil ya recibió el estado y manda órdenes (conexión de ida y vuelta).
   if (m.t === 'ping' || m.t === 'cmd' || m.t === 'set') { lsSet('paired', true); hidePair(); }
-  if (m.t === 'hello') { RC.hellos++; if (Date.now() - RC.lastState > 2500) { RC.lastState = Date.now(); relaySend(tvState()); } return; }
-  if (m.t === 'ping') { RC.forceNow = true; tvNowSoon(); return; }
+  if (m.t === 'hello') { RC.hellos++; if (Date.now() - RC.lastState > 2500) { RC.lastState = Date.now(); relaySend(tvState()); tvSrcsSoon(true); } return; }
+  if (m.t === 'ping') { RC.forceNow = true; tvNowSoon(); tvSrcsSoon(); return; }
   if (m.t === 'cmd') {
     RC.forceNow = true;
     if (m.c === 'update') { forceUpdate(); return; }
@@ -972,7 +993,7 @@ function tvHandle(m) {
     if (keyChanged || JSON.stringify(S.f) !== before) applyChange(); else { saveAll(); schedule(); }
     if (S.menu) renderAll();
     toast('Ajustes cambiados desde el móvil');
-    RC.lastState = Date.now(); relaySend(tvState());
+    RC.lastState = Date.now(); relaySend(tvState()); tvSrcsSoon(true);
   }
 }
 // Acepta «abcd-efgh-jkmn», con espacios, en mayúsculas o el enlace completo del QR.
@@ -1047,7 +1068,24 @@ function remoteHandle(m) {
     renderAll(); remoteNow(m.now); remoteVer(m.ver); remoteKeys(m.keyset);
     remoteStat('Conectado a la TV. Lo que cambies aquí se aplica en la pantalla.', true, false);
   } else if (m.t === 'diag') { $('#diagOut').textContent = m.text || ''; $('#diag').hidden = false;
+  } else if (m.t === 'srcs') { remoteSrcs(m);
   } else if (m.t === 'now') { remoteNow(m.now); if (!RC.gotState) remoteHello(true); }
+}
+function remoteSrcs(m) { // la TV cuenta cómo va cada museo; aquí se pinta igual que en la TV
+  const s = m.s || {}, changed = [];
+  C.SOURCE_LIST.forEach(src => {
+    const k = src.id.replace(/^m:/, ''), v = s[k], before = JSON.stringify([S.status[src.id], S.counts[src.id], S.detail[src.id]]);
+    if (v == null) { delete S.status[src.id]; delete S.counts[src.id]; delete S.detail[src.id]; }
+    else {
+      S.status[src.id] = { state: SRC_STATE[String(v)[0]] || 'loading', msg: (m.m && m.m[k]) || '' };
+      const n = +String(v).slice(1); if (n) S.counts[src.id] = n; else delete S.counts[src.id];
+      if (m.d && m.d[k]) S.detail[src.id] = m.d[k]; else delete S.detail[src.id];
+    }
+    if (JSON.stringify([S.status[src.id], S.counts[src.id], S.detail[src.id]]) !== before) changed.push(src.id);
+  });
+  if (!changed.length) return;
+  if (changed.length > 6) render('srcs'); else changed.forEach(updateSrc); // si cambian muchos, un solo repintado es más barato que fila por fila
+  scheduleResort();
 }
 function remoteCmd(c) {
   if (!RC.gotState) { toast('Todavía no hay conexión con la TV'); return; }

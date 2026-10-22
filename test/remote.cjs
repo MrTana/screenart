@@ -88,7 +88,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   assert.ok(tv.document.getElementById('pair').hidden, 'la TV oculta el QR al emparejar');
   ph.ArtApp.onAct('play'); await wait(300);
   assert.strictEqual(tvA.S.paused, true, 'pausa llega a la TV');
-  assert.ok(/Reanudar/.test(p.getElementById('playBtn').textContent), 'el móvil refleja la pausa');
+  assert.ok(/Reanudar/.test(p.getElementById('playBtn').textContent), 'el móvil refleja la pausa: ' + p.getElementById('playBtn').textContent);
   ph.ArtApp.onAct('play'); await wait(300); assert.strictEqual(tvA.S.paused, false);
   ph.ArtApp.onAct('fav'); await wait(300);
   assert.strictEqual(tvA.S.favs.length, 1, 'favorita en la TV');
@@ -102,6 +102,16 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     ph.ArtApp.onAct('fav'); await wait(600);
     const opts = Array.from(p.querySelectorAll('#c-presets option')).map(o => o.textContent);
     assert.ok(opts.includes('Surrealismo'), 'el mando muestra «Surrealismo» por las favoritas de la TV: ' + opts.join(' | ')); }
+
+  { // el menú del mando pinta el estado de cada museo como la TV
+    await wait(1500);
+    const ids = Object.keys(tvA.S.status); assert.ok(ids.length >= 1, 'la TV tiene estados de museos');
+    const ps = ph.ArtApp.S.status; assert.ok(Object.keys(ps).length >= 1, 'el mando recibe los estados de museos: ' + JSON.stringify(ps));
+    const id = Object.keys(ps)[0]; assert.strictEqual(ps[id].state, tvA.S.status[id].state, 'mismo estado en mando y TV (' + id + ')');
+    assert.ok(p.querySelector('#c-msrcs .dot.ok, #c-msrcs .dot.empty, #c-msrcs .dot.loading, #c-msrcs .dot.error'), 'el mando muestra los puntos de color');
+    const rk = r => !r.getAttribute('aria-pressed') || r.getAttribute('aria-pressed') === 'false' ? 2 : (c => /ok/.test(c) ? 0 : /error|nokey/.test(c) ? 3 : 1)(r.querySelector('.dot').className);
+    ph.ArtApp.S.order = null; ph.ArtApp.renderAll(); const rr = Array.from(p.querySelectorAll('#c-msrcs .src')).map(rk); assert.ok(rr.every((x, i) => !i || rr[i - 1] <= x), 'el mando ordena los museos por color'); }
+  { const g = p.getElementById('idk-gemini'); g.value = 'AIza-prueba'; g.dispatchEvent(new ph.Event('change', { bubbles: true })); assert.ok(/AIza-prueba/.test(ph.localStorage.getItem('galeria-arte-v1:idkeys') || ''), 'el mando guarda su clave de reconocimiento de fotos'); }
 
   // filtros desde el móvil
   p.querySelector('#c-styles [data-id=impressionism]').click();
