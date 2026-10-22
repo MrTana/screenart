@@ -1358,6 +1358,44 @@ async function searchPaintings(text, ctx, onPart) {
   return out;
 }
 
+/* ───────── reconocer una obra a partir de una foto ─────────
+   Se manda la foto (reducida) a un modelo con visión, con la clave del propio usuario: Gemini (hay nivel gratuito) o Claude. Responde con el
+   título, artista, año y museo; luego la app busca la obra por su título y el usuario elige. */
+const ID_PROMPT = 'Eres un experto en historia del arte. La imagen es una foto o captura de una obra de arte (por ejemplo una pintura en un museo, en un libro o en una pantalla). Identifica la obra. Responde SOLO con un objeto JSON, sin texto extra: {"title":"título en español","title_en":"título en inglés o en el idioma original","artist":"artista","year":"año o siglo","museum":"museo donde se conserva","confidence":número de 0 a 1}. Si no reconoces la obra con razonable seguridad, responde {"unknown":true}.';
+const GEMINI_MODELS = ['gemini-3.8-flash', 'gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
+function parseIdJSON(text) {
+  const m = String(text || '').match(/\{[\s\S]*\}/);
+  if (!m) throw new Error('No he entendido la respuesta del reconocimiento');
+  let o; try { o = JSON.parse(m[0]); } catch (e) { throw new Error('No he entendido la respuesta del reconocimiento'); }
+  if (!o || o.unknown || !(o.title || o.title_en)) return null;
+  return { title: String(o.title || '').trim(), title_en: String(o.title_en || '').trim(), artist: String(o.artist || '').trim(), year: String(o.year || '').trim(), museum: String(o.museum || '').trim(), confidence: +o.confidence || null };
+}
+async function identifyArtwork(b64, mime, keys) {
+  keys = keys || {};
+  if (keys.gemini) {
+    let last;
+    for (const model of GEMINI_MODELS) {
+      try {
+        const j = await getJSON('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(keys.gemini), {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: ID_PROMPT }, { inline_data: { mime_type: mime || 'image/jpeg', data: b64 } }] }], generationConfig: { responseMimeType: 'application/json', temperature: 0 } })
+        }, 40000);
+        const parts = (((j.candidates || [])[0] || {}).content || {}).parts || [];
+        return parseIdJSON(parts.map(p => p.text || '').join(''));
+      } catch (e) { last = e; if (!(e && e.status === 404)) throw e; } // si el modelo ya no existe se prueba el siguiente
+    }
+    throw last;
+  }
+  if (keys.anthropic) {
+    const j = await getJSON('https://api.anthropic.com/v1/messages', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': keys.anthropic, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-sonnet-5-5', max_tokens: 400, messages: [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: mime || 'image/jpeg', data: b64 } }, { type: 'text', text: ID_PROMPT }] }] })
+    }, 40000);
+    return parseIdJSON((j.content || []).map(p => p.text || '').join(''));
+  }
+  const e = new Error('Falta la clave para reconocer fotos'); e.noKey = true; throw e;
+}
+
 /* Colecciones sin API pública, pero con datos abiertos: MoMA, National Gallery of Art y Tate. Los datos se convirtieron en trozos
    pequeños en data/<museo>/ (ver tools/*-shards.py). Cada fila: [id, título, artista, año, clave de imagen, ...]. */
 const momaToken = id => btoa('[["f","' + id + '"],["p","convert","-resize 1024x1024\\u003e"]]').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -1431,7 +1469,7 @@ async function runSource(src, f, ctx) {
 const api = {
   rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
   ERAS, STYLES, TYPES, KEYWORDS, EXCLUDES, excluded, MUSEUMS, DEFAULT_MUSEUMS, MUSEUM_SOURCES, ARTIST_SUGGESTIONS, ARTIST_GROUPS, TUNING, keywordToQuery,
-  museumCountry, countryCollections, styleIdsOf, searchPaintings, countryCollectionName, defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC, museumIdsByTag,
+  museumCountry, countryCollections, styleIdsOf, searchPaintings, identifyArtwork, countryCollectionName, defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC, museumIdsByTag,
   adapters: { momaFetch, ngaFetch, tateFetch, shardFetch, commonsSpecial, wikidataMuseum, wikipediaFetch, commonsFetch, wikiartFetch, metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }
 };
 if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.ArtCore = api;

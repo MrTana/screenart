@@ -347,8 +347,15 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
     <div class="accb">
       <p class="hint" style="margin-top:0">Escribe el nombre de una pintura (en español, inglés o francés). Se busca en Wikidata y en los museos grandes (WikiArt, Met, Art Institute of Chicago, Cleveland, Rijksmuseum, V&amp;A, SMK, Minneapolis); elige una para verla ahora en la pantalla.</p>
       <div class="row"><input type="search" id="titleIn" placeholder="Ej. La noche estrellada, Las meninas" autocomplete="off"><button class="btn" data-act="title-search">Buscar</button></div>
+      <div class="row"><button class="btn" data-act="photo">Buscar por foto</button><input type="file" id="photoIn" accept="image/*" hidden></div>
+      <p class="hint">Toma una foto o elige una imagen de una pintura y se reconoce para buscarla. La foto se envía al servicio de la clave que pongas abajo.</p>
       <p class="hint" id="titleMsg"></p>
       <div class="srcs" id="c-tres"></div>
+      <details class="adv"><summary>Clave para reconocer fotos</summary>
+        <p class="hint">Hace falta una de las dos (se guarda solo en este dispositivo). La de Gemini es gratuita: se crea en aistudio.google.com/apikey. La de Anthropic (Claude) es de pago por uso.</p>
+        <label class="lbl" for="idk-gemini">Gemini (gratuita)</label><input type="password" id="idk-gemini" autocomplete="off">
+        <label class="lbl" for="idk-anthropic">Anthropic (Claude)</label><input type="password" id="idk-anthropic" autocomplete="off">
+      </details>
     </div>
   </section>
   <section class="acc" data-acc="museos">
@@ -407,7 +414,7 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
     <button class="acch" data-act="acc" data-id="skin" aria-expanded="false"><span class="at">Skin</span><span class="as" data-sum="skin"></span><span class="ac">›</span></button>
     <div class="accb"><label class="fld"><span>Aspecto de la interfaz</span><select id="c-skin"></select></label><p class="hint">Material Design 3 y Material 3 Expressive, en claro y oscuro. Solo cambia el menú, el mando y los avisos; la obra y su ficha no cambian.</p></div>
   </section>
-  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 12080a658e · 2026-10-22 00:22 UTC</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
+  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 3cac0e39a8 · 2026-10-22 00:31 UTC</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
   <div id="rcfoot" hidden><button class="btn pri" data-act="rc-update">Buscar actualización</button><p id="rcver"></p></div>
 <div id="tvConnect"><button class="btn pri" data-act="tv-connect">Conectar a la TV</button><div class="row" id="tvRow" hidden><input type="text" id="tvCode" placeholder="Código de la TV (ej. abcd-efgh-jkmn)" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn pri" data-act="tv-go">Abrir mando</button></div><p class="hint" id="tvMsg">El código sale bajo el QR en la pantalla de la TV.</p></div>
 </aside>
@@ -1776,6 +1783,44 @@ async function searchPaintings(text, ctx, onPart) {
   return out;
 }
 
+/* ───────── reconocer una obra a partir de una foto ─────────
+   Se manda la foto (reducida) a un modelo con visión, con la clave del propio usuario: Gemini (hay nivel gratuito) o Claude. Responde con el
+   título, artista, año y museo; luego la app busca la obra por su título y el usuario elige. */
+const ID_PROMPT = 'Eres un experto en historia del arte. La imagen es una foto o captura de una obra de arte (por ejemplo una pintura en un museo, en un libro o en una pantalla). Identifica la obra. Responde SOLO con un objeto JSON, sin texto extra: {"title":"título en español","title_en":"título en inglés o en el idioma original","artist":"artista","year":"año o siglo","museum":"museo donde se conserva","confidence":número de 0 a 1}. Si no reconoces la obra con razonable seguridad, responde {"unknown":true}.';
+const GEMINI_MODELS = ['gemini-3.8-flash', 'gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
+function parseIdJSON(text) {
+  const m = String(text || '').match(/\{[\s\S]*\}/);
+  if (!m) throw new Error('No he entendido la respuesta del reconocimiento');
+  let o; try { o = JSON.parse(m[0]); } catch (e) { throw new Error('No he entendido la respuesta del reconocimiento'); }
+  if (!o || o.unknown || !(o.title || o.title_en)) return null;
+  return { title: String(o.title || '').trim(), title_en: String(o.title_en || '').trim(), artist: String(o.artist || '').trim(), year: String(o.year || '').trim(), museum: String(o.museum || '').trim(), confidence: +o.confidence || null };
+}
+async function identifyArtwork(b64, mime, keys) {
+  keys = keys || {};
+  if (keys.gemini) {
+    let last;
+    for (const model of GEMINI_MODELS) {
+      try {
+        const j = await getJSON('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(keys.gemini), {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: ID_PROMPT }, { inline_data: { mime_type: mime || 'image/jpeg', data: b64 } }] }], generationConfig: { responseMimeType: 'application/json', temperature: 0 } })
+        }, 40000);
+        const parts = (((j.candidates || [])[0] || {}).content || {}).parts || [];
+        return parseIdJSON(parts.map(p => p.text || '').join(''));
+      } catch (e) { last = e; if (!(e && e.status === 404)) throw e; } // si el modelo ya no existe se prueba el siguiente
+    }
+    throw last;
+  }
+  if (keys.anthropic) {
+    const j = await getJSON('https://api.anthropic.com/v1/messages', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': keys.anthropic, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-sonnet-5-5', max_tokens: 400, messages: [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: mime || 'image/jpeg', data: b64 } }, { type: 'text', text: ID_PROMPT }] }] })
+    }, 40000);
+    return parseIdJSON((j.content || []).map(p => p.text || '').join(''));
+  }
+  const e = new Error('Falta la clave para reconocer fotos'); e.noKey = true; throw e;
+}
+
 /* Colecciones sin API pública, pero con datos abiertos: MoMA, National Gallery of Art y Tate. Los datos se convirtieron en trozos
    pequeños en data/<museo>/ (ver tools/*-shards.py). Cada fila: [id, título, artista, año, clave de imagen, ...]. */
 const momaToken = id => btoa('[["f","' + id + '"],["p","convert","-resize 1024x1024\\u003e"]]').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -1849,7 +1894,7 @@ async function runSource(src, f, ctx) {
 const api = {
   rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
   ERAS, STYLES, TYPES, KEYWORDS, EXCLUDES, excluded, MUSEUMS, DEFAULT_MUSEUMS, MUSEUM_SOURCES, ARTIST_SUGGESTIONS, ARTIST_GROUPS, TUNING, keywordToQuery,
-  museumCountry, countryCollections, styleIdsOf, searchPaintings, countryCollectionName, defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC, museumIdsByTag,
+  museumCountry, countryCollections, styleIdsOf, searchPaintings, identifyArtwork, countryCollectionName, defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC, museumIdsByTag,
   adapters: { momaFetch, ngaFetch, tateFetch, shardFetch, commonsSpecial, wikidataMuseum, wikipediaFetch, commonsFetch, wikiartFetch, metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }
 };
 if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.ArtCore = api;
@@ -2342,6 +2387,58 @@ async function searchTitle() {
     renderTres();
   } catch (e) { msg.textContent = e && e.message && !e.status && !(e instanceof TypeError) ? e.message : 'No pude buscar: ' + errText(e); }
 }
+const idKeys = () => { try { return Object.assign({ gemini: '', anthropic: '' }, lsGet('idkeys', {})); } catch (e) { return { gemini: '', anthropic: '' }; } };
+/* Reduce la foto (máx. 1280 px, JPEG) para que el envío sea ligero; si el navegador no puede, se manda tal cual (hasta 4 MB). */
+function photoToB64(file) {
+  const raw = () => new Promise((res, rej) => { if (file.size > 4e6) return rej(new Error('La foto pesa demasiado; prueba con una más pequeña')); const fr = new FileReader(); fr.onload = () => res({ b64: String(fr.result).split(',')[1], mime: file.type || 'image/jpeg' }); fr.onerror = () => rej(new Error('No pude leer la foto')); fr.readAsDataURL(file); });
+  return new Promise(resolve => {
+    try {
+      const url = URL.createObjectURL(file), im = new Image();
+      im.onload = () => {
+        try {
+          const k = Math.min(1, 1280 / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement('canvas');
+          c.width = Math.max(1, Math.round(im.naturalWidth * k)); c.height = Math.max(1, Math.round(im.naturalHeight * k));
+          c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+          const d = c.toDataURL('image/jpeg', 0.85); URL.revokeObjectURL(url);
+          if (!/^data:image\/jpeg;base64,/.test(d)) throw new Error('sin canvas');
+          resolve({ b64: d.split(',')[1], mime: 'image/jpeg' });
+        } catch (e) { resolve(raw()); }
+      };
+      im.onerror = () => resolve(raw());
+      im.src = url;
+    } catch (e) { resolve(raw()); }
+  });
+}
+async function searchByPhoto(file) {
+  const msg = $('#titleMsg'), keys = idKeys();
+  if (!file) return;
+  if (!keys.gemini && !keys.anthropic) { msg.textContent = 'Para reconocer fotos pon antes una clave (abajo, «Clave para reconocer fotos»). La de Gemini es gratuita.'; try { document.querySelector('[data-acc=titulo] details.adv').open = true; } catch (e) { /* sin detalles */ } return; }
+  const mine = S.titleQ = (S.titleQ || 0) + 1;
+  msg.textContent = 'Reconociendo la obra…'; S.tres = []; renderTres();
+  try {
+    const { b64, mime } = await photoToB64(file);
+    const id = await C.identifyArtwork(b64, mime, keys);
+    if (mine !== S.titleQ) return;
+    if (!id) { msg.textContent = 'No reconozco la obra. Prueba con otra foto más recta, con buena luz y sin reflejos, o búscala por su nombre.'; return; }
+    const label = '«' + (id.title || id.title_en) + '»' + (id.artist ? ', ' + id.artist : '') + (id.year ? ' (' + id.year + ')' : '');
+    msg.textContent = 'Parece ser ' + label + '. Buscándola…';
+    const done = list => { if (mine === S.titleQ) { S.tres = rankByArtist(list, id.artist); renderTres(); } };
+    let res = await C.searchPaintings(id.title_en || id.title, ctx(), done);
+    if (id.title && id.title_en && C.norm(id.title) !== C.norm(id.title_en)) {
+      try { const more = await C.searchPaintings(id.title, ctx(), null); res = res.concat(more.filter(m => !res.some(r => r.uid === m.uid))); } catch (e) { /* con la primera búsqueda basta */ }
+    }
+    if (mine !== S.titleQ) return;
+    S.tres = rankByArtist(res, id.artist); renderTres();
+    msg.textContent = S.tres.length ? 'Parece ser ' + label + '. Toca una para verla ahora.' : 'Parece ser ' + label + ', pero no encuentro esa obra con imagen. Prueba a buscarla por su nombre.';
+  } catch (e) {
+    msg.textContent = e && e.noKey ? 'Falta la clave para reconocer fotos.' : e && (e.status === 400 || e.status === 401 || e.status === 403) ? 'La clave no es válida o no tiene permiso para reconocer imágenes (' + e.status + ').' : e && e.status === 429 ? 'Se acabó la cuota de la clave por ahora; prueba más tarde.' : 'No pude reconocer la foto: ' + errText(e);
+  }
+}
+function rankByArtist(list, artist) {
+  const a = C.norm(artist || '').split(/\s+/).filter(x => x.length > 2).pop();
+  if (!a) return list;
+  return list.slice().sort((x, y) => (C.norm(y.artist).includes(a) ? 1 : 0) - (C.norm(x.artist).includes(a) ? 1 : 0));
+}
 function showTitleResult(i) {
   const w = (S.tres || [])[+i]; if (!w) return;
   if (REMOTE) { if (!RC.gotState) { toast('Todavía no hay conexión con la TV'); return; } relaySend({ t: 'cmd', c: 'show', w: slimWork(w) }); toast('Enviada a la TV: ' + w.title); return; }
@@ -2377,6 +2474,7 @@ function renderAll() {
   $('#artistList').innerHTML = C.ARTIST_SUGGESTIONS.map(a => '<option value="' + esc(a) + '">').join('');
   $('#yFrom').value = S.f.yearFrom; $('#yTo').value = S.f.yearTo;
   ['europeana', 'si', 'harvard'].forEach(k => { $('#k-' + k).value = S.keys[k] || ''; });
+  { const ik = idKeys(); $('#idk-gemini').value = ik.gemini || ''; $('#idk-anthropic').value = ik.anthropic || ''; }
   $('#playBtn').textContent = S.paused ? 'Reanudar' : 'Pausar'; updateFavBtn(); updateSums();
 }
 function openMenu() { if (S.menu) return; S.menu = true; clearTimeout(S.timer); renderAll(); $('#drawer').hidden = false; const b = $('#drawer [data-act=next]'); if (b) b.focus({ preventScroll: true }); }
@@ -2450,6 +2548,7 @@ function onAct(act, id) {
     case 'mus-all': case 'mus-none': visibleMuseums().forEach(x => { f.sources[x.id] = act === 'mus-all'; }); render('srcs'); applyChange(); break;
     case 'add-museum': addMuseumByName(); break;
     case 'title-search': searchTitle(); break;
+    case 'photo': $('#photoIn').click(); break;
     case 'title-show': showTitleResult(id); break;
     case 'era': toggleArr(f.eras, id); f.yearFrom = f.yearTo = ''; $('#yFrom').value = $('#yTo').value = ''; render('eras'); applyChange(); break;
     case 'style': toggleArr(f.styles, id); render('styles'); applyChange(); break;
@@ -2513,6 +2612,10 @@ document.addEventListener('click', e => {
   openMenu();
 });
 ['mousemove', 'touchstart', 'pointerdown'].forEach(ev => document.addEventListener(ev, activity, { passive: true }));
+document.addEventListener('change', e => {
+  if (e.target.id === 'photoIn') { const f = e.target.files && e.target.files[0]; e.target.value = ''; searchByPhoto(f); }
+  else if (e.target.id === 'idk-gemini' || e.target.id === 'idk-anthropic') { const k = idKeys(); k[e.target.id.slice(4)] = e.target.value.trim(); lsSet('idkeys', k); toast('Clave guardada en este dispositivo'); }
+});
 document.addEventListener('keydown', e => {
   activity();
   const tag = (e.target.tagName || '').toLowerCase(), typing = tag === 'input' || tag === 'textarea';

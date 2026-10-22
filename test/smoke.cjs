@@ -102,6 +102,22 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     assert.strictEqual(d.querySelectorAll('#c-tres .tres').length, 1, 'resultado de la búsqueda por título');
     d.querySelector('#c-tres .tres').click(); await wait(100);
     assert.strictEqual(S.current.title, 'La noche estrellada', 'la obra elegida se muestra'); assert.ok(!S.menu, 'el menú se cierra al elegirla'); assert.ok(/Special:FilePath\/Starry\.jpg/.test(d.querySelector('.slide.on img').getAttribute('src')), 'se muestra la imagen, no la página: ' + d.querySelector('.slide.on img').getAttribute('src')); assert.strictEqual(d.querySelector('#caption .t').textContent, 'La noche estrellada');
+    // buscar por foto
+    d.getElementById('photoIn').dispatchEvent(new w.Event('change')); // sin archivo no pasa nada
+    const fotoMsg = () => d.getElementById('titleMsg').textContent;
+    const subir = async () => { const inp = d.getElementById('photoIn'); Object.defineProperty(inp, 'files', { value: [new w.File([new Uint8Array([255, 216, 255, 224])], 'cuadro.jpg', { type: 'image/jpeg' })], configurable: true }); inp.dispatchEvent(new w.Event('change', { bubbles: true })); await wait(500); };
+    A.openMenu(); S.tres = []; await subir();
+    assert.ok(/clave/i.test(fotoMsg()), 'sin clave avisa: ' + fotoMsg());
+    d.getElementById('idk-gemini').value = 'clave-gemini'; d.getElementById('idk-gemini').dispatchEvent(new w.Event('change', { bubbles: true }));
+    assert.strictEqual(JSON.parse(w.localStorage.getItem('galeria-arte-v1:idkeys')).gemini, 'clave-gemini', 'la clave se guarda en el dispositivo');
+    w.fetch = async (u, i) => { u = String(u);
+      if (/generativelanguage/.test(u)) return J2({ candidates: [{ content: { parts: [{ text: '{"title":"La noche estrellada","title_en":"The Starry Night","artist":"Vincent van Gogh","year":"1889","confidence":0.9}' }] } }] });
+      if (/wbsearchentities/.test(u)) return J2({ search: /language=es/.test(u) ? [{ id: 'Q45585', label: 'La noche estrellada', description: 'pintura de Vincent van Gogh' }] : [] });
+      if (/props=claims/.test(u)) return J2({ entities: { Q45585: { id: 'Q45585', labels: { es: { value: 'La noche estrellada' } }, descriptions: { es: { value: 'pintura de Vincent van Gogh' } }, claims: { P18: [{ mainsnak: { datavalue: { value: 'Starry.jpg' } } }], P571: [{ mainsnak: { datavalue: { value: { time: '+1889-06-00T00:00:00Z' } } } }] } } } });
+      return f0(u, i); };
+    S.tres = []; await subir();
+    assert.strictEqual(d.querySelectorAll('#c-tres .tres').length, 1, 'la foto se reconoce y se busca: ' + fotoMsg()); assert.ok(/Parece ser «La noche estrellada», Vincent van Gogh \(1889\)/.test(fotoMsg()), fotoMsg());
+    d.querySelector('#c-tres .tres').click(); await wait(100); assert.strictEqual(S.current.title, 'La noche estrellada', 'se muestra la obra reconocida');
     w.fetch = f0; }
   const C0 = () => w.ArtCore; const favs0 = S.favs; S.favs = []; A.render('presets');
   { const opts = Array.from(d.querySelectorAll('#c-presets option')).map(o => o.textContent);

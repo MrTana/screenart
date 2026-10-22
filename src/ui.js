@@ -483,6 +483,58 @@ async function searchTitle() {
     renderTres();
   } catch (e) { msg.textContent = e && e.message && !e.status && !(e instanceof TypeError) ? e.message : 'No pude buscar: ' + errText(e); }
 }
+const idKeys = () => { try { return Object.assign({ gemini: '', anthropic: '' }, lsGet('idkeys', {})); } catch (e) { return { gemini: '', anthropic: '' }; } };
+/* Reduce la foto (máx. 1280 px, JPEG) para que el envío sea ligero; si el navegador no puede, se manda tal cual (hasta 4 MB). */
+function photoToB64(file) {
+  const raw = () => new Promise((res, rej) => { if (file.size > 4e6) return rej(new Error('La foto pesa demasiado; prueba con una más pequeña')); const fr = new FileReader(); fr.onload = () => res({ b64: String(fr.result).split(',')[1], mime: file.type || 'image/jpeg' }); fr.onerror = () => rej(new Error('No pude leer la foto')); fr.readAsDataURL(file); });
+  return new Promise(resolve => {
+    try {
+      const url = URL.createObjectURL(file), im = new Image();
+      im.onload = () => {
+        try {
+          const k = Math.min(1, 1280 / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement('canvas');
+          c.width = Math.max(1, Math.round(im.naturalWidth * k)); c.height = Math.max(1, Math.round(im.naturalHeight * k));
+          c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+          const d = c.toDataURL('image/jpeg', 0.85); URL.revokeObjectURL(url);
+          if (!/^data:image\/jpeg;base64,/.test(d)) throw new Error('sin canvas');
+          resolve({ b64: d.split(',')[1], mime: 'image/jpeg' });
+        } catch (e) { resolve(raw()); }
+      };
+      im.onerror = () => resolve(raw());
+      im.src = url;
+    } catch (e) { resolve(raw()); }
+  });
+}
+async function searchByPhoto(file) {
+  const msg = $('#titleMsg'), keys = idKeys();
+  if (!file) return;
+  if (!keys.gemini && !keys.anthropic) { msg.textContent = 'Para reconocer fotos pon antes una clave (abajo, «Clave para reconocer fotos»). La de Gemini es gratuita.'; try { document.querySelector('[data-acc=titulo] details.adv').open = true; } catch (e) { /* sin detalles */ } return; }
+  const mine = S.titleQ = (S.titleQ || 0) + 1;
+  msg.textContent = 'Reconociendo la obra…'; S.tres = []; renderTres();
+  try {
+    const { b64, mime } = await photoToB64(file);
+    const id = await C.identifyArtwork(b64, mime, keys);
+    if (mine !== S.titleQ) return;
+    if (!id) { msg.textContent = 'No reconozco la obra. Prueba con otra foto más recta, con buena luz y sin reflejos, o búscala por su nombre.'; return; }
+    const label = '«' + (id.title || id.title_en) + '»' + (id.artist ? ', ' + id.artist : '') + (id.year ? ' (' + id.year + ')' : '');
+    msg.textContent = 'Parece ser ' + label + '. Buscándola…';
+    const done = list => { if (mine === S.titleQ) { S.tres = rankByArtist(list, id.artist); renderTres(); } };
+    let res = await C.searchPaintings(id.title_en || id.title, ctx(), done);
+    if (id.title && id.title_en && C.norm(id.title) !== C.norm(id.title_en)) {
+      try { const more = await C.searchPaintings(id.title, ctx(), null); res = res.concat(more.filter(m => !res.some(r => r.uid === m.uid))); } catch (e) { /* con la primera búsqueda basta */ }
+    }
+    if (mine !== S.titleQ) return;
+    S.tres = rankByArtist(res, id.artist); renderTres();
+    msg.textContent = S.tres.length ? 'Parece ser ' + label + '. Toca una para verla ahora.' : 'Parece ser ' + label + ', pero no encuentro esa obra con imagen. Prueba a buscarla por su nombre.';
+  } catch (e) {
+    msg.textContent = e && e.noKey ? 'Falta la clave para reconocer fotos.' : e && (e.status === 400 || e.status === 401 || e.status === 403) ? 'La clave no es válida o no tiene permiso para reconocer imágenes (' + e.status + ').' : e && e.status === 429 ? 'Se acabó la cuota de la clave por ahora; prueba más tarde.' : 'No pude reconocer la foto: ' + errText(e);
+  }
+}
+function rankByArtist(list, artist) {
+  const a = C.norm(artist || '').split(/\s+/).filter(x => x.length > 2).pop();
+  if (!a) return list;
+  return list.slice().sort((x, y) => (C.norm(y.artist).includes(a) ? 1 : 0) - (C.norm(x.artist).includes(a) ? 1 : 0));
+}
 function showTitleResult(i) {
   const w = (S.tres || [])[+i]; if (!w) return;
   if (REMOTE) { if (!RC.gotState) { toast('Todavía no hay conexión con la TV'); return; } relaySend({ t: 'cmd', c: 'show', w: slimWork(w) }); toast('Enviada a la TV: ' + w.title); return; }
@@ -518,6 +570,7 @@ function renderAll() {
   $('#artistList').innerHTML = C.ARTIST_SUGGESTIONS.map(a => '<option value="' + esc(a) + '">').join('');
   $('#yFrom').value = S.f.yearFrom; $('#yTo').value = S.f.yearTo;
   ['europeana', 'si', 'harvard'].forEach(k => { $('#k-' + k).value = S.keys[k] || ''; });
+  { const ik = idKeys(); $('#idk-gemini').value = ik.gemini || ''; $('#idk-anthropic').value = ik.anthropic || ''; }
   $('#playBtn').textContent = S.paused ? 'Reanudar' : 'Pausar'; updateFavBtn(); updateSums();
 }
 function openMenu() { if (S.menu) return; S.menu = true; clearTimeout(S.timer); renderAll(); $('#drawer').hidden = false; const b = $('#drawer [data-act=next]'); if (b) b.focus({ preventScroll: true }); }
@@ -591,6 +644,7 @@ function onAct(act, id) {
     case 'mus-all': case 'mus-none': visibleMuseums().forEach(x => { f.sources[x.id] = act === 'mus-all'; }); render('srcs'); applyChange(); break;
     case 'add-museum': addMuseumByName(); break;
     case 'title-search': searchTitle(); break;
+    case 'photo': $('#photoIn').click(); break;
     case 'title-show': showTitleResult(id); break;
     case 'era': toggleArr(f.eras, id); f.yearFrom = f.yearTo = ''; $('#yFrom').value = $('#yTo').value = ''; render('eras'); applyChange(); break;
     case 'style': toggleArr(f.styles, id); render('styles'); applyChange(); break;
@@ -654,6 +708,10 @@ document.addEventListener('click', e => {
   openMenu();
 });
 ['mousemove', 'touchstart', 'pointerdown'].forEach(ev => document.addEventListener(ev, activity, { passive: true }));
+document.addEventListener('change', e => {
+  if (e.target.id === 'photoIn') { const f = e.target.files && e.target.files[0]; e.target.value = ''; searchByPhoto(f); }
+  else if (e.target.id === 'idk-gemini' || e.target.id === 'idk-anthropic') { const k = idKeys(); k[e.target.id.slice(4)] = e.target.value.trim(); lsSet('idkeys', k); toast('Clave guardada en este dispositivo'); }
+});
 document.addEventListener('keydown', e => {
   activity();
   const tag = (e.target.tagName || '').toLowerCase(), typing = tag === 'input' || tag === 'textarea';

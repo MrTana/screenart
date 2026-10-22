@@ -347,8 +347,15 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
     <div class="accb">
       <p class="hint" style="margin-top:0">Escribe el nombre de una pintura (en español, inglés o francés). Se busca en Wikidata y en los museos grandes (WikiArt, Met, Art Institute of Chicago, Cleveland, Rijksmuseum, V&amp;A, SMK, Minneapolis); elige una para verla ahora en la pantalla.</p>
       <div class="row"><input type="search" id="titleIn" placeholder="Ej. La noche estrellada, Las meninas" autocomplete="off"><button class="btn" data-act="title-search">Buscar</button></div>
+      <div class="row"><button class="btn" data-act="photo">Buscar por foto</button><input type="file" id="photoIn" accept="image/*" hidden></div>
+      <p class="hint">Toma una foto o elige una imagen de una pintura y se reconoce para buscarla. La foto se envía al servicio de la clave que pongas abajo.</p>
       <p class="hint" id="titleMsg"></p>
       <div class="srcs" id="c-tres"></div>
+      <details class="adv"><summary>Clave para reconocer fotos</summary>
+        <p class="hint">Hace falta una de las dos (se guarda solo en este dispositivo). La de Gemini es gratuita: se crea en aistudio.google.com/apikey. La de Anthropic (Claude) es de pago por uso.</p>
+        <label class="lbl" for="idk-gemini">Gemini (gratuita)</label><input type="password" id="idk-gemini" autocomplete="off">
+        <label class="lbl" for="idk-anthropic">Anthropic (Claude)</label><input type="password" id="idk-anthropic" autocomplete="off">
+      </details>
     </div>
   </section>
   <section class="acc" data-acc="museos">

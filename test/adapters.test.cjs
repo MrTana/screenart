@@ -288,6 +288,21 @@ globalThis.fetch = async (url, init) => {
     { const rr = await C.searchPaintings('starry night', {}); assert.ok(rr.some(x => x.src === 'wikiart' && x.title === 'The Starry Night'), 'WikiArt aporta resultados: ' + rr.map(x => x.src + ':' + x.title)); assert.ok(!rr.some(x => x.title === 'Café Terrace'), 'solo los que coinciden con el título'); }
     await assert.rejects(() => C.searchPaintings('a', {}), /dos letras/);
     globalThis.fetch = prev; }
+  { const prev = globalThis.fetch, urls = [], J = o => ({ ok: true, status: 200, json: async () => o });
+    const answer = '{"title":"La noche estrellada","title_en":"The Starry Night","artist":"Vincent van Gogh","year":"1889","museum":"MoMA","confidence":0.97}';
+    globalThis.fetch = async (u, i) => { u = String(u); urls.push([u, i]);
+      if (u.includes('generativelanguage.googleapis.com')) { if (/gemini-3\.8-flash/.test(u)) return { ok: false, status: 404, json: async () => ({}) }; return J({ candidates: [{ content: { parts: [{ text: answer }] } }] }); }
+      if (u.includes('api.anthropic.com')) return J({ content: [{ type: 'text', text: 'Aquí está: ```json\n' + answer + '\n```' }] });
+      return prev(u, i); };
+    let id = await C.identifyArtwork('QUJD', 'image/jpeg', { gemini: 'k1' });
+    assert.strictEqual(id.title_en, 'The Starry Night'); assert.strictEqual(id.artist, 'Vincent van Gogh'); assert.strictEqual(id.confidence, 0.97);
+    assert.ok(urls.some(x => /gemini-3\.6-flash/.test(x[0])), 'si un modelo ya no existe, prueba el siguiente'); assert.ok(/inline_data/.test(urls[urls.length - 1][1].body) && /QUJD/.test(urls[urls.length - 1][1].body), 'manda la imagen');
+    id = await C.identifyArtwork('QUJD', 'image/jpeg', { anthropic: 'sk-ant-x' });
+    assert.strictEqual(id.title, 'La noche estrellada'); { const c = urls[urls.length - 1][1]; assert.strictEqual(c.headers['x-api-key'], 'sk-ant-x'); assert.strictEqual(c.headers['anthropic-dangerous-direct-browser-access'], 'true'); assert.ok(/"type":"image"/.test(c.body)); }
+    await assert.rejects(() => C.identifyArtwork('QUJD', 'image/jpeg', {}), e => e.noKey);
+    globalThis.fetch = async (u) => u.includes('anthropic') ? J({ content: [{ type: 'text', text: '{"unknown":true}' }] }) : prev(u);
+    assert.strictEqual(await C.identifyArtwork('QUJD', 'image/jpeg', { anthropic: 'k' }), null, 'obra no reconocida');
+    globalThis.fetch = prev; }
   { const sin = C.SOURCE_LIST.filter(s => s.museum && !s.museum.open && !s.museum.custom && !C.museumCountry(s.museum)).map(s => s.id); assert.deepStrictEqual(sin, [], 'todo museo debe tener país (así tiene su colección «Museos de …»): ' + sin);
     assert.ok(C.countryCollections().some(c => c.es === 'Museos de España' && c.ids.length >= 10), 'Museos de España'); assert.strictEqual(C.countryCollectionName('Reino Unido'), 'Museos del Reino Unido'); }
   console.log('TODO OK');
