@@ -9,7 +9,7 @@ const Q = (() => { try { return new URLSearchParams(location.search); } catch (e
 // Con «?c=código» la página es el mando del móvil: no muestra obras, controla la TV.
 const REMOTE = /^[a-z0-9]{6,24}$/i.test(Q.get('c') || '') ? Q.get('c').toLowerCase() : '';
 function lsGet(k, def) { try { const v = localStorage.getItem(KEY + ':' + k); return v ? JSON.parse(v) : def; } catch (e) { return def; } }
-function lsSet(k, v) { if (REMOTE && k !== 'rc' && k !== 'idkeys') return; // el mando solo guarda su código y las claves de reconocimiento de fotos (son de este móvil)
+function lsSet(k, v) { if (REMOTE && !['rc', 'idkeys', 'keys', 'keysent', 'favs'].includes(k)) return; // el mando solo guarda su código y lo que comparte con la versión móvil (claves y favoritas)
    try { localStorage.setItem(KEY + ':' + k, JSON.stringify(v)); } catch (e) { /* sin almacenamiento */ } }
 
 /* ───────── estado ───────── */
@@ -289,9 +289,10 @@ function toggleFav() {
   const w = S.current; if (!w) return;
   if (isFav(w)) { S.favs = S.favs.filter(x => x.uid !== w.uid); toast('Quitada de favoritas'); }
   else { S.favs.unshift({ uid: w.uid, src: w.src, museum: w.museum, title: w.title, artist: w.artist, date: w.date, year: w.year, imgs: [w.url].concat(w.imgs.filter(u => u !== w.url)), thumb: w.thumb, url: w.url_page || w.url, type: w.type, pd: w.pd, license: w.license, w: w.w, h: w.h }); toast('Guardada en favoritas'); }
-  saveAll(); updateFavBtn(); render('presets'); tvNowSoon(true);
+  saveAll(); updateFavBtn(); render('presets'); render('opts'); tvNowSoon(true);
+  tvFavPush(w, isFav(w));
 }
-function updateFavBtn() { $('#favBtn').textContent = isFav(S.current) ? 'Quitar favorita' : 'Guardar favorita'; }
+function updateFavBtn() { $('#favBtn').textContent = (REMOTE ? !!S.nowFav : isFav(S.current)) ? 'Quitar favorita' : 'Guardar favorita'; }
 function toggleFS() {
   try {
     if (document.fullscreenElement) document.exitFullscreen();
@@ -784,7 +785,13 @@ $('#museumFilter').addEventListener('input', e => { S.mfilter = e.target.value; 
 $('#yFrom').addEventListener('change', e => { S.f.yearFrom = e.target.value; S.f.eras = []; render('eras'); applyChange(); });
 $('#yTo').addEventListener('change', e => { S.f.yearTo = e.target.value; S.f.eras = []; render('eras'); applyChange(); });
 ['europeana', 'si', 'harvard'].forEach(k => {
-  $('#k-' + k).addEventListener('change', e => { S.keys[k] = e.target.value.trim(); saveAll(); updateSums(); if (S.f.sources[k]) applyChange(); });
+  $('#k-' + k).addEventListener('change', e => {
+    S.keys[k] = e.target.value.trim();
+    if (REMOTE) { // también queda en este móvil (para la versión móvil) y no se reenvía de más
+      const def = { europeana: 'api2demo', si: 'DEMO_KEY', harvard: '' };
+      lsSet('keys', Object.assign({}, def, lsGet('keys', {}), { [k]: S.keys[k] || def[k] })); lsSet('keysent', Object.assign({}, lsGet('keysent', {}), { [k]: S.keys[k] }));
+    }
+    saveAll(); updateSums(); if (S.f.sources[k]) applyChange(); });
 });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); });
 let lock = null;
@@ -948,6 +955,28 @@ function tvNowSoon(force) {
   const wait = RC.forceNow ? 120 : Math.max(300, 8000 - (Date.now() - RC.lastNow));
   RC.nowT = setTimeout(() => { RC.forceNow = false; RC.lastNow = Date.now(); relaySend({ t: 'now', now: tvNow() }); }, wait);
 }
+/* Favoritas compartidas entre móvil, mando y TV. Al conectar, el mando manda la lista de identificadores; la TV contesta con las
+   obras que le faltan al mando y pide las que le faltan a ella; después cada alta o baja viaja sola. Se unen (nada se borra por sincronizar). */
+const FAV_MAX = 300;
+function mergeFavs(ws, rm) {
+  let n = 0;
+  (Array.isArray(rm) ? rm : []).forEach(u => { const l = S.favs.length; S.favs = S.favs.filter(x => x.uid !== u); if (S.favs.length !== l) n++; });
+  (Array.isArray(ws) ? ws.slice(0, 12) : []).filter(okWork).forEach(w => { if (!S.favs.some(x => x.uid === w.uid)) { S.favs.push(slimWork(w)); n++; } });
+  if (S.favs.length > FAV_MAX) S.favs = S.favs.slice(0, FAV_MAX);
+  if (!n) return 0;
+  if (REMOTE) lsSet('favs', S.favs); else saveAll();
+  updateFavBtn(); render('presets'); render('opts'); if (!REMOTE) tvNowSoon(true);
+  return n;
+}
+function sendFavBatches(list) { // lotes pequeños y espaciados para no saturar el relé
+  const slim = list.slice(0, FAV_MAX).map(slimWork);
+  for (let i = 0; i < slim.length; i += 6) setTimeout(() => relaySend({ t: 'favs', w: slim.slice(i, i + 6) }), (i / 6) * 450);
+}
+function tvFavPush(w, added) {
+  if (REMOTE || !RC.code || !RC.lastPhone || Date.now() - RC.lastPhone > 240000) return;
+  relaySend(added ? { t: 'favs', w: [slimWork(S.favs.find(x => x.uid === w.uid) || w)] } : { t: 'favs', rm: [w.uid] });
+}
+const uidList = a => Array.isArray(a) ? a.filter(u => typeof u === 'string' && u.length < 80).slice(0, 400) : [];
 /* Estado de cada museo (verde/amarillo/rojo, obras cargadas y detalle por fuente) para que el menú del mando sea igual que el de la TV.
    Va en un mensaje aparte y compacto: «o12» = ok con 12 obras; l = buscando; e = sin resultados; x = error; k = falta clave. */
 const SRC_CODE = { ok: 'o', loading: 'l', empty: 'e', error: 'x', nokey: 'k' }, SRC_STATE = { o: 'ok', l: 'loading', e: 'empty', x: 'error', k: 'nokey' };
@@ -969,7 +998,13 @@ function tvSrcsSoon(now) {
   RC.srcsT = setTimeout(() => { RC.srcsT = 0; relaySend(tvSrcsMsg()); }, now ? 800 : 6000);
 }
 function tvHandle(m) {
-  if (m.t === 'hello' || m.t === 'ping' || m.t === 'cmd' || m.t === 'set') RC.lastPhone = Date.now();
+  if (m.t === 'hello' || m.t === 'ping' || m.t === 'cmd' || m.t === 'set' || m.t === 'fs' || m.t === 'favs') RC.lastPhone = Date.now();
+  if (m.t === 'fs') { // el mando cuenta qué favoritas tiene
+    const theirs = uidList(m.u), have = new Set(S.favs.map(w => w.uid)), mine = new Set(theirs);
+    const need = theirs.filter(u => !have.has(u)); if (need.length) relaySend({ t: 'fneed', u: need });
+    sendFavBatches(S.favs.filter(w => !mine.has(w.uid))); return;
+  }
+  if (m.t === 'favs') { mergeFavs(m.w, m.rm); return; }
   // El QR se oculta solo cuando el móvil ya recibió el estado y manda órdenes (conexión de ida y vuelta).
   if (m.t === 'ping' || m.t === 'cmd' || m.t === 'set') { lsSet('paired', true); hidePair(); }
   if (m.t === 'hello') { RC.hellos++; if (Date.now() - RC.lastState > 2500) { RC.lastState = Date.now(); relaySend(tvState()); tvSrcsSoon(true); } return; }
@@ -1029,14 +1064,19 @@ function remoteFavStyles(ids) {
 function remoteNow(n) {
   if (!n) return;
   remoteFavStyles(n.favStyles);
-  S.current = { uid: n.uid }; S.favs = n.fav ? [{ uid: n.uid }] : []; S.paused = !!n.paused;
+  S.current = { uid: n.uid }; S.nowFav = !!n.fav; S.paused = !!n.paused;
   $('#rcnow').hidden = false; $('#rcT').textContent = n.title || ''; $('#rcA').textContent = [n.artist, n.date].filter(Boolean).join(' · ');
   const im = $('#rcImg'); if (n.thumb && im.dataset.u !== n.thumb) { im.dataset.u = n.thumb; im.src = n.thumb; }
   $('#playBtn').textContent = S.paused ? 'Reanudar' : 'Pausar'; updateFavBtn();
 }
+function remoteSyncKeys() { // manda a la TV las claves de este móvil que aún no le llegaron
+  const sent = lsGet('keysent', {}), todo = ['europeana', 'si', 'harvard'].filter(k => S.keys[k] && sent[k] !== S.keys[k]);
+  if (!todo.length) return;
+  lsSet('keysent', Object.assign({}, sent, Object.fromEntries(todo.map(k => [k, S.keys[k]])))); remoteSetSoon();
+}
 function remoteKeys(ks) {
   S.tvKeyset = ks || {};
-  ['europeana', 'si', 'harvard'].forEach(k => { const el = $('#k-' + k); el.value = ''; el.placeholder = ks && ks[k] ? '•••••• guardada en la TV (escribe para cambiarla)' : 'sin clave en la TV'; });
+  ['europeana', 'si', 'harvard'].forEach(k => { const el = $('#k-' + k); el.value = S.keys[k] || ''; el.placeholder = ks && ks[k] ? '•••••• guardada en la TV (escribe para cambiarla)' : 'sin clave en la TV'; });
 }
 function remoteDiag() {
   if (!RC.gotState) { toast('Todavía no hay conexión con la TV'); return; }
@@ -1066,9 +1106,12 @@ function remoteHandle(m) {
     S.f = normFilters(m.f); if (m.st) S.st = Object.assign(S.st, m.st);
     S.tvFavStyles = Array.isArray(m.favStyles) ? m.favStyles : (S.tvFavStyles || []);
     renderAll(); remoteNow(m.now); remoteVer(m.ver); remoteKeys(m.keyset);
+    if (!RC.synced) { RC.synced = true; relaySend({ t: 'fs', u: S.favs.map(w => w.uid).slice(0, 400) }); remoteSyncKeys(); }
     remoteStat('Conectado a la TV. Lo que cambies aquí se aplica en la pantalla.', true, false);
   } else if (m.t === 'diag') { $('#diagOut').textContent = m.text || ''; $('#diag').hidden = false;
   } else if (m.t === 'srcs') { remoteSrcs(m);
+  } else if (m.t === 'favs') { mergeFavs(m.w, m.rm);
+  } else if (m.t === 'fneed') { const need = new Set(uidList(m.u)); sendFavBatches(S.favs.filter(w => need.has(w.uid)));
   } else if (m.t === 'now') { remoteNow(m.now); if (!RC.gotState) remoteHello(true); }
 }
 function remoteSrcs(m) { // la TV cuenta cómo va cada museo; aquí se pinta igual que en la TV
@@ -1100,7 +1143,10 @@ function remoteSetSoon() {
 function initRemote() {
   RC.code = REMOTE; lsSet('rc', REMOTE);
   document.body.classList.add('rc');
-  S.keys = { europeana: '', si: '', harvard: '' };
+  { // las claves guardadas en la versión móvil (mismo navegador) viajan a la TV; las de demostración no
+    const pk = lsGet('keys', {}), nd = (v, d) => (v && v !== d ? v : '');
+    S.keys = { europeana: nd(pk.europeana, 'api2demo'), si: nd(pk.si, 'DEMO_KEY'), harvard: nd(pk.harvard, '') };
+  }
   S.menu = true; applyLook(); renderAll();
   $('#rcinfo').hidden = false; $('#rcfoot').hidden = false; $('#drawer').hidden = false; remoteVer('');
   document.title = 'Mando · Galería de arte';

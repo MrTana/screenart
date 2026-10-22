@@ -48,6 +48,7 @@ function make(url, opt) {
     if (u.includes('metmuseum') && u.includes('/objects/')) { const id = +u.split('/').pop(); return J({ objectID: id, isPublicDomain: true, primaryImage: 'https://img/met' + id + '.jpg', primaryImageSmall: 'https://img/s' + id + '.jpg', title: 'Obra á' + id, artistDisplayName: 'Artista ñ', objectDate: '1880', objectBeginDate: 1880, objectEndDate: 1880, department: 'Paintings', classification: 'Paintings', objectName: 'Painting', objectURL: 'https://met/' + id, medium: 'oil', creditLine: 'x', tags: [] }); }
     throw new TypeError('Failed to fetch');
   };
+  if (opt.ls) Object.keys(opt.ls).forEach(k => w.localStorage.setItem('galeria-arte-v1:' + k, JSON.stringify(opt.ls[k])));
   w.WebSocket = opt.noMQTT ? DeadWS : FakeWS;
   if (opt.noSSE) w.EventSource = function () { /* nunca abre: simula un navegador de TV que corta SSE */ }; else w.EventSource = function (u) { const t = String(u).replace(/^https:\/\/ntfy\.sh\//, '').replace(/\/sse$/, ''); (subs[t] = subs[t] || []).push(this); setTimeout(() => this.onopen && this.onopen(), 2); };
   w.Image = function () { const o = { set src(v) { this._s = v; setTimeout(() => { o.naturalWidth = 1600; o.naturalHeight = 1000; o.onload && o.onload(); }, 5); }, get src() { return this._s; } }; return o; };
@@ -153,6 +154,23 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   ph2.ArtApp.onAct('tv-go'); assert.ok(/no es válido/.test(ph2.document.getElementById('tvMsg').textContent), 'rechaza un código vacío');
   // móvil que reaparece tras actualizar: la TV conserva todos los museos
   assert.ok(Object.keys(tvA.S.f.sources).length > 100, 'la TV conserva la lista completa de museos');
+  { // favoritas y claves de la versión móvil llegan a la TV y al mando; las de la TV llegan al móvil
+    const mkFav = (n, t) => ({ uid: 'mv:' + n, src: 'mv', museum: 'Museo ' + n, title: t, artist: 'Pintor ' + n, date: '1900', year: 1900, imgs: ['https://example.org/f' + n + '.jpg'], thumb: 'https://example.org/t' + n + '.jpg', url: 'https://example.org/p' + n, type: 'painting', pd: true, license: 'PD' });
+    const tvFavs0 = tvA.S.favs.map(f => f.uid);
+    const ph4 = make('https://example.test/?c=' + code, { ls: { favs: [mkFav(1, 'Del móvil uno'), mkFav(2, 'Del móvil dos')], keys: { europeana: 'api2demo', si: 'DEMO_KEY', harvard: 'HARV-123' } } });
+    await wait(4000);
+    const tu = tvA.S.favs.map(f => f.uid);
+    assert.ok(tu.includes('mv:1') && tu.includes('mv:2'), 'las favoritas del móvil llegan a la TV: ' + tu.join());
+    assert.strictEqual(tvA.S.keys.harvard, 'HARV-123', 'la clave de Harvard del móvil llega a la TV');
+    assert.strictEqual(ph4.document.getElementById('k-harvard').value, 'HARV-123', 'el mando muestra la clave guardada en el móvil');
+    const pu = ph4.ArtApp.S.favs.map(f => f.uid); tvFavs0.forEach(u => assert.ok(pu.includes(u), 'la favorita de la TV llega al móvil: ' + u + ' en ' + pu.join()));
+    assert.ok(ph4.localStorage.getItem('galeria-arte-v1:favs').includes('mv:1') && ph4.localStorage.getItem('galeria-arte-v1:favs').length > 100, 'el móvil las guarda');
+    assert.ok(/Solo mis favoritas \(\d+\)/.test(ph4.document.getElementById('c-opts').textContent) && ph4.ArtApp.S.favs.length >= 3, 'el mando cuenta las favoritas');
+    // alta en la TV (desde otro mando) → llega al móvil sin reconectar
+    const cur = tvA.S.current.uid, hadCur = tvA.S.favs.some(f => f.uid === cur);
+    ph.ArtApp.onAct('fav'); await wait(1500);
+    assert.strictEqual(ph4.ArtApp.S.favs.some(f => f.uid === cur), !hadCur, 'el cambio de favorita en la TV llega a los móviles');
+  }
   // sin brokers MQTT y sin SSE (TV y móvil): reserva ntfy por sondeo
   const tv2 = make('https://example.test/?tv=1', { noSSE: true, noMQTT: true });
   await wait(2200);
