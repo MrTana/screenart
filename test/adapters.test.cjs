@@ -291,12 +291,12 @@ globalThis.fetch = async (url, init) => {
   { const prev = globalThis.fetch, urls = [], J = o => ({ ok: true, status: 200, json: async () => o });
     const answer = '{"title":"La noche estrellada","title_en":"The Starry Night","artist":"Vincent van Gogh","year":"1889","museum":"MoMA","confidence":0.97}';
     globalThis.fetch = async (u, i) => { u = String(u); urls.push([u, i]);
-      if (u.includes('generativelanguage.googleapis.com')) { if (/gemini-3\.8-flash/.test(u)) return { ok: false, status: 404, json: async () => ({}) }; return J({ candidates: [{ content: { parts: [{ text: answer }] } }] }); }
+      if (u.includes('generativelanguage.googleapis.com')) { if (/gemini-3\.6-flash/.test(u)) return { ok: false, status: 404, json: async () => ({}) }; return J({ candidates: [{ content: { parts: [{ text: answer }] } }] }); }
       if (u.includes('api.anthropic.com')) return J({ content: [{ type: 'text', text: 'Aquí está: ```json\n' + answer + '\n```' }] });
       return prev(u, i); };
     let id = await C.identifyArtwork('QUJD', 'image/jpeg', { gemini: 'k1' });
     assert.strictEqual(id.title_en, 'The Starry Night'); assert.strictEqual(id.artist, 'Vincent van Gogh'); assert.strictEqual(id.confidence, 0.97);
-    assert.ok(urls.some(x => /gemini-3\.6-flash/.test(x[0])), 'si un modelo ya no existe, prueba el siguiente'); assert.ok(/inline_data/.test(urls[urls.length - 1][1].body) && /QUJD/.test(urls[urls.length - 1][1].body), 'manda la imagen');
+    assert.ok(urls.some(x => /gemini-3\.5-flash-lite/.test(x[0])), 'si un modelo ya no existe, prueba el siguiente'); assert.ok(/inline_data/.test(urls[urls.length - 1][1].body) && /QUJD/.test(urls[urls.length - 1][1].body), 'manda la imagen');
     { const before = urls.length; urls.length = 0; const old = globalThis.fetch;
       globalThis.fetch = async (u, i) => { u = String(u); urls.push([u, i]); if (u.includes('generativelanguage')) { if (/thinkingConfig/.test(i.body)) return { ok: false, status: 400, json: async () => ({}) }; return J({ candidates: [{ content: { parts: [{ text: answer }] } }] }); } return old(u, i); };
       const r2 = await C.identifyArtwork('QUJD', 'image/jpeg', { gemini: 'k1' }); assert.strictEqual(r2.title_en, 'The Starry Night');

@@ -1362,7 +1362,7 @@ async function searchPaintings(text, ctx, onPart) {
    Se manda la foto (reducida) a un modelo con visión, con la clave del propio usuario: Gemini (hay nivel gratuito) o Claude. Responde con el
    título, artista, año y museo; luego la app busca la obra por su título y el usuario elige. */
 const ID_PROMPT = 'Eres un experto en historia del arte. La imagen es una foto o captura de una obra de arte (por ejemplo una pintura en un museo, en un libro o en una pantalla). Identifica la obra. Responde SOLO con un objeto JSON, sin texto extra: {"title":"título en español","title_en":"título en inglés o en el idioma original","artist":"artista","year":"año o siglo","museum":"museo donde se conserva","confidence":número de 0 a 1}. Si no reconoces la obra con razonable seguridad, responde {"unknown":true}.';
-const GEMINI_MODELS = ['gemini-3.8-flash', 'gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
+const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
 function parseIdJSON(text) {
   const m = String(text || '').match(/\{[\s\S]*\}/);
   if (!m) throw new Error('No he entendido la respuesta del reconocimiento');
