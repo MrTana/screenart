@@ -519,9 +519,9 @@ async function searchByPhoto(file) {
     const label = '«' + (id.title || id.title_en) + '»' + (id.artist ? ', ' + id.artist : '') + (id.year ? ' (' + id.year + ')' : '');
     msg.textContent = 'Parece ser ' + label + '. Buscándola…';
     const done = list => { if (mine === S.titleQ) { S.tres = rankByArtist(list, id.artist); renderTres(); } };
-    let res = await C.searchPaintings(id.title_en || id.title, ctx(), done);
+    let res = await C.searchPaintings(id.title_en || id.title, ctx(), done, id.artist);
     if (id.title && id.title_en && C.norm(id.title) !== C.norm(id.title_en)) {
-      try { const more = await C.searchPaintings(id.title, ctx(), null); res = res.concat(more.filter(m => !res.some(r => r.uid === m.uid))); } catch (e) { /* con la primera búsqueda basta */ }
+      try { const more = await C.searchPaintings(id.title, ctx(), null, id.artist); res = res.concat(more.filter(m => !res.some(r => r.uid === m.uid))); } catch (e) { /* con la primera búsqueda basta */ }
     }
     if (mine !== S.titleQ) return;
     S.tres = rankByArtist(res, id.artist); renderTres();

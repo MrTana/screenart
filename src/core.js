@@ -1307,6 +1307,51 @@ async function searchWikidataTitle(q, ctx) {
   });
 }
 
+/* Wikipedia (varios idiomas) y Wikimedia Commons: artículos y archivos de obras con imagen, también de museos pequeños o obras poco conocidas. */
+const WP_LANGS = ['es', 'en', 'fr', 'de', 'it', 'hu', 'pt', 'nl'];
+const WP_ART_EXTRA = /festm[eé]ny|obraz\b|olajfest|gem[aä]lde|bild\b|quadro|dipinto|tableau|schilderij|pintura|painting/i;
+async function searchWikipediaTitle(q, hint, ctx) {
+  const tok = titleTokens(q);
+  const one = async lang => {
+    const j = await getJSON('https://' + lang + '.wikipedia.org/w/api.php?action=query&format=json&formatversion=2&origin=*&generator=search&gsrnamespace=0&gsrlimit=8&prop=pageimages|description&piprop=thumbnail|original&pithumbsize=2000&gsrsearch=' + encodeURIComponent(q + (hint ? ' ' + hint : '')));
+    return ((j.query && j.query.pages) || []).filter(p => p.title && (p.thumbnail || p.original)).map(p => {
+      const desc = p.description || '', title = p.title.replace(/\s*\([^)]*\)\s*$/, '');
+      if (WD_NOT_ART.test(desc) && !WD_ARTWORK.test(desc) && !WP_ART_EXTRA.test(desc)) return null;
+      if (!(WD_ARTWORK.test(desc) || WP_ART_EXTRA.test(desc))) return null; // solo artículos de obras de arte
+      if (!(tok.length ? tok.every(x => norm(title).includes(x)) : norm(title).includes(norm(q)))) return null;
+      const src = (p.thumbnail && p.thumbnail.source) || p.original.source, full = p.original && p.original.source;
+      if (!/\.(jpe?g|png|webp)(\?|$)/i.test(src) && !/\.(jpe?g|png|webp)(\?|$)/i.test(full || '')) return null;
+      const by = (desc.match(/\b(?:by|de|par|von|door|di|van|od)\s+([^,;(]+)/i) || [])[1];
+      const ym = desc.match(/\b(1[0-9]{3}|20[0-2][0-9])\b/);
+      return mk({
+        src: 'wp' + lang, museum: 'Wikipedia (' + lang + ')', id: String(p.pageid), title, artist: by ? by.trim() : (hint || ''), date: ym ? ym[1] : '', year: ym ? +ym[1] : null,
+        imgs: [src].concat(full && full !== src ? [full] : []), thumb: src.replace(/\/(\d+)px-/, '/400px-'),
+        url: 'https://' + lang + '.wikipedia.org/?curid=' + p.pageid, type: classifyType(desc) || 'painting', pd: null, license: 'Imagen de Wikipedia / Wikimedia Commons'
+      });
+    }).filter(Boolean);
+  };
+  const res = await Promise.allSettled(WP_LANGS.map(one));
+  const ok = res.filter(r => r.status === 'fulfilled');
+  if (!ok.length) throw res[0].reason;
+  return [].concat(...ok.map(r => r.value));
+}
+async function searchCommonsTitle(q, hint, ctx) {
+  const tok = titleTokens(q);
+  const j = await getJSON('https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&origin=*&generator=search&gsrnamespace=6&gsrlimit=12&prop=imageinfo&iiprop=url|size|mime|extmetadata&iiurlwidth=2000&iiextmetadatafilter=ObjectName|Artist|DateTimeOriginal&gsrsearch=' + encodeURIComponent(q + (hint ? ' ' + hint : '')));
+  const strip = h => String(h || '').replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+  return ((j.query && j.query.pages) || []).map(p => {
+    const ii = (p.imageinfo || [])[0]; if (!ii || !/^image\/(jpeg|png|webp)$/.test(ii.mime || '') || (ii.width || 0) < 600) return null;
+    const md = ii.extmetadata || {}, file = p.title.replace(/^File:/i, '').replace(/\.[a-z0-9]+$/i, '').replace(/_/g, ' ');
+    const title = strip(md.ObjectName && md.ObjectName.value) || file;
+    if (!(tok.length ? tok.every(x => norm(title + ' ' + file).includes(x)) : norm(title + ' ' + file).includes(norm(q)))) return null;
+    const date = strip(md.DateTimeOriginal && md.DateTimeOriginal.value);
+    return mk({
+      src: 'commons', museum: 'Wikimedia Commons', id: String(p.pageid), title, artist: strip(md.Artist && md.Artist.value).slice(0, 80) || (hint || ''), date: date.slice(0, 10),
+      imgs: [ii.thumburl || ii.url, ii.url].filter(Boolean), thumb: (ii.thumburl || ii.url).replace(/\/(\d+)px-/, '/400px-'),
+      url: ii.descriptionurl || 'https://commons.wikimedia.org/?curid=' + p.pageid, w: ii.width, h: ii.height, type: 'painting', pd: null, license: 'Wikimedia Commons'
+    });
+  }).filter(Boolean);
+}
 /* WikiArt tiene una búsqueda pública en JSON (título o artista). */
 async function searchWikiArtTitle(q) {
   const j = await getJSONvia('https://www.wikiart.org/en/search/' + encodeURIComponent(q) + '?json=2');
@@ -1322,7 +1367,7 @@ const titleTokens = s => norm(s).split(/[^a-z0-9]+/).filter(x => x && !TITLE_STO
 const TITLE_SOURCES = ['m:met', 'm:aic', 'm:cma', 'm:rijks', 'm:vam', 'm:smk', 'm:mia', 'm:harvard', 'm:si'];
 /* Busca una obra por su título en Wikidata y en las API de los museos grandes, todo a la vez. onPart(lista) se llama cada vez que una fuente
    responde, así los resultados salen según llegan. Devuelve hasta 20, las que mejor coinciden primero. */
-async function searchPaintings(text, ctx, onPart) {
+async function searchPaintings(text, ctx, onPart, hint) {
   const q = String(text || '').trim();
   if (q.length < 2) throw new Error('Escribe al menos dos letras del título');
   ctx = ctx || {};
@@ -1348,6 +1393,8 @@ async function searchPaintings(text, ctx, onPart) {
   };
   const jobs = [searchWikidataTitle(q, ctx).then(l => add(l, false), e => { wikiErr = e; errors++; })];
   jobs.push(searchWikiArtTitle(q).then(l => add(l, true), () => { errors++; }));
+  jobs.push(searchWikipediaTitle(q, hint, ctx).then(l => add(l, true), () => { errors++; }));
+  jobs.push(searchCommonsTitle(q, hint, ctx).then(l => add(l, true), () => { errors++; }));
   const f = defaultFilters();
   TITLE_SOURCES.map(id => SOURCE_LIST.find(s => s.id === id)).filter(s => s && !(s.museum && s.museum.needsKey && !(ctx.keys && ctx.keys[s.museum.needsKey]))).forEach(s => {
     jobs.push(Promise.race([s.fetch({ keyword: q, top: true, type: null, range: null, style: null, artist: null, hintArtist: null }, f, Object.assign({ anyRights: true }, ctx)), new Promise((_, rej) => setTimeout(() => rej(new Error('tiempo')), 20000))]).then(l => add(l, true), () => { errors++; }));
