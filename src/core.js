@@ -648,7 +648,7 @@ const MUSEUMS = [
   { id: 'mia', es: 'Minneapolis Institute of Art', city: 'Minneapolis', ids: [], direct: 'mia', labels: [['Minneapolis Institute of Art', 'en']] },
   { id: 'si', es: 'Smithsonian (SAAM, Freer, Hirshhorn, NPG)', city: 'Washington', ids: [], direct: 'si', labels: [['Smithsonian American Art Museum', 'en'], ['Freer Gallery of Art', 'en'], ['Hirshhorn Museum and Sculpture Garden', 'en']], q: 'Smithsonian American Art Museum', needsKey: 'si' },
   { id: 'harvard', es: 'Harvard Art Museums', city: 'Cambridge (EE. UU.)', ids: [], direct: 'harvard', labels: [['Harvard Art Museums', 'en']], needsKey: 'harvard' },
-  { id: 'open', es: 'Colecciones abiertas', city: 'WikiArt, Google Art Project, Commons, Wikidata y Europeana', ids: [], open: true, labels: [], q: '', note: 'No distinguen museos: se mezclan con cualquier museo' },
+  { id: 'open', es: 'Colecciones abiertas', city: 'WikiArt, Google Art Project, Commons, Wikipedia, Wikidata y Europeana', ids: [], open: true, labels: [], q: '', note: 'No distinguen museos: se mezclan con cualquier museo' },
   { id: 'louvre', es: 'Louvre', city: 'París', ids: ['Q19675'], labels: [['Louvre', 'en'], ['Musée du Louvre', 'fr'], ['Louvre Museum', 'en']] },
   { id: 'orsay', es: 'Orsay', city: 'París', ids: ['Q23402'], labels: [["Musée d'Orsay", 'fr'], ["Musée d'Orsay", 'en'], ['Orsay Museum', 'en']] },
   { id: 'versailles', es: 'Versalles', city: 'Versalles', ids: ['Q2946'], labels: [['Palace of Versailles', 'en'], ['Château de Versailles', 'fr'], ['Musée national des châteaux de Versailles et de Trianon', 'fr']] },
@@ -1162,11 +1162,14 @@ async function wikiartFetch(plan, f, ctx) {
 /* Wikipedia: artículos de obras que citan al museo; la imagen principal del artículo es la obra. */
 const ART_DESC = /painting|sculpture|drawing|print\b|artwork|triptych|fresco|portrait|photograph|statue|relief|mural|watercolou?r|engraving|etching|lithograph|pastel|oil on|panel|altarpiece|still life|landscape/i;
 async function wikipediaFetch(plan, f, ctx, m) {
-  if (!m || !m.q) return [];
+  if (m && !m.q) return [];
   const API = 'https://en.wikipedia.org/w/api.php?format=json&formatversion=2&origin=*&action=query';
   const kind = COMMONS_KIND[plan.type] || 'painting', kw = plan.keyword ? ' ' + plan.keyword : '';
   const qs = [];
-  if (plan.artist) qs.push('"' + m.q + '" "' + plan.artist + '"' + kw);
+  if (!m) { // colección abierta: obras de cualquier museo, por artista, estilo o tema
+    const who = plan.artist || plan.hintArtist;
+    qs.push([who, plan.style && plan.style.q, plan.keyword, kind].filter(Boolean).join(' ') + (who || plan.style || plan.keyword ? '' : ' ' + pick(GENERIC)));
+  } else if (plan.artist) qs.push('"' + m.q + '" "' + plan.artist + '"' + kw);
   else { if (plan.style) qs.push('"' + m.q + '" ' + plan.style.q + ' ' + kind + kw); qs.push('"' + m.q + '" ' + kind + kw); }
   let pages = [];
   for (const q of qs) {
@@ -1186,10 +1189,10 @@ async function wikipediaFetch(plan, f, ctx, m) {
     const o = p.original, t = p.thumbnail, desc = p.description || '';
     if (!o || !ART_DESC.test(desc) || (o.width || 0) < 700 || (o.height || 0) < 500) return null;
     if (!/\.(jpe?g|png|webp|gif)$/i.test(o.source)) return null;
-    if (norm(p.title).includes(norm(m.q))) return null;
+    if (m && norm(p.title).includes(norm(m.q))) return null;
     const by = /\bby ([^,;(]{3,60})/i.exec(desc);
     return mk({
-      src: 'wikipedia', museum: m.es, id: p.pageid, title: p.title, artist: by ? by[1].trim() : '', date: desc.slice(0, 40), year: parseYear(desc),
+      src: 'wikipedia', museum: m ? m.es : 'Wikipedia', id: p.pageid, title: p.title, artist: by ? by[1].trim() : '', date: desc.slice(0, 40), year: parseYear(desc),
       imgs: [t && t.source, o.source], thumb: (t && t.source) || o.source, url: 'https://en.wikipedia.org/?curid=' + p.pageid,
       w: o.width, h: o.height, type: classifyType(desc), pd: null, license: 'Wikipedia (imagen del artículo)'
     });
@@ -1197,14 +1200,14 @@ async function wikipediaFetch(plan, f, ctx, m) {
 }
 
 /* Un museo = varias fuentes a la vez: su API directa (si tiene), Wikidata, Commons y Wikipedia.
-   Las «colecciones abiertas» juntan WikiArt, Commons por estilo, Wikidata por movimiento y Europeana. */
+   Las «colecciones abiertas» juntan WikiArt, Commons por estilo, Wikipedia, Wikidata por movimiento y Europeana. */
 const DIRECT = {};
 function finishMuseum(m) { if (!m.q) m.q = (m.labels[0] || [''])[0]; return m; }
 async function museumFetch(m, plan, f, ctx) {
   const rep = (name, n, err) => { if (ctx.report) ctx.report(name, n, err); };
   const jobs = [];
   if (m.open) {
-    jobs.push(['WikiArt', () => wikiartFetch(plan, f, ctx)], ['Google Art Project', () => commonsSpecial('gap', plan, f, ctx)], ['Commons destacadas', () => commonsSpecial('fp', plan, f, ctx)], ['Commons', () => commonsFetch(plan, f, ctx)], ['Wikidata', () => wikiFetch(plan, f, ctx)]);
+    jobs.push(['WikiArt', () => wikiartFetch(plan, f, ctx)], ['Google Art Project', () => commonsSpecial('gap', plan, f, ctx)], ['Commons destacadas', () => commonsSpecial('fp', plan, f, ctx)], ['Commons', () => commonsFetch(plan, f, ctx)], ['Wikipedia', () => wikipediaFetch(plan, f, ctx)], ['Wikidata', () => wikiFetch(plan, f, ctx)]);
     if (ctx.keys && ctx.keys.europeana) jobs.push(['Europeana', () => europeanaFetch(plan, f, ctx)]);
   } else {
     if (m.direct && DIRECT[m.direct]) jobs.push(['Directa', () => DIRECT[m.direct](plan, f, ctx)]);

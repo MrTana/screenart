@@ -14,7 +14,7 @@ El menú ya no tiene una lista de fuentes: solo **museos**. Hay unos 160 (Louvre
 
 Si una fuente de un museo falla, las demás siguen. El punto de color y la línea bajo cada museo muestran cuántas obras dio cada fuente.
 
-**Colecciones abiertas** es una fila aparte con WikiArt (catálogo grande por estilo), Commons por estilo, Wikidata por movimiento y Europeana. Estas fuentes no distinguen museos, así que se mezclan con cualquier museo; desmárcala si solo quieres los museos elegidos. Las claves gratuitas (Europeana, Smithsonian, Harvard) se escriben en «Claves de API» y se guardan solo en el navegador.
+**Colecciones abiertas** es una fila aparte con WikiArt (catálogo grande por estilo), Commons por estilo, Wikipedia (artículos de pinturas con su imagen, por artista, estilo o tema), Wikidata por movimiento y Europeana. Estas fuentes no distinguen museos, así que se mezclan con cualquier museo; desmárcala si solo quieres los museos elegidos. Las claves gratuitas (Europeana, Smithsonian, Harvard) se escriben en «Claves de API» y se guardan solo en el navegador.
 
 ## Repositorios y colecciones añadidos
 

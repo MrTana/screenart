@@ -361,7 +361,7 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
   <section class="acc" data-acc="museos">
     <button class="acch" data-act="acc" data-id="museos" aria-expanded="false"><span class="at">Museos</span><span class="as" data-sum="museos"></span><span class="ac">›</span></button>
     <div class="accb">
-      <p class="hint" style="margin-top:0">Cada museo se busca a la vez en su API directa (si la tiene), Wikidata, Wikimedia Commons y Wikipedia. «Colecciones abiertas» añade WikiArt y Europeana, que no distinguen museos.</p>
+      <p class="hint" style="margin-top:0">Cada museo se busca a la vez en su API directa (si la tiene), Wikidata, Wikimedia Commons y Wikipedia. «Colecciones abiertas» añade WikiArt, Wikipedia (artículos de pinturas con su imagen, de cualquier museo) y Europeana, que no distinguen museos.</p>
       <div class="row"><input type="search" id="museumFilter" placeholder="Filtrar la lista (ej. París, Prado, México)" autocomplete="off"></div>
       <div class="srcs" id="c-msrcs"></div>
       <div class="row"><button class="btn" data-act="mus-all">Marcar los de la lista</button><button class="btn" data-act="mus-none">Quitar los de la lista</button></div>
@@ -414,7 +414,7 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
     <button class="acch" data-act="acc" data-id="skin" aria-expanded="false"><span class="at">Skin</span><span class="as" data-sum="skin"></span><span class="ac">›</span></button>
     <div class="accb"><label class="fld"><span>Aspecto de la interfaz</span><select id="c-skin"></select></label><p class="hint">Material Design 3 y Material 3 Expressive, en claro y oscuro. Solo cambia el menú, el mando y los avisos; la obra y su ficha no cambian.</p></div>
   </section>
-  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión f4217b971a · 2026-10-22 01:05 UTC</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
+  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 9431b3ef50 · 2026-10-22 06:12 UTC</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
   <div id="rcfoot" hidden><button class="btn pri" data-act="rc-update">Buscar actualización</button><p id="rcver"></p></div>
 <div id="tvConnect"><button class="btn pri" data-act="tv-connect">Conectar a la TV</button><div class="row" id="tvRow" hidden><input type="text" id="tvCode" placeholder="Código de la TV (ej. abcd-efgh-jkmn)" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn pri" data-act="tv-go">Abrir mando</button></div><p class="hint" id="tvMsg">El código sale bajo el QR en la pantalla de la TV.</p></div>
 </aside>
@@ -1073,7 +1073,7 @@ const MUSEUMS = [
   { id: 'mia', es: 'Minneapolis Institute of Art', city: 'Minneapolis', ids: [], direct: 'mia', labels: [['Minneapolis Institute of Art', 'en']] },
   { id: 'si', es: 'Smithsonian (SAAM, Freer, Hirshhorn, NPG)', city: 'Washington', ids: [], direct: 'si', labels: [['Smithsonian American Art Museum', 'en'], ['Freer Gallery of Art', 'en'], ['Hirshhorn Museum and Sculpture Garden', 'en']], q: 'Smithsonian American Art Museum', needsKey: 'si' },
   { id: 'harvard', es: 'Harvard Art Museums', city: 'Cambridge (EE. UU.)', ids: [], direct: 'harvard', labels: [['Harvard Art Museums', 'en']], needsKey: 'harvard' },
-  { id: 'open', es: 'Colecciones abiertas', city: 'WikiArt, Google Art Project, Commons, Wikidata y Europeana', ids: [], open: true, labels: [], q: '', note: 'No distinguen museos: se mezclan con cualquier museo' },
+  { id: 'open', es: 'Colecciones abiertas', city: 'WikiArt, Google Art Project, Commons, Wikipedia, Wikidata y Europeana', ids: [], open: true, labels: [], q: '', note: 'No distinguen museos: se mezclan con cualquier museo' },
   { id: 'louvre', es: 'Louvre', city: 'París', ids: ['Q19675'], labels: [['Louvre', 'en'], ['Musée du Louvre', 'fr'], ['Louvre Museum', 'en']] },
   { id: 'orsay', es: 'Orsay', city: 'París', ids: ['Q23402'], labels: [["Musée d'Orsay", 'fr'], ["Musée d'Orsay", 'en'], ['Orsay Museum', 'en']] },
   { id: 'versailles', es: 'Versalles', city: 'Versalles', ids: ['Q2946'], labels: [['Palace of Versailles', 'en'], ['Château de Versailles', 'fr'], ['Musée national des châteaux de Versailles et de Trianon', 'fr']] },
@@ -1587,11 +1587,14 @@ async function wikiartFetch(plan, f, ctx) {
 /* Wikipedia: artículos de obras que citan al museo; la imagen principal del artículo es la obra. */
 const ART_DESC = /painting|sculpture|drawing|print\b|artwork|triptych|fresco|portrait|photograph|statue|relief|mural|watercolou?r|engraving|etching|lithograph|pastel|oil on|panel|altarpiece|still life|landscape/i;
 async function wikipediaFetch(plan, f, ctx, m) {
-  if (!m || !m.q) return [];
+  if (m && !m.q) return [];
   const API = 'https://en.wikipedia.org/w/api.php?format=json&formatversion=2&origin=*&action=query';
   const kind = COMMONS_KIND[plan.type] || 'painting', kw = plan.keyword ? ' ' + plan.keyword : '';
   const qs = [];
-  if (plan.artist) qs.push('"' + m.q + '" "' + plan.artist + '"' + kw);
+  if (!m) { // colección abierta: obras de cualquier museo, por artista, estilo o tema
+    const who = plan.artist || plan.hintArtist;
+    qs.push([who, plan.style && plan.style.q, plan.keyword, kind].filter(Boolean).join(' ') + (who || plan.style || plan.keyword ? '' : ' ' + pick(GENERIC)));
+  } else if (plan.artist) qs.push('"' + m.q + '" "' + plan.artist + '"' + kw);
   else { if (plan.style) qs.push('"' + m.q + '" ' + plan.style.q + ' ' + kind + kw); qs.push('"' + m.q + '" ' + kind + kw); }
   let pages = [];
   for (const q of qs) {
@@ -1611,10 +1614,10 @@ async function wikipediaFetch(plan, f, ctx, m) {
     const o = p.original, t = p.thumbnail, desc = p.description || '';
     if (!o || !ART_DESC.test(desc) || (o.width || 0) < 700 || (o.height || 0) < 500) return null;
     if (!/\.(jpe?g|png|webp|gif)$/i.test(o.source)) return null;
-    if (norm(p.title).includes(norm(m.q))) return null;
+    if (m && norm(p.title).includes(norm(m.q))) return null;
     const by = /\bby ([^,;(]{3,60})/i.exec(desc);
     return mk({
-      src: 'wikipedia', museum: m.es, id: p.pageid, title: p.title, artist: by ? by[1].trim() : '', date: desc.slice(0, 40), year: parseYear(desc),
+      src: 'wikipedia', museum: m ? m.es : 'Wikipedia', id: p.pageid, title: p.title, artist: by ? by[1].trim() : '', date: desc.slice(0, 40), year: parseYear(desc),
       imgs: [t && t.source, o.source], thumb: (t && t.source) || o.source, url: 'https://en.wikipedia.org/?curid=' + p.pageid,
       w: o.width, h: o.height, type: classifyType(desc), pd: null, license: 'Wikipedia (imagen del artículo)'
     });
@@ -1622,14 +1625,14 @@ async function wikipediaFetch(plan, f, ctx, m) {
 }
 
 /* Un museo = varias fuentes a la vez: su API directa (si tiene), Wikidata, Commons y Wikipedia.
-   Las «colecciones abiertas» juntan WikiArt, Commons por estilo, Wikidata por movimiento y Europeana. */
+   Las «colecciones abiertas» juntan WikiArt, Commons por estilo, Wikipedia, Wikidata por movimiento y Europeana. */
 const DIRECT = {};
 function finishMuseum(m) { if (!m.q) m.q = (m.labels[0] || [''])[0]; return m; }
 async function museumFetch(m, plan, f, ctx) {
   const rep = (name, n, err) => { if (ctx.report) ctx.report(name, n, err); };
   const jobs = [];
   if (m.open) {
-    jobs.push(['WikiArt', () => wikiartFetch(plan, f, ctx)], ['Google Art Project', () => commonsSpecial('gap', plan, f, ctx)], ['Commons destacadas', () => commonsSpecial('fp', plan, f, ctx)], ['Commons', () => commonsFetch(plan, f, ctx)], ['Wikidata', () => wikiFetch(plan, f, ctx)]);
+    jobs.push(['WikiArt', () => wikiartFetch(plan, f, ctx)], ['Google Art Project', () => commonsSpecial('gap', plan, f, ctx)], ['Commons destacadas', () => commonsSpecial('fp', plan, f, ctx)], ['Commons', () => commonsFetch(plan, f, ctx)], ['Wikipedia', () => wikipediaFetch(plan, f, ctx)], ['Wikidata', () => wikiFetch(plan, f, ctx)]);
     if (ctx.keys && ctx.keys.europeana) jobs.push(['Europeana', () => europeanaFetch(plan, f, ctx)]);
   } else {
     if (m.direct && DIRECT[m.direct]) jobs.push(['Directa', () => DIRECT[m.direct](plan, f, ctx)]);
