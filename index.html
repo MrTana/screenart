@@ -345,7 +345,7 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
   <section class="acc" data-acc="titulo">
     <button class="acch" data-act="acc" data-id="titulo" aria-expanded="false"><span class="at">Buscar por título</span><span class="as" data-sum="titulo"></span><span class="ac">›</span></button>
     <div class="accb">
-      <p class="hint" style="margin-top:0">Escribe el nombre de una pintura (en español, inglés o francés). Se busca en Wikidata y en los museos grandes (Met, Art Institute of Chicago, Cleveland, Rijksmuseum, V&amp;A, SMK, Minneapolis); elige una para verla ahora en la pantalla.</p>
+      <p class="hint" style="margin-top:0">Escribe el nombre de una pintura (en español, inglés o francés). Se busca en Wikidata y en los museos grandes (WikiArt, Met, Art Institute of Chicago, Cleveland, Rijksmuseum, V&amp;A, SMK, Minneapolis); elige una para verla ahora en la pantalla.</p>
       <div class="row"><input type="search" id="titleIn" placeholder="Ej. La noche estrellada, Las meninas" autocomplete="off"><button class="btn" data-act="title-search">Buscar</button></div>
       <p class="hint" id="titleMsg"></p>
       <div class="srcs" id="c-tres"></div>
@@ -407,7 +407,7 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
     <button class="acch" data-act="acc" data-id="skin" aria-expanded="false"><span class="at">Skin</span><span class="as" data-sum="skin"></span><span class="ac">›</span></button>
     <div class="accb"><label class="fld"><span>Aspecto de la interfaz</span><select id="c-skin"></select></label><p class="hint">Material Design 3 y Material 3 Expressive, en claro y oscuro. Solo cambia el menú, el mando y los avisos; la obra y su ficha no cambian.</p></div>
   </section>
-  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión ac497550d1 · 2026-10-22 00:14 UTC</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
+  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 12080a658e · 2026-10-22 00:22 UTC</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
   <div id="rcfoot" hidden><button class="btn pri" data-act="rc-update">Buscar actualización</button><p id="rcver"></p></div>
 <div id="tvConnect"><button class="btn pri" data-act="tv-connect">Conectar a la TV</button><div class="row" id="tvRow" hidden><input type="text" id="tvCode" placeholder="Código de la TV (ej. abcd-efgh-jkmn)" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn pri" data-act="tv-go">Abrir mando</button></div><p class="hint" id="tvMsg">El código sale bajo el QR en la pantalla de la TV.</p></div>
 </aside>
@@ -1725,6 +1725,16 @@ async function searchWikidataTitle(q, ctx) {
   });
 }
 
+/* WikiArt tiene una búsqueda pública en JSON (título o artista). */
+async function searchWikiArtTitle(q) {
+  const j = await getJSONvia('https://www.wikiart.org/en/search/' + encodeURIComponent(q) + '?json=2');
+  return (Array.isArray(j) ? j : (j.Paintings || [])).filter(p => p.image && p.title).slice(0, 30).map(p => mk({
+    src: 'wikiart', museum: 'WikiArt', id: p.id, title: p.title, artist: p.artistName, date: p.year,
+    imgs: [p.image.replace(/!\w+\.jpg$/, ''), p.image], thumb: p.image + '!PinterestSmall.jpg',
+    url: 'https://www.wikiart.org' + (p.paintingUrl || ''), w: p.width, h: p.height, type: 'painting',
+    pd: null, license: 'WikiArt (obra con o sin derechos de autor)'
+  }));
+}
 const TITLE_STOP = new Set(['el', 'la', 'los', 'las', 'de', 'del', 'un', 'una', 'the', 'of', 'a', 'an', 'le', 'les', 'des', 'du', 'and', 'y', 'e', 'et']);
 const titleTokens = s => norm(s).split(/[^a-z0-9]+/).filter(x => x && !TITLE_STOP.has(x));
 const TITLE_SOURCES = ['m:met', 'm:aic', 'm:cma', 'm:rijks', 'm:vam', 'm:smk', 'm:mia', 'm:harvard', 'm:si'];
@@ -1755,6 +1765,7 @@ async function searchPaintings(text, ctx, onPart) {
     if (onPart) { try { onPart(merged()); } catch (e) { /* la pantalla ya no escucha */ } }
   };
   const jobs = [searchWikidataTitle(q, ctx).then(l => add(l, false), e => { wikiErr = e; errors++; })];
+  jobs.push(searchWikiArtTitle(q).then(l => add(l, true), () => { errors++; }));
   const f = defaultFilters();
   TITLE_SOURCES.map(id => SOURCE_LIST.find(s => s.id === id)).filter(s => s && !(s.museum && s.museum.needsKey && !(ctx.keys && ctx.keys[s.museum.needsKey]))).forEach(s => {
     jobs.push(Promise.race([s.fetch({ keyword: q, top: true, type: null, range: null, style: null, artist: null, hintArtist: null }, f, Object.assign({ anyRights: true }, ctx)), new Promise((_, rej) => setTimeout(() => rej(new Error('tiempo')), 20000))]).then(l => add(l, true), () => { errors++; }));

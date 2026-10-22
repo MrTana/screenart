@@ -1307,6 +1307,16 @@ async function searchWikidataTitle(q, ctx) {
   });
 }
 
+/* WikiArt tiene una búsqueda pública en JSON (título o artista). */
+async function searchWikiArtTitle(q) {
+  const j = await getJSONvia('https://www.wikiart.org/en/search/' + encodeURIComponent(q) + '?json=2');
+  return (Array.isArray(j) ? j : (j.Paintings || [])).filter(p => p.image && p.title).slice(0, 30).map(p => mk({
+    src: 'wikiart', museum: 'WikiArt', id: p.id, title: p.title, artist: p.artistName, date: p.year,
+    imgs: [p.image.replace(/!\w+\.jpg$/, ''), p.image], thumb: p.image + '!PinterestSmall.jpg',
+    url: 'https://www.wikiart.org' + (p.paintingUrl || ''), w: p.width, h: p.height, type: 'painting',
+    pd: null, license: 'WikiArt (obra con o sin derechos de autor)'
+  }));
+}
 const TITLE_STOP = new Set(['el', 'la', 'los', 'las', 'de', 'del', 'un', 'una', 'the', 'of', 'a', 'an', 'le', 'les', 'des', 'du', 'and', 'y', 'e', 'et']);
 const titleTokens = s => norm(s).split(/[^a-z0-9]+/).filter(x => x && !TITLE_STOP.has(x));
 const TITLE_SOURCES = ['m:met', 'm:aic', 'm:cma', 'm:rijks', 'm:vam', 'm:smk', 'm:mia', 'm:harvard', 'm:si'];
@@ -1337,6 +1347,7 @@ async function searchPaintings(text, ctx, onPart) {
     if (onPart) { try { onPart(merged()); } catch (e) { /* la pantalla ya no escucha */ } }
   };
   const jobs = [searchWikidataTitle(q, ctx).then(l => add(l, false), e => { wikiErr = e; errors++; })];
+  jobs.push(searchWikiArtTitle(q).then(l => add(l, true), () => { errors++; }));
   const f = defaultFilters();
   TITLE_SOURCES.map(id => SOURCE_LIST.find(s => s.id === id)).filter(s => s && !(s.museum && s.museum.needsKey && !(ctx.keys && ctx.keys[s.museum.needsKey]))).forEach(s => {
     jobs.push(Promise.race([s.fetch({ keyword: q, top: true, type: null, range: null, style: null, artist: null, hintArtist: null }, f, Object.assign({ anyRights: true }, ctx)), new Promise((_, rej) => setTimeout(() => rej(new Error('tiempo')), 20000))]).then(l => add(l, true), () => { errors++; }));
