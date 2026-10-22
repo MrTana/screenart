@@ -238,7 +238,7 @@ function present(item, fromHist) {
   slides[S.layer].classList.remove('on'); S.layer = nxt;
   $('#loader').hidden = true;
   if (!fromHist) { S.hist.push(item); if (S.hist.length > 120) S.hist.shift(); S.hi = S.hist.length - 1; }
-  S.current = item; S.shown++;
+  S.current = item; S.shown++; saveStashSoon();
   setCaption(item); updateFavBtn();
   tvNowSoon();
 }
@@ -255,19 +255,48 @@ async function advance() {
   try {
     let item = null;
     if (S.nextP && S.nextEpoch === S.epoch) { item = await S.nextP; }
-    S.nextP = null;
+    S.nextP = null; S.ready = null;
     if (epoch !== S.epoch) return;
     if (!item) item = await pullNext();
     if (epoch !== S.epoch) return;
     if (!item) {
       // Sin obras nuevas: se repite una ya vista para que la pantalla nunca se quede parada.
       const old = S.hist.filter(w => !S.current || w.uid !== S.current.uid);
-      if (old.length) { present(C.pick(old), true); toast('Repitiendo obras ya vistas: las fuentes no dan más por ahora'); S.nextEpoch = S.epoch; S.nextP = pullNext(); return; }
+      if (old.length) { present(C.pick(old), true); toast('Repitiendo obras ya vistas: las fuentes no dan más por ahora'); prefetch(); return; }
       showEmpty(); return;
     }
     present(item, false);
-    S.nextEpoch = S.epoch; S.nextP = pullNext();
+    prefetch();
   } finally { if (epoch === S.epoch) { S.adv = false; schedule(); } }
+}
+/* Arranque instantáneo: se guardan en el dispositivo la próxima obra ya comprobada, la cola de obras pendientes y lo ya visto.
+   Al abrir con los mismos filtros, la primera obra sale de ahí (y su imagen suele estar en la caché del navegador) mientras los
+   museos se consultan en segundo plano. Con otros filtros, o pasada una semana, se ignora. */
+const STASH_MAX = 40, STASH_TTL = 7 * 864e5;
+function filterSig(f) { return JSON.stringify(slimF(f)); }
+function prefetch() {
+  const ep = S.epoch; S.nextEpoch = ep; S.ready = null;
+  S.nextP = pullNext().then(it => { if (ep === S.epoch) { S.ready = it; saveStashSoon(); } return it; });
+}
+function saveStash() {
+  if (REMOTE || S.f.onlyFavs) return;
+  clearTimeout(S.stashT); S.stashT = 0;
+  const r = S.ready, first = r ? [Object.assign({}, r, { imgs: [r.url].concat((r.imgs || []).filter(u => u !== r.url)), url: r.url_page || r.url })] : [];
+  const works = first.concat(S.pool.slice(0, STASH_MAX)).map(slimWork).filter(okWork).slice(0, STASH_MAX);
+  const pending = new Set(works.map(w => w.uid)); // la próxima obra ya cuenta como vista en memoria, pero aún no se ha mostrado
+  const seen = Array.from(S.seen).filter(u => !pending.has(u)).slice(-500).concat(S.current && !S.seen.has(S.current.uid) ? [S.current.uid] : []);
+  if (works.length) lsSet('stash', { sig: filterSig(S.f), at: Date.now(), works, seen });
+}
+function saveStashSoon() { if (!S.stashT) S.stashT = setTimeout(saveStash, 3000); }
+function loadStash() {
+  if (REMOTE || S.f.onlyFavs) return 0;
+  const st = lsGet('stash', null);
+  if (!st || st.sig !== filterSig(S.f) || !(Date.now() - st.at < STASH_TTL)) return 0;
+  (Array.isArray(st.seen) ? st.seen : []).forEach(u => { if (typeof u === 'string') S.seen.add(u); });
+  const list = (Array.isArray(st.works) ? st.works : []).filter(okWork).filter(w => !S.seen.has(w.uid));
+  list.forEach(w => S.seenKey.delete(wkey(w)));
+  S.pool = list.concat(S.pool);
+  return list.length;
 }
 function showEmpty() {
   const states = Object.keys(S.status).map(k => S.status[k].state);
@@ -357,7 +386,7 @@ function applyChange() {
   if (REMOTE) return;
   clearTimeout(applyT);
   applyT = setTimeout(() => {
-    S.epoch++; S.pool = []; S.nextP = null; S.flight = new Map(); S.cool = {}; S.streak = {}; S.warned = false; S.adv = false; S.counts = {}; S.status = {};
+    S.epoch++; S.pool = []; S.nextP = null; S.ready = null; S.flight = new Map(); S.cool = {}; S.streak = {}; S.warned = false; S.adv = false; S.counts = {}; S.status = {};
     renderSrcs();
     if (S.f.onlyFavs && !S.favs.length) toast('Aún no tienes favoritas');
     advance();
@@ -793,7 +822,8 @@ $('#yTo').addEventListener('change', e => { S.f.yearTo = e.target.value; S.f.era
     }
     saveAll(); updateSums(); if (S.f.sources[k]) applyChange(); });
 });
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); else saveStash(); });
+window.addEventListener('pagehide', saveStash);
 let lock = null;
 async function keepAwake() { try { if ('wakeLock' in navigator) lock = await navigator.wakeLock.request('screen'); } catch (e) { /* no disponible */ } }
 
@@ -1164,6 +1194,7 @@ function init() {
   document.body.classList.add('active');
   if (touchLayout() && !lsGet('tapHint', false)) { lsSet('tapHint', true); setTimeout(() => toast('Toca el borde derecho: siguiente · el izquierdo: anterior · el centro: menú'), 2500); }
   showLoader('Buscando obras en los museos…', 'Pulsa Intro o toca la pantalla para abrir los filtros.', false);
+  if (loadStash()) refill(); // con obras guardadas se muestran ya y los museos se consultan igual en segundo plano
   advance();
   initTV();
 }

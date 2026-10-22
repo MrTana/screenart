@@ -35,6 +35,7 @@ function make(url, opt) {
   const w = dom.window; w.__ART_TUNING = { sparqlPause: 5 };
   w.fetch = async (u, init) => {
     u = String(u);
+    if (opt.noFetch) throw new TypeError('Failed to fetch');
     const m = /^https:\/\/ntfy\.sh\/([\w-]+)$/.exec(u);
     if (m && init && init.method === 'POST') {
       (queue[m[1]] = queue[m[1]] || []).push({ id: 'n' + Math.random(), event: 'message', message: init.body });
@@ -178,6 +179,16 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   const ph3 = make('https://example.test/?c=' + code2, { noMQTT: true });
   for (let i = 0; i < 160 && !/Conectado/.test(ph3.document.getElementById('rcstat').textContent); i++) await wait(250);
   assert.ok(/Conectado/.test(ph3.document.getElementById('rcstat').textContent), 'conecta por sondeo: ' + ph3.document.getElementById('rcstat').textContent);
+  { // arranque instantáneo: una TV nueva con la cola guardada muestra una obra enseguida, sin esperar a los museos
+    const raw = tv.localStorage.getItem('galeria-arte-v1:stash'); assert.ok(raw, 'la TV guarda la cola de obras');
+    const st = JSON.parse(raw); assert.ok(st.works.length >= 1 && st.sig, 'cola guardada con filtros: ' + st.works.length);
+    const tv3 = make('https://example.test/?tv=0', { ls: { stash: st }, noFetch: true });
+    await wait(400);
+    assert.ok(tv3.ArtApp.S.current && st.works.some(w => w.uid === tv3.ArtApp.S.current.uid), 'la primera obra sale de la cola guardada en < 0,4 s');
+    assert.ok(!st.seen.length || !st.seen.includes(tv3.ArtApp.S.current.uid), 'no repite una obra ya vista');
+    const stale = Object.assign({}, st, { sig: 'otro' }); const tv4 = make('https://example.test/?tv=0', { ls: { stash: stale }, noFetch: true }); await wait(400);
+    assert.ok(!tv4.ArtApp.S.current, 'con otros filtros la cola guardada no se usa');
+  }
   // en el móvil nada cierra el menú
   ph.ArtApp.closeMenu(); assert.ok(!p.getElementById('drawer').hidden, 'el menú del móvil no se cierra');
   console.log('mando OK · mensajes:', posts);

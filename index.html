@@ -414,7 +414,7 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
     <button class="acch" data-act="acc" data-id="skin" aria-expanded="false"><span class="at">Skin</span><span class="as" data-sum="skin"></span><span class="ac">›</span></button>
     <div class="accb"><label class="fld"><span>Aspecto de la interfaz</span><select id="c-skin"></select></label><p class="hint">Material Design 3 y Material 3 Expressive, en claro y oscuro. Solo cambia el menú, el mando y los avisos; la obra y su ficha no cambian.</p></div>
   </section>
-  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 69b628836e · 2026-10-22 11:05 UTC</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
+  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión dde1469e48 · 2026-10-22 23:47 UTC</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
   <div id="rcfoot" hidden><button class="btn pri" data-act="rc-update">Buscar actualización</button><p id="rcver"></p></div>
 <div id="tvConnect"><button class="btn pri" data-act="tv-connect">Conectar a la TV</button><div class="row" id="tvRow" hidden><input type="text" id="tvCode" placeholder="Código de la TV (ej. abcd-efgh-jkmn)" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn pri" data-act="tv-go">Abrir mando</button></div><p class="hint" id="tvMsg">El código sale bajo el QR en la pantalla de la TV.</p></div>
 </aside>
@@ -2214,7 +2214,7 @@ function present(item, fromHist) {
   slides[S.layer].classList.remove('on'); S.layer = nxt;
   $('#loader').hidden = true;
   if (!fromHist) { S.hist.push(item); if (S.hist.length > 120) S.hist.shift(); S.hi = S.hist.length - 1; }
-  S.current = item; S.shown++;
+  S.current = item; S.shown++; saveStashSoon();
   setCaption(item); updateFavBtn();
   tvNowSoon();
 }
@@ -2231,19 +2231,48 @@ async function advance() {
   try {
     let item = null;
     if (S.nextP && S.nextEpoch === S.epoch) { item = await S.nextP; }
-    S.nextP = null;
+    S.nextP = null; S.ready = null;
     if (epoch !== S.epoch) return;
     if (!item) item = await pullNext();
     if (epoch !== S.epoch) return;
     if (!item) {
       // Sin obras nuevas: se repite una ya vista para que la pantalla nunca se quede parada.
       const old = S.hist.filter(w => !S.current || w.uid !== S.current.uid);
-      if (old.length) { present(C.pick(old), true); toast('Repitiendo obras ya vistas: las fuentes no dan más por ahora'); S.nextEpoch = S.epoch; S.nextP = pullNext(); return; }
+      if (old.length) { present(C.pick(old), true); toast('Repitiendo obras ya vistas: las fuentes no dan más por ahora'); prefetch(); return; }
       showEmpty(); return;
     }
     present(item, false);
-    S.nextEpoch = S.epoch; S.nextP = pullNext();
+    prefetch();
   } finally { if (epoch === S.epoch) { S.adv = false; schedule(); } }
+}
+/* Arranque instantáneo: se guardan en el dispositivo la próxima obra ya comprobada, la cola de obras pendientes y lo ya visto.
+   Al abrir con los mismos filtros, la primera obra sale de ahí (y su imagen suele estar en la caché del navegador) mientras los
+   museos se consultan en segundo plano. Con otros filtros, o pasada una semana, se ignora. */
+const STASH_MAX = 40, STASH_TTL = 7 * 864e5;
+function filterSig(f) { return JSON.stringify(slimF(f)); }
+function prefetch() {
+  const ep = S.epoch; S.nextEpoch = ep; S.ready = null;
+  S.nextP = pullNext().then(it => { if (ep === S.epoch) { S.ready = it; saveStashSoon(); } return it; });
+}
+function saveStash() {
+  if (REMOTE || S.f.onlyFavs) return;
+  clearTimeout(S.stashT); S.stashT = 0;
+  const r = S.ready, first = r ? [Object.assign({}, r, { imgs: [r.url].concat((r.imgs || []).filter(u => u !== r.url)), url: r.url_page || r.url })] : [];
+  const works = first.concat(S.pool.slice(0, STASH_MAX)).map(slimWork).filter(okWork).slice(0, STASH_MAX);
+  const pending = new Set(works.map(w => w.uid)); // la próxima obra ya cuenta como vista en memoria, pero aún no se ha mostrado
+  const seen = Array.from(S.seen).filter(u => !pending.has(u)).slice(-500).concat(S.current && !S.seen.has(S.current.uid) ? [S.current.uid] : []);
+  if (works.length) lsSet('stash', { sig: filterSig(S.f), at: Date.now(), works, seen });
+}
+function saveStashSoon() { if (!S.stashT) S.stashT = setTimeout(saveStash, 3000); }
+function loadStash() {
+  if (REMOTE || S.f.onlyFavs) return 0;
+  const st = lsGet('stash', null);
+  if (!st || st.sig !== filterSig(S.f) || !(Date.now() - st.at < STASH_TTL)) return 0;
+  (Array.isArray(st.seen) ? st.seen : []).forEach(u => { if (typeof u === 'string') S.seen.add(u); });
+  const list = (Array.isArray(st.works) ? st.works : []).filter(okWork).filter(w => !S.seen.has(w.uid));
+  list.forEach(w => S.seenKey.delete(wkey(w)));
+  S.pool = list.concat(S.pool);
+  return list.length;
 }
 function showEmpty() {
   const states = Object.keys(S.status).map(k => S.status[k].state);
@@ -2333,7 +2362,7 @@ function applyChange() {
   if (REMOTE) return;
   clearTimeout(applyT);
   applyT = setTimeout(() => {
-    S.epoch++; S.pool = []; S.nextP = null; S.flight = new Map(); S.cool = {}; S.streak = {}; S.warned = false; S.adv = false; S.counts = {}; S.status = {};
+    S.epoch++; S.pool = []; S.nextP = null; S.ready = null; S.flight = new Map(); S.cool = {}; S.streak = {}; S.warned = false; S.adv = false; S.counts = {}; S.status = {};
     renderSrcs();
     if (S.f.onlyFavs && !S.favs.length) toast('Aún no tienes favoritas');
     advance();
@@ -2769,7 +2798,8 @@ $('#yTo').addEventListener('change', e => { S.f.yearTo = e.target.value; S.f.era
     }
     saveAll(); updateSums(); if (S.f.sources[k]) applyChange(); });
 });
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); else saveStash(); });
+window.addEventListener('pagehide', saveStash);
 let lock = null;
 async function keepAwake() { try { if ('wakeLock' in navigator) lock = await navigator.wakeLock.request('screen'); } catch (e) { /* no disponible */ } }
 
@@ -3140,6 +3170,7 @@ function init() {
   document.body.classList.add('active');
   if (touchLayout() && !lsGet('tapHint', false)) { lsSet('tapHint', true); setTimeout(() => toast('Toca el borde derecho: siguiente · el izquierdo: anterior · el centro: menú'), 2500); }
   showLoader('Buscando obras en los museos…', 'Pulsa Intro o toca la pantalla para abrir los filtros.', false);
+  if (loadStash()) refill(); // con obras guardadas se muestran ya y los museos se consultan igual en segundo plano
   advance();
   initTV();
 }
