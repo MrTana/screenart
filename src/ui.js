@@ -448,7 +448,14 @@ function srcNote(s) {
 function srcRow(s) {
   return '<button class="src" data-act="src" data-id="' + esc(s.id) + '" aria-pressed="' + !!S.f.sources[s.id] + '"><span class="box"></span><span class="nm"><b>' + esc(s.name) + '</b><span data-sn="' + esc(s.id) + '">' + esc(srcNote(s)) + '</span></span><span class="dot ' + ((S.status[s.id] && S.status[s.id].state) || '') + '" data-dot="' + esc(s.id) + '"></span></button>';
 }
-function visibleMuseums() { const q = C.norm(S.mfilter); return C.SOURCE_LIST.filter(s => !q || C.norm(s.name + ' ' + s.place + ' ' + (s.tags || '')).includes(q)); }
+/* Los museos seleccionados salen arriba de la lista. El orden se fija al abrir el menú o cambiar de colección (no al marcar uno suelto,
+   para que las filas no salten bajo el dedo). */
+function pinSelected() { S.pin = new Set(C.SOURCE_LIST.filter(s => S.f.sources[s.id]).map(s => s.id)); }
+function visibleMuseums() {
+  const q = C.norm(S.mfilter); if (!S.pin) pinSelected();
+  const l = C.SOURCE_LIST.filter(s => !q || C.norm(s.name + ' ' + s.place + ' ' + (s.tags || '')).includes(q));
+  return l.filter(s => S.pin.has(s.id)).concat(l.filter(s => !S.pin.has(s.id)));
+}
 function renderSrcs() {
   $('#c-msrcs').innerHTML = visibleMuseums().map(srcRow).join('') || '<p class="hint">Ningún museo coincide. Puedes añadirlo con su nombre aquí abajo.</p>';
 }
@@ -547,7 +554,7 @@ async function addMuseumByName() {
   try {
     const m = await C.resolveMuseum(name), src = C.addMuseum(m);
     S.custom = S.custom.filter(x => x.id !== m.id).concat([m]); lsSet('custom', S.custom);
-    S.f.sources[src.id] = true; S.mfilter = ''; $('#museumFilter').value = ''; el.value = '';
+    S.f.sources[src.id] = true; if (S.pin) S.pin.add(src.id); S.mfilter = ''; $('#museumFilter').value = ''; el.value = '';
     msg.textContent = 'Añadido: ' + m.es + ' (' + m.city + ')';
     renderSrcs(); render('presets'); applyChange();
   } catch (e) { msg.textContent = e && e.message && !e.status ? e.message : 'No pude buscar el museo: ' + errText(e); }
@@ -565,6 +572,7 @@ function render(name) {
   if (key) { const el = Array.prototype.find.call(d.querySelectorAll('[data-act]'), e => e.dataset.act + '|' + e.dataset.id === key); if (el) el.focus({ preventScroll: true }); }
 }
 function renderAll() {
+  pinSelected();
   Object.keys(BOX).forEach(k => { $('#' + BOX[k]).innerHTML = R[k](); });
   renderSrcs();
   $('#artistList').innerHTML = C.ARTIST_SUGGESTIONS.map(a => '<option value="' + esc(a) + '">').join('');
