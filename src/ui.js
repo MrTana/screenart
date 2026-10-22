@@ -133,6 +133,15 @@ async function launch(s, epoch) {
   }
   if (added) wake();
   if (S.pool.length < 6) ensureRefill();
+  setTimeout(() => { if (epoch === S.epoch) sweep(); }, 500);
+}
+/* Barrido: aunque ya haya obras de sobra, cada museo seleccionado se consulta al menos una vez (4 a la vez), para que todos
+   aporten variedad y su color de estado sea real. Después solo se rellena cuando la cola baja. */
+function sweep() {
+  if (S.f.onlyFavs) return;
+  const room = Math.max(0, 4 - S.flight.size); if (!room) return;
+  const todo = C.SOURCE_LIST.filter(s => S.f.sources[s.id] && !S.status[s.id] && !S.flight.has(s.id));
+  C.sampleN(todo, room).forEach(s => launch(s, S.epoch));
 }
 
 /* Cuando las fuentes no dan más obras nuevas, se vuelven a mostrar las ya vistas en lugar de quedarse parado. */
