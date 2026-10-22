@@ -202,7 +202,10 @@ globalThis.fetch = async (url, init) => {
   const orsay = museumSrcs.find(x => x.id === 'm:orsay'); const rp = {}; commonsLog.length = 0;
   const fo = C.defaultFilters();
   const ow = await C.runSource(orsay, fo, Object.assign({}, anyCtx, { report: (n, c, e) => { rp[n] = e ? 'x' : c; } }));
-  assert.deepStrictEqual(Object.keys(rp).sort(), ['Commons', 'Wikidata', 'Wikipedia'], 'Orsay: ' + JSON.stringify(rp));
+  assert.deepStrictEqual(Object.keys(rp).sort(), ['Commons', 'Europeana', 'Google Art Project', 'Wikidata', 'Wikipedia'], 'Orsay: ' + JSON.stringify(rp));
+  assert.ok(commonsLog.some(x => x.includes('Google Art Project') && x.includes("Musée d'Orsay")), 'Google Art Project por museo: busca el nombre del museo');
+  const euq = decodeURIComponent(calls.filter(u => u.includes('api.europeana.eu/record')).pop() || ''); assert.ok(/DATA_PROVIDER:\("[^)]*Orsay/.test(euq), 'Europeana por museo filtra por institución: ' + euq);
+  assert.ok(ow.some(w => w.src === 'europeana' && w.museum === 'Orsay'), 'Europeana: la obra lleva el museo');
   assert.ok(commonsLog.some(x => x.includes("Musée d'Orsay")), 'Commons busca por el nombre del museo');
   const wpw = ow.find(w => w.src === 'wikipedia'); assert.ok(wpw && wpw.title === 'Water Lilies (Monet)' && wpw.artist === 'Claude Monet' && wpw.year === 1906 && wpw.museum === 'Orsay', 'Wikipedia: ' + JSON.stringify(wpw));
   assert.ok(!ow.some(w => w.title === "Musée d'Orsay" || w.title === 'Un político' || w.title === 'Sin imagen'), 'Wikipedia descarta el museo, personas y artículos sin imagen');

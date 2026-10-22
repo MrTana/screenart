@@ -962,13 +962,17 @@ async function wikidataMuseum(m, plan, f, ctx) {
   return wdRows(rows, typeQ, ctx, m.es + ' (' + m.city + ')', any);
 }
 
-async function europeanaFetch(plan, f, ctx) {
+async function europeanaFetch(plan, f, ctx, m) {
   const key = ctx.keys && ctx.keys.europeana;
-  if (!key) { const e = new Error('Falta clave'); e.noKey = true; throw e; }
+  if (!key) { if (m) return []; const e = new Error('Falta clave'); e.noKey = true; throw e; } // por museo, sin clave simplemente no aporta
   const text = [plan.style && plan.style.q, plan.artist || plan.hintArtist, plan.keyword, plan.type === 'painting' ? 'painting' : ''].filter(Boolean).join(' ') || pick(GENERIC);
   const p = new URLSearchParams({ wskey: key, query: text, media: 'true', thumbnail: 'true', rows: '24' });
   if (!ctx.anyRights) p.set('reusability', 'open');
   p.append('qf', 'TYPE:IMAGE');
+  if (m) { // un museo = la institución que aporta los registros (DATA_PROVIDER)
+    const names = Array.from(new Set([].concat(m.eu || [], m.labels.map(x => x[0]), m.q || []).filter(Boolean)));
+    p.append('qf', 'DATA_PROVIDER:(' + names.map(n => '"' + String(n).replace(/"/g, '') + '"').join(' OR ') + ')');
+  }
   if (plan.range) p.append('qf', 'YEAR:[' + Math.max(plan.range[0], 0) + ' TO ' + plan.range[1] + ']');
   const base = 'https://api.europeana.eu/record/v2/search.json?' + p;
   const total = await memo('eu:' + p, async () => (await getJSON(base + '&start=1&rows=1')).totalResults);
@@ -979,7 +983,7 @@ async function europeanaFetch(plan, f, ctx) {
     const rights = (o.rights || [])[0] || '';
     const date = (o.year || [])[0];
     return mk({
-      src: 'europeana', museum: ((o.dataProvider || [])[0]) || 'Europeana', id: o.id,
+      src: 'europeana', museum: (m && m.es) || ((o.dataProvider || [])[0]) || 'Europeana', id: o.id,
       title: o.title[0], artist: (o.dcCreator || [])[0] ? flipName(o.dcCreator[0]) : '', date,
       imgs: [(o.edmIsShownBy || [])[0], (o.edmPreview || [])[0]], thumb: (o.edmPreview || [])[0], url: o.guid,
       type: classifyType(o.title.join(' ')), pd: /publicdomain|zero/.test(rights), license: /publicdomain|zero/.test(rights) ? 'Dominio público' : 'Licencia abierta'
@@ -1131,6 +1135,15 @@ async function commonsSearch(queries, plan, ctx, m, label) {
   }).filter(Boolean);
 }
 
+/* Google Art Project por museo: sus archivos en Commons nombran la institución en la descripción. */
+async function gapMuseum(m, plan, f, ctx) {
+  const tail = ' filetype:bitmap', kw = plan.keyword ? ' ' + plan.keyword : '', base = '"Google Art Project" "' + m.q + '"', qs = [];
+  if (plan.artist) qs.push(base + ' "' + plan.artist + '"' + kw + tail);
+  else { if (plan.style) qs.push(base + ' ' + plan.style.q + kw + tail); qs.push(base + kw + tail); }
+  return commonsSearch(qs, plan, ctx, m, 'Google Art Project');
+}
+const EUROPE_COUNTRIES = new Set(['Alemania', 'Austria', 'Bélgica', 'Dinamarca', 'España', 'Finlandia', 'Francia', 'Irlanda', 'Italia', 'Noruega', 'Países Bajos', 'Portugal', 'Reino Unido', 'Rusia', 'Suecia', 'Suiza']);
+
 /* WikiArt: catálogo grande de pintura clasificado por estilo (respuesta JSON de su propia web). */
 const wikiSlug = s => norm(s).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 async function wikiartFetch(plan, f, ctx) {
@@ -1211,7 +1224,8 @@ async function museumFetch(m, plan, f, ctx) {
     if (ctx.keys && ctx.keys.europeana) jobs.push(['Europeana', () => europeanaFetch(plan, f, ctx)]);
   } else {
     if (m.direct && DIRECT[m.direct]) jobs.push(['Directa', () => DIRECT[m.direct](plan, f, ctx)]);
-    jobs.push(['Wikidata', () => wikidataMuseum(m, plan, f, ctx)], ['Commons', () => commonsFetch(plan, f, ctx, m)], ['Wikipedia', () => wikipediaFetch(plan, f, ctx, m)]);
+    jobs.push(['Wikidata', () => wikidataMuseum(m, plan, f, ctx)], ['Commons', () => commonsFetch(plan, f, ctx, m)], ['Wikipedia', () => wikipediaFetch(plan, f, ctx, m)], ['Google Art Project', () => gapMuseum(m, plan, f, ctx)]);
+    if (ctx.keys && ctx.keys.europeana && EUROPE_COUNTRIES.has(museumCountry(m))) jobs.push(['Europeana', () => europeanaFetch(plan, f, ctx, m)]);
   }
   // WikiArt va primero: sus obras se entregan en cuanto llegan, sin esperar a las demás fuentes de la fila.
   const res = await Promise.allSettled(jobs.map(j => j[1]().then(v => { if (j[0] === 'WikiArt' && ctx.early && v.length) ctx.early(v); return v; })));
@@ -1228,7 +1242,7 @@ async function museumFetch(m, plan, f, ctx) {
 function museumSource(m) {
   finishMuseum(m);
   return { id: 'm:' + m.id, group: 'museum', name: m.es, place: m.country ? m.city + ', ' + m.country : m.city, tags: (m.tags || []).map(t => TAG_NAMES[t] || t).join(' '), museum: m, fetch: (plan, f, ctx) => museumFetch(m, plan, f, ctx),
-    note: m.note || ((m.direct ? 'Directa · ' : '') + 'Wikidata · Commons · Wikipedia') };
+    note: m.note || ((m.direct ? 'Directa · ' : '') + 'Wikidata · Commons · Wikipedia · Google Art Project' + (EUROPE_COUNTRIES.has(museumCountry(m)) ? ' · Europeana' : '')) };
 }
 /* Museos añadidos por el usuario: se busca el museo en Wikidata por su nombre. */
 const SOURCE_LIST = [];

@@ -28,6 +28,7 @@ Si una fuente de un museo falla, las demás siguen. El punto de color y la líne
 
 - **WikiArt**: además del catálogo por estilo, ahora se consulta la página de cada artista.
 - **Wikimedia Commons**: búsqueda por categorías con subcategorías («Paintings by …», estilos, museos), **Google Art Project** e **imágenes destacadas**.
+- **Por museo**: cada museo suma también **Google Art Project** (sus archivos en Commons que nombran al museo) y, si es europeo y hay clave, **Europeana** filtrada por la institución que aporta los registros (`DATA_PROVIDER`). No todos los museos están en Europeana; en ese caso simplemente no aporta.
 - **Intermediario `/api/p`** (`functions/api/p.js`, una función de Cloudflare Pages): WikiArt y la búsqueda del Art Institute of Chicago no envían cabeceras CORS y el navegador no las deja leer. Si la petición directa falla, la app la repite por este intermediario, que solo acepta esas direcciones y solo desde la propia página.
 - **Museos de un solo artista** (Picasso, Miró, Munch, Matisse, Chagall, Rodin, Botero, Sorolla, Klimt…), con colección rápida propia.
 
