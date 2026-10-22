@@ -1,5 +1,5 @@
 /* Service worker: la app abre sin conexión (las obras sí necesitan internet). */
-const VERSION = '7031721b05';
+const VERSION = 'c92e367684';
 const CACHE = 'galeria-' + VERSION;
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/apple-touch-icon.png', 'icons/favicon-32.png'];
 

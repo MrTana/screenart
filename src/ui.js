@@ -72,7 +72,7 @@ const fresh = (w, f) => C.accept(w, f) && !S.seen.has(w.uid) && !S.seenKey.has(w
 
 function setStatus(id, state, msg) {
   S.status[id] = { state, msg: msg || '' };
-  updateSrc(id);
+  updateSrc(id); scheduleResort();
 }
 
 function ensureRefill() { if (S.pool.length < 8) refill(); }
@@ -448,13 +448,35 @@ function srcNote(s) {
 function srcRow(s) {
   return '<button class="src" data-act="src" data-id="' + esc(s.id) + '" aria-pressed="' + !!S.f.sources[s.id] + '"><span class="box"></span><span class="nm"><b>' + esc(s.name) + '</b><span data-sn="' + esc(s.id) + '">' + esc(srcNote(s)) + '</span></span><span class="dot ' + ((S.status[s.id] && S.status[s.id].state) || '') + '" data-dot="' + esc(s.id) + '"></span></button>';
 }
-/* Los museos seleccionados salen arriba de la lista. El orden se fija al abrir el menú o cambiar de colección (no al marcar uno suelto,
-   para que las filas no salten bajo el dedo). */
-function pinSelected() { S.pin = new Set(C.SOURCE_LIST.filter(s => S.f.sources[s.id]).map(s => s.id)); }
+/* Orden de la lista de museos: primero los que ya respondieron (verde), luego los que están buscando o vacíos (amarillo), después los que
+   no están seleccionados y al final los que fallaron (rojo). El orden se congela y solo se recalcula al abrir el menú, al cambiar de colección
+   o cuando pasa un momento sin que la persona toque la lista (para que las filas no salten bajo el dedo o el mando). */
+function srcRank(s) {
+  if (!S.f.sources[s.id]) return 2;
+  const st = S.status[s.id] && S.status[s.id].state;
+  return st === 'ok' ? 0 : (st === 'error' || st === 'nokey') ? 3 : 1;
+}
+function resortMuseums() {
+  const l = C.SOURCE_LIST.map((s, i) => ({ id: s.id, i, r: srcRank(s) })).sort((a, b) => a.r - b.r || a.i - b.i);
+  S.order = new Map(l.map((x, k) => [x.id, k]));
+}
 function visibleMuseums() {
-  const q = C.norm(S.mfilter); if (!S.pin) pinSelected();
-  const l = C.SOURCE_LIST.filter(s => !q || C.norm(s.name + ' ' + s.place + ' ' + (s.tags || '')).includes(q));
-  return l.filter(s => S.pin.has(s.id)).concat(l.filter(s => !S.pin.has(s.id)));
+  const q = C.norm(S.mfilter); if (!S.order) resortMuseums();
+  const pos = s => S.order.has(s.id) ? S.order.get(s.id) : -1; // un museo recién añadido va arriba
+  return C.SOURCE_LIST.filter(s => !q || C.norm(s.name + ' ' + s.place + ' ' + (s.tags || '')).includes(q)).sort((a, b) => pos(a) - pos(b));
+}
+let touchAt = 0, resortTimer = 0;
+function scheduleResort() {
+  if (!S.menu) { S.order = null; return; }
+  if (resortTimer) return; // como máximo un reordenamiento cada ~1,2 s mientras llegan resultados
+  resortTimer = setTimeout(function tick() {
+    resortTimer = 0;
+    if (!S.menu) { S.order = null; return; }
+    if (Date.now() - touchAt < 1500) { resortTimer = setTimeout(tick, 800); return; }
+    const before = S.order ? Array.from(S.order.keys()).join() : '';
+    resortMuseums();
+    if (Array.from(S.order.keys()).join() !== before) renderSrcs();
+  }, 1200);
 }
 function renderSrcs() {
   $('#c-msrcs').innerHTML = visibleMuseums().map(srcRow).join('') || '<p class="hint">Ningún museo coincide. Puedes añadirlo con su nombre aquí abajo.</p>';
@@ -554,7 +576,7 @@ async function addMuseumByName() {
   try {
     const m = await C.resolveMuseum(name), src = C.addMuseum(m);
     S.custom = S.custom.filter(x => x.id !== m.id).concat([m]); lsSet('custom', S.custom);
-    S.f.sources[src.id] = true; if (S.pin) S.pin.add(src.id); S.mfilter = ''; $('#museumFilter').value = ''; el.value = '';
+    S.f.sources[src.id] = true; S.mfilter = ''; $('#museumFilter').value = ''; el.value = '';
     msg.textContent = 'Añadido: ' + m.es + ' (' + m.city + ')';
     renderSrcs(); render('presets'); applyChange();
   } catch (e) { msg.textContent = e && e.message && !e.status ? e.message : 'No pude buscar el museo: ' + errText(e); }
@@ -572,7 +594,7 @@ function render(name) {
   if (key) { const el = Array.prototype.find.call(d.querySelectorAll('[data-act]'), e => e.dataset.act + '|' + e.dataset.id === key); if (el) el.focus({ preventScroll: true }); }
 }
 function renderAll() {
-  pinSelected();
+  resortMuseums();
   Object.keys(BOX).forEach(k => { $('#' + BOX[k]).innerHTML = R[k](); });
   renderSrcs();
   $('#artistList').innerHTML = C.ARTIST_SUGGESTIONS.map(a => '<option value="' + esc(a) + '">').join('');
@@ -747,6 +769,7 @@ document.addEventListener('keydown', e => {
     onAct(act, v);
   });
 });
+['pointerdown', 'touchstart', 'wheel', 'keydown', 'scroll'].forEach(ev => $('#drawer').addEventListener(ev, () => { touchAt = Date.now(); }, { passive: true, capture: true }));
 $('#museumFilter').addEventListener('input', e => { S.mfilter = e.target.value; renderSrcs(); });
 $('#yFrom').addEventListener('change', e => { S.f.yearFrom = e.target.value; S.f.eras = []; render('eras'); applyChange(); });
 $('#yTo').addEventListener('change', e => { S.f.yearTo = e.target.value; S.f.eras = []; render('eras'); applyChange(); });

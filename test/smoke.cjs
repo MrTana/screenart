@@ -146,10 +146,16 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     if (act !== n) { console.error('FALLO preset', name, act, 'esperaba', n); process.exit(1); }
   }
   pick('Museos de París');
-  { const rows = () => Array.from(d.querySelectorAll('#c-msrcs .src')), on = r => r.getAttribute('aria-pressed') === 'true', n = Object.keys(S.f.sources).filter(k => S.f.sources[k]).length;
-    assert.ok(rows().slice(0, n).every(on) && !rows().slice(n).some(on), 'los museos seleccionados salen arriba (' + n + ')');
-    const ids0 = rows().map(r => r.dataset.id).join(); rows()[n + 2].click(); assert.strictEqual(rows().map(r => r.dataset.id).join(), ids0, 'al marcar un museo suelto las filas no se reordenan');
-    A.openMenu && 0; A.renderAll(); assert.ok(rows().slice(0, n + 1).every(on), 'al volver a abrir/renderizar, el recién marcado sube'); rows()[0].click(); rows().find(r => r.dataset.id === ids0.split(',')[n + 2]).click(); }
+  { const rows = () => Array.from(d.querySelectorAll('#c-msrcs .src')), on = r => r.getAttribute('aria-pressed') === 'true';
+    const rank = r => !on(r) ? 2 : (st => st === 'ok' ? 0 : st === 'error' || st === 'nokey' ? 3 : 1)(r.querySelector('.dot').className.replace('dot', '').trim());
+    const sorted = () => rows().map(rank).every((x, i, a) => !i || a[i - 1] <= x);
+    const sel = Object.keys(S.f.sources).filter(k => S.f.sources[k]);
+    sel.forEach((id, k) => { S.status[id] = { state: ['error', 'ok', 'loading', 'empty'][k % 4], msg: '' }; });
+    A.renderAll(); assert.ok(sorted(), 'verdes arriba, luego amarillos, luego sin seleccionar y rojos al final');
+    assert.strictEqual(rank(rows()[rows().length - 1]), 3, 'el último es rojo');
+    assert.strictEqual(rank(rows()[0]), 0, 'el primero es verde');
+    const ids0 = rows().map(r => r.dataset.id).join(); const freeId = rows().find(r => !on(r)).dataset.id; d.querySelector('#c-msrcs [data-id="' + freeId + '"]').click(); assert.strictEqual(rows().map(r => r.dataset.id).join(), ids0, 'al marcar un museo suelto las filas no se reordenan');
+    A.renderAll(); assert.ok(sorted(), 'al reabrir/renderizar el orden vuelve a seguir los colores'); d.querySelector('#c-msrcs [data-id="' + freeId + '"]').click(); }
   console.log('preset Museos de París -> fuentes activas:', Object.keys(S.f.sources).filter(k => S.f.sources[k]).join(','), );
   A.closeMenu();
   await wait(1500);
