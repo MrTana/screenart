@@ -1385,9 +1385,13 @@ async function identifyArtwork(b64, mime, keys) {
         try { j = await call(true); } catch (e) { if (e && e.status === 400) j = await call(false); else throw e; }
         const parts = (((j.candidates || [])[0] || {}).content || {}).parts || [];
         return parseIdJSON(parts.map(p => p.text || '').join(''));
-      } catch (e) { last = e; if (!(e && e.status === 404)) throw named('Gemini (' + model + ')', e); } // si el modelo ya no existe se prueba el siguiente
+      } catch (e) {
+        last = named('Gemini (' + model + ')', e);
+        // modelo que ya no existe (404), saturado (503, 500, 502, 504), sin cuota (429) o que no responde: se prueba el siguiente
+        if (!(e && (e.timeout || [404, 429, 500, 502, 503, 504].includes(e.status)))) throw last;
+      }
     }
-    throw last;
+    if (!keys.anthropic) throw last; // sin otra clave, se devuelve el último error
   }
   if (keys.anthropic) {
     let j;

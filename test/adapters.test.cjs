@@ -304,6 +304,13 @@ globalThis.fetch = async (url, init) => {
       globalThis.fetch = async () => { const e = new Error('Tiempo de espera agotado'); e.timeout = true; throw e; };
       await assert.rejects(() => C.identifyArtwork('QUJD', 'image/jpeg', { anthropic: 'k' }), e => e.timeout && /Claude/.test(e.message), 'el error de tiempo dice quién no respondió');
       globalThis.fetch = old; }
+    { const old = globalThis.fetch, tried = [];
+      globalThis.fetch = async (u, i) => { u = String(u); if (u.includes('generativelanguage')) { tried.push(u.match(/models\/([^:]+)/)[1]); if (tried.length < 3) return { ok: false, status: 503, json: async () => ({}) }; return J({ candidates: [{ content: { parts: [{ text: answer }] } }] }); } return old(u, i); };
+      const r3 = await C.identifyArtwork('QUJD', 'image/jpeg', { gemini: 'k1' }); assert.strictEqual(r3.title_en, 'The Starry Night'); assert.ok(tried.length >= 3, 'ante un 503 prueba otro modelo: ' + tried);
+      globalThis.fetch = async (u, i) => { u = String(u); if (u.includes('generativelanguage')) return { ok: false, status: 503, json: async () => ({}) }; return old(u, i); };
+      const r4 = await C.identifyArtwork('QUJD', 'image/jpeg', { gemini: 'k1', anthropic: 'sk-ant-x' }); assert.strictEqual(r4.title, 'La noche estrellada', 'si Gemini está saturado, usa Claude si hay clave');
+      await assert.rejects(() => C.identifyArtwork('QUJD', 'image/jpeg', { gemini: 'k1' }), e => e.status === 503, 'sin otra clave devuelve el 503');
+      globalThis.fetch = old; }
     id = await C.identifyArtwork('QUJD', 'image/jpeg', { anthropic: 'sk-ant-x' });
     assert.strictEqual(id.title, 'La noche estrellada'); { const c = urls[urls.length - 1][1]; assert.strictEqual(c.headers['x-api-key'], 'sk-ant-x'); assert.strictEqual(c.headers['anthropic-dangerous-direct-browser-access'], 'true'); assert.ok(/"type":"image"/.test(c.body)); }
     await assert.rejects(() => C.identifyArtwork('QUJD', 'image/jpeg', {}), e => e.noKey);
