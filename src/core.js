@@ -1456,7 +1456,11 @@ async function searchWikidataTitle(q, ctx) {
     } catch (e) { if (lang === 'es') throw e; }
   }
   if (!found.length) return [];
-  const ids = found.slice(0, 40).map(r => r.id);
+  return wdWorks(found.slice(0, 40).map(r => r.id), ctx);
+}
+/* Fichas de Wikidata (con imagen) de esos identificadores, como obras listas para mostrar. */
+async function wdWorks(ids, ctx) {
+  const api = 'https://www.wikidata.org/w/api.php?format=json&origin=*&';
   const ents = {};
   for (let i = 0; i < ids.length; i += 25) {
     const j = await getJSON(api + 'action=wbgetentities&props=claims|labels|descriptions&languages=es|en|fr&ids=' + ids.slice(i, i + 25).join('|'));
@@ -1592,14 +1596,48 @@ async function searchPaintings(text, ctx, onPart, hint) {
 /* ───────── reconocer una obra a partir de una foto ─────────
    Se manda la foto (reducida) a un modelo con visión, con la clave del propio usuario: Gemini (hay nivel gratuito) o Claude. Responde con el
    título, artista, año y museo; luego la app busca la obra por su título y el usuario elige. */
-const ID_PROMPT = 'Eres un experto en historia del arte. La imagen es una foto o captura de una obra de arte (por ejemplo una pintura en un museo, en un libro o en una pantalla). Identifica la obra. Responde SOLO con un objeto JSON, sin texto extra: {"title":"título en español","title_en":"título en inglés o en el idioma original","artist":"artista","year":"año o siglo","museum":"museo donde se conserva","confidence":número de 0 a 1}. Si no reconoces la obra con razonable seguridad, responde {"unknown":true}.';
+const ID_PROMPT = 'Eres un experto en historia del arte. La imagen es una foto o captura de una obra de arte (por ejemplo una pintura en un museo, en un libro o en una pantalla). Identifica la obra. Responde SOLO con un objeto JSON, sin texto extra: {"title":"título en español","title_en":"título en inglés o en el idioma original","artist":"artista","year":"año o siglo","museum":"museo donde se conserva","wikipedia_en":"título exacto del artículo de la Wikipedia en inglés sobre esta obra (vacío si no lo hay)","wikidata":"identificador Q de Wikidata de la obra si lo sabes con seguridad (vacío si no)","confidence":número de 0 a 1}. Si no reconoces la obra con razonable seguridad, responde {"unknown":true}.';
 const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
 function parseIdJSON(text) {
   const m = String(text || '').match(/\{[\s\S]*\}/);
   if (!m) throw new Error('No he entendido la respuesta del reconocimiento');
   let o; try { o = JSON.parse(m[0]); } catch (e) { throw new Error('No he entendido la respuesta del reconocimiento'); }
   if (!o || o.unknown || !(o.title || o.title_en)) return null;
-  return { title: String(o.title || '').trim(), title_en: String(o.title_en || '').trim(), artist: String(o.artist || '').trim(), year: String(o.year || '').trim(), museum: String(o.museum || '').trim(), confidence: +o.confidence || null };
+  return { title: String(o.title || '').trim(), title_en: String(o.title_en || '').trim(), artist: String(o.artist || '').trim(), year: String(o.year || '').trim(), museum: String(o.museum || '').trim(),
+    wikipedia_en: String(o.wikipedia_en || '').trim(), wikidata: /^Q\d+$/.test(String(o.wikidata || '').trim()) ? String(o.wikidata).trim() : '', confidence: +o.confidence || null };
+}
+/* Con lo que reconoció la foto, se va directo a la obra: el artículo de la Wikipedia en inglés (y su ficha de Wikidata) o el identificador
+   de Wikidata que dio el modelo, comprobando que el título o el artista encajan (el modelo a veces se inventa el número). */
+async function findIdentified(id, ctx) {
+  const out = [], qids = []; let trusted = '';
+  const words = t => norm(t).split(/[^a-z0-9]+/).filter(x => x.length > 2 && !TITLE_STOP.has(x));
+  const tw = words(id.title).concat(words(id.title_en)), aw = words(id.artist).pop();
+  const fits = w => { const t = norm(w.title), a = norm(w.artist); return (aw && a.includes(aw)) || tw.filter(x => t.includes(x)).length >= Math.min(2, tw.length); };
+  if (id.wikipedia_en) {
+    try {
+      const j = await getJSON('https://en.wikipedia.org/w/api.php?action=query&format=json&formatversion=2&origin=*&redirects=1&prop=pageimages|description|pageprops&piprop=thumbnail|original&pithumbsize=2000&ppprop=wikibase_item&titles=' + encodeURIComponent(id.wikipedia_en), null, 15000);
+      const pg = ((j.query && j.query.pages) || [])[0];
+      if (pg && !pg.missing) {
+        if (pg.pageprops && pg.pageprops.wikibase_item) qids.push(trusted = pg.pageprops.wikibase_item);
+        const src = (pg.thumbnail && pg.thumbnail.source) || (pg.original && pg.original.source), full = pg.original && pg.original.source;
+        if (src && /\.(jpe?g|png|webp)(\?|$)/i.test(full || src)) out.push(mk({
+          src: 'wpen', museum: id.museum || 'Wikipedia (en)', id: String(pg.pageid), title: id.title || pg.title, artist: id.artist, date: id.year, year: parseInt(id.year, 10) || null,
+          imgs: [src].concat(full && full !== src ? [full] : []), thumb: src.replace(/\/(\d+)px-/, '/400px-'),
+          url: 'https://en.wikipedia.org/?curid=' + pg.pageid, type: 'painting', pd: null, license: 'Imagen de Wikipedia / Wikimedia Commons'
+        }));
+      }
+    } catch (e) { /* sin Wikipedia: se prueba con Wikidata */ }
+  }
+  if (id.wikidata && !qids.includes(id.wikidata)) qids.push(id.wikidata);
+  if (qids.length) {
+    try {
+      const ws = await wdWorks(qids, ctx);
+      ws.forEach(w => { if (w.uid === 'wiki:' + trusted || fits(w)) { if (!w.artist) w.artist = id.artist; out.unshift(w); } });
+    } catch (e) { /* sin Wikidata: queda lo de Wikipedia */ }
+  }
+  // la ficha de Wikidata (imagen de Commons) y la de Wikipedia son la misma obra: se deja una
+  const wd = out.filter(w => w.src === 'wiki');
+  return (wd.length ? wd : out).slice(0, 3);
 }
 async function identifyArtwork(b64, mime, keys) {
   keys = keys || {};
@@ -1825,7 +1863,7 @@ async function runSource(src, f, ctx) {
 const api = {
   QUICK_COLLECTIONS, quickFilters, cleanName, WD_SHARDS, wdMuseumQuery, wdSelect, md5, commonsImgs, PX, memoForget, primeWikidataCounts, rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
   ERAS, STYLES, TYPES, KEYWORDS, EXCLUDES, excluded, MUSEUMS, DEFAULT_MUSEUMS, MUSEUM_SOURCES, ARTIST_SUGGESTIONS, ARTIST_GROUPS, TUNING, keywordToQuery,
-  museumCountry, countryCollections, styleIdsOf, searchPaintings, identifyArtwork, countryCollectionName, defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC, museumIdsByTag,
+  museumCountry, countryCollections, styleIdsOf, searchPaintings, identifyArtwork, findIdentified, countryCollectionName, defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC, museumIdsByTag,
   adapters: { momaFetch, ngaFetch, tateFetch, shardFetch, commonsSpecial, wikidataMuseum, wikipediaFetch, commonsFetch, wikiartFetch, metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }
 };
 if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.ArtCore = api;

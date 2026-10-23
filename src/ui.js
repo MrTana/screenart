@@ -669,14 +669,19 @@ async function searchByPhoto(file, pre) { // pre: imagen ya preparada { b64, mim
     if (!id) { tmsg('No reconozco la obra. Prueba con otra foto más recta, con buena luz y sin reflejos, o búscala por su nombre.'); return; }
     const label = '«' + (id.title || id.title_en) + '»' + (id.artist ? ', ' + id.artist : '') + (id.year ? ' (' + id.year + ')' : '');
     tmsg('Parece ser ' + label + '. Buscándola…');
-    const done = list => { if (mine === S.titleQ) { S.tres = rankFound(list, id); renderTres(); } };
-    let res = await C.searchPaintings(id.title_en || id.title, ctx(), done, id.artist);
-    if (id.title && id.title_en && C.norm(id.title) !== C.norm(id.title_en)) {
-      try { const more = await C.searchPaintings(id.title, ctx(), null, id.artist); res = res.concat(more.filter(m => !res.some(r => r.uid === m.uid))); } catch (e) { /* con la primera búsqueda basta */ }
-    }
+    // 1) directo a esa obra (Wikipedia / Wikidata); 2) a la vez, búsqueda por título para otras versiones, como mucho 25 s
+    let exact = [];
+    try { exact = await C.findIdentified(id, ctx()); } catch (e) { /* se sigue con la búsqueda por título */ }
     if (mine !== S.titleQ) return;
-    S.tres = rankFound(res, id); renderTres();
-    tmsg(S.tres.length ? 'Parece ser ' + label + '. Toca una para verla ahora.' : 'Parece ser ' + label + ', pero no encuentro esa obra con imagen. Prueba a buscarla por su nombre.');
+    const seen = new Set(exact.map(w => w.uid)), parts = {};
+    const show = () => { if (mine !== S.titleQ) return; const all = [].concat(...Object.values(parts)).filter((w, i, l) => !seen.has(w.uid) && l.findIndex(x => x.uid === w.uid) === i); S.tres = exact.concat(rankFound(all, id)).slice(0, 20); renderTres(); };
+    if (exact.length) { show(); tmsg('Es ' + label + '. Tócala para verla. Buscando más versiones…'); }
+    const titles = [id.title_en, id.title].filter((t, i, l) => t && l.findIndex(x => C.norm(x) === C.norm(t)) === i);
+    const jobs = titles.map((t, i) => C.searchPaintings(t, ctx(), list => { parts[i] = list; show(); }, id.artist).then(list => { parts[i] = list; show(); }, () => {}));
+    await Promise.race([Promise.all(jobs), new Promise(r => setTimeout(r, 25000))]);
+    if (mine !== S.titleQ) return;
+    show();
+    tmsg(exact.length ? 'Es ' + label + '. Tócala para verla.' : S.tres.length ? 'Parece ser ' + label + '. Toca una para verla ahora.' : 'Parece ser ' + label + ', pero no encuentro esa obra con imagen. Prueba a buscarla por su nombre.');
   } catch (e) {
     tmsg(e && e.noKey ? 'Falta la clave para reconocer fotos.' : e && (e.status === 400 || e.status === 401 || e.status === 403) ? 'La clave no es válida o no tiene permiso para reconocer imágenes (' + e.status + ').' : e && (e.status === 503 || e.status === 500 || e.status === 502 || e.status === 504 || e.status === 529) ? 'El servicio de reconocimiento está saturado (' + e.status + '). Espera unos segundos y vuelve a intentarlo.' : e && e.status === 429 ? 'Se acabó la cuota de la clave por ahora; prueba más tarde.' : e && e.timeout ? 'No pude reconocer la foto: ' + e.message + '. Prueba de nuevo; si sigue igual, usa la otra clave o una foto más pequeña.' : 'No pude reconocer la foto: ' + errText(e));
   }

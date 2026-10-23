@@ -75,6 +75,27 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   // buscar por foto: abre la galería del móvil (sin forzar la cámara)
   let clicked; const inp = d.getElementById('photoIn'); inp.click = () => { clicked = inp.getAttribute('capture'); };
   sc.querySelector('[data-act=scan-photo]').click(); assert.strictEqual(clicked, null, 'Foto elige una imagen guardada');
+  // foto reconocida: va directa a la obra (artículo de la Wikipedia en inglés → Wikidata), aunque la búsqueda por título no dé nada
+  w.fetch = async u => { u = String(u);
+    if (/generativelanguage/.test(u)) return J({ candidates: [{ content: { parts: [{ text: '{"title":"El jardín de las delicias","title_en":"The Garden of Earthly Delights","artist":"El Bosco","year":"1500","museum":"Museo del Prado","wikipedia_en":"The Garden of Earthly Delights","wikidata":"Q99999","confidence":0.9}' }] } }] });
+    if (/en\.wikipedia\.org\/w\/api\.php.*titles=The%20Garden/.test(u)) return J({ query: { pages: [{ pageid: 1, title: 'The Garden of Earthly Delights', pageprops: { wikibase_item: 'Q321303' }, original: { source: 'https://upload.wikimedia.org/x/Garden.jpg' } }] } });
+    if (/wbgetentities/.test(u) && /props=claims/.test(u)) return J({ entities: {
+      Q321303: { id: 'Q321303', labels: { es: { value: 'El jardín de las delicias' } }, descriptions: { es: { value: 'tríptico de El Bosco' } }, claims: { P18: [{ mainsnak: { datavalue: { value: 'Garden.jpg' } } }], P170: [{ mainsnak: { datavalue: { value: { id: 'Q130531' } } } }] } },
+      Q99999: { id: 'Q99999', labels: { es: { value: 'Un puente cualquiera' } }, descriptions: { es: { value: 'pintura de Fulano' } }, claims: { P18: [{ mainsnak: { datavalue: { value: 'Puente.jpg' } } }], P170: [{ mainsnak: { datavalue: { value: { id: 'Q1' } } } }] } } } });
+    if (/wbgetentities/.test(u)) return J({ entities: { Q130531: { labels: { es: { value: 'El Bosco' } } }, Q1: { labels: { es: { value: 'Fulano' } } } } });
+    throw new TypeError('Failed to fetch'); };
+  Object.defineProperty(inp, 'files', { value: [new w.File([new Uint8Array([255, 216, 255, 224])], 'f.jpg', { type: 'image/jpeg' })], configurable: true });
+  inp.dispatchEvent(new w.Event('change', { bubbles: true })); await wait(800);
+  const titles = Array.from(d.querySelectorAll('#scanRes .tres b')).map(b => b.textContent);
+  assert.deepStrictEqual(titles, ['El jardín de las delicias'], 'la obra reconocida, y no la del número inventado: ' + titles + ' · ' + d.getElementById('scanMsg').textContent);
+  assert.ok(/^Es «El jardín de las delicias», El Bosco/.test(d.getElementById('scanMsg').textContent), d.getElementById('scanMsg').textContent);
+  A.onAct('sheet-close');
+  sc.querySelector('[data-act=scan-name]').click(); d.getElementById('scanTitleIn').value = 'noche estrellada';
+  w.fetch = async u => { u = String(u);
+    if (/wbsearchentities/.test(u)) return J({ search: /language=es/.test(u) ? [{ id: 'Q45585', label: 'La noche estrellada', description: 'pintura de Vincent van Gogh' }] : [] });
+    if (/props=claims/.test(u)) return J({ entities: { Q45585: { id: 'Q45585', labels: { es: { value: 'La noche estrellada' } }, descriptions: { es: { value: 'pintura de Vincent van Gogh' } }, claims: { P18: [{ mainsnak: { datavalue: { value: 'Starry.jpg' } } }] } } } });
+    throw new TypeError('Failed to fetch'); };
+  A.onAct('scan-name-go'); await wait(300);
   // elegir el resultado: se cierra la cámara y se ve la obra en la galería
   d.querySelector('#scanRes .tres').click(); await wait(100);
   assert.ok(sc.hidden && stopped === 1, 'la cámara se apaga'); assert.ok(home.hidden, 'se sale del inicio');
