@@ -1635,9 +1635,36 @@ async function findIdentified(id, ctx) {
       ws.forEach(w => { if (w.uid === 'wiki:' + trusted || fits(w)) { if (!w.artist) w.artist = id.artist; out.unshift(w); } });
     } catch (e) { /* sin Wikidata: queda lo de Wikipedia */ }
   }
+  // 3) sin ficha directa (obras sin artículo propio, como muchos dibujos): se busca entre las obras de ese artista en Wikidata
+  if (!out.length && id.artist && tw.length) { try { (await worksByArtist(id, ctx)).forEach(w => out.push(w)); } catch (e) { /* Wikidata no contesta */ } }
   // la ficha de Wikidata (imagen de Commons) y la de Wikipedia son la misma obra: se deja una
   const wd = out.filter(w => w.src === 'wiki');
   return (wd.length ? wd : out).slice(0, 3);
+}
+/* Obras del artista reconocido (Wikidata, con imagen) cuyo título contiene las palabras del título reconocido, las que más encajan primero. */
+async function worksByArtist(id, ctx) {
+  const api = 'https://www.wikidata.org/w/api.php?format=json&origin=*&';
+  const j = await getJSON(api + 'action=wbsearchentities&type=item&limit=7&language=en&uselang=en&search=' + encodeURIComponent(id.artist));
+  const hits = j.search || [], who = hits.find(r => /painter|artist|draughts|printmaker|engraver|illustrator|sculptor|pintor|artista/i.test(r.description || '')) || hits[0];
+  if (!who) return [];
+  const stem = x => (x.length > 4 ? x.replace(/(es|s)$/, '') : x);
+  const words = t => norm(t).split(/[^a-z0-9]+/).filter(x => x.length > 2 && !TITLE_STOP.has(x) && !/^(near|with|from|des|del|las|los|bei|van|von|the)$/.test(x));
+  const sets = [words(id.title_en), words(id.title)].filter(x => x.length);
+  const keys = Array.from(new Set([].concat(...sets).map(stem))).sort((x, y) => y.length - x.length).slice(0, 4);
+  if (!keys.length) return [];
+  const rows = await sparql('SELECT ?w ?l WHERE { ?w wdt:P170 wd:' + who.id + '; wdt:P18 ?img; rdfs:label ?l. FILTER(LANG(?l) IN ("en","es","fr","nl","de","it")) ' +
+    'FILTER(' + keys.map(k => 'CONTAINS(LCASE(?l), "' + k.replace(/[^a-z0-9]/g, '') + '")').join(' || ') + ') } LIMIT 300');
+  const best = {};
+  rows.forEach(r => {
+    const q = String(r.w.value).split('/').pop(), l = norm(r.l.value);
+    const sc = Math.max.apply(null, sets.map(ws => ws.filter(x => l.includes(stem(x))).length / ws.length));
+    if (sc > (best[q] || 0)) best[q] = sc;
+  });
+  const top = Object.keys(best).filter(q => best[q] >= 0.5).sort((x, y) => best[y] - best[x]).slice(0, 6);
+  if (!top.length) return [];
+  const ws = await wdWorks(top, ctx);
+  ws.forEach(w => { w.artist = w.artist || id.artist; });
+  return ws.sort((x, y) => (best[y.uid.split(':')[1]] || 0) - (best[x.uid.split(':')[1]] || 0));
 }
 async function identifyArtwork(b64, mime, keys) {
   keys = keys || {};

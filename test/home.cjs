@@ -90,6 +90,22 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   assert.deepStrictEqual(titles, ['El jardín de las delicias'], 'la obra reconocida, y no la del número inventado: ' + titles + ' · ' + d.getElementById('scanMsg').textContent);
   assert.ok(/^Es «El jardín de las delicias», El Bosco/.test(d.getElementById('scanMsg').textContent), d.getElementById('scanMsg').textContent);
   A.onAct('sheet-close');
+  // obra sin artículo propio (un dibujo de Van Gogh): se busca entre las obras del artista; el cuadro de otro con el mismo título no sale
+  w.fetch = async u => { u = String(u);
+    if (/generativelanguage/.test(u)) return J({ candidates: [{ content: { parts: [{ text: '{"title":"Molinos de viento en los alrededores de Dordrecht","title_en":"Windmills near Dordrecht","artist":"Vincent van Gogh","year":"1881","wikipedia_en":"","wikidata":""}' }] } }] });
+    if (/wbsearchentities/.test(u) && /search=Vincent/.test(u)) return J({ search: [{ id: 'Q5582', label: 'Vincent van Gogh', description: 'Dutch painter (1853–1890)' }] });
+    if (/query\.wikidata\.org/.test(u)) { assert.ok(/wd:Q5582/.test(decodeURIComponent(u)) && /windmill/.test(decodeURIComponent(u)), 'consulta por artista: ' + decodeURIComponent(u)); return J({ results: { bindings: [{ w: { value: 'http://www.wikidata.org/entity/Q777' }, l: { value: 'Windmills near Dordrecht', 'xml:lang': 'en' } }, { w: { value: 'http://www.wikidata.org/entity/Q778' }, l: { value: 'Windmill on Montmartre' } }] } }); }
+    if (/wbsearchentities/.test(u)) return J({ search: [{ id: 'Q500', label: 'Windmills near Dordrecht', description: 'painting by Karl Daubigny' }] });
+    if (/wbgetentities/.test(u) && /props=claims/.test(u)) return J({ entities: {
+      Q777: { id: 'Q777', labels: { en: { value: 'Windmills near Dordrecht' } }, descriptions: { en: { value: 'drawing by Vincent van Gogh' } }, claims: { P18: [{ mainsnak: { datavalue: { value: 'VG.jpg' } } }], P170: [{ mainsnak: { datavalue: { value: { id: 'Q5582' } } } }] } },
+      Q500: { id: 'Q500', labels: { en: { value: 'Windmills near Dordrecht' } }, descriptions: { en: { value: 'painting by Karl Daubigny' } }, claims: { P18: [{ mainsnak: { datavalue: { value: 'KD.jpg' } } }], P170: [{ mainsnak: { datavalue: { value: { id: 'Q501' } } } }] } } } });
+    if (/wbgetentities/.test(u)) return J({ entities: { Q5582: { labels: { en: { value: 'Vincent van Gogh' } } }, Q501: { labels: { en: { value: 'Karl Daubigny' } } } } });
+    throw new TypeError('Failed to fetch'); };
+  inp.dispatchEvent(new w.Event('change', { bubbles: true })); await wait(800);
+  const vg = Array.from(d.querySelectorAll('#scanRes .tres span')).map(b => b.textContent);
+  assert.deepStrictEqual(vg.map(x => x.split(' · ')[0]).length, 1, 'solo la de Van Gogh: ' + vg + ' · ' + d.getElementById('scanMsg').textContent);
+  assert.ok(/Windmills near Dordrecht/.test(vg[0]) && /Vincent van Gogh/.test(vg[0]), vg[0]);
+  A.onAct('sheet-close');
   sc.querySelector('[data-act=scan-name]').click(); d.getElementById('scanTitleIn').value = 'noche estrellada';
   w.fetch = async u => { u = String(u);
     if (/wbsearchentities/.test(u)) return J({ search: /language=es/.test(u) ? [{ id: 'Q45585', label: 'La noche estrellada', description: 'pintura de Vincent van Gogh' }] : [] });
