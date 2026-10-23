@@ -168,7 +168,7 @@ globalThis.fetch = async (url, init) => {
   assert.strictEqual(ws.length, 3, 'filas de Wikidata: se descartan tif y webm -> ' + ws.length);
   assert.ok(wsAll.some(w => w.src === 'commons') && wsAll.some(w => w.src === 'wikipedia'), 'el Louvre también trae Commons y Wikipedia');
   const gio = ws.find(w => w.title === 'La Gioconda'); assert.strictEqual(gio.type, 'painting'); assert.ok(gio.museum === 'Louvre (París)');
-  assert.ok(gio.imgs[0].startsWith('https://commons.wikimedia.org/wiki/Special:FilePath/Mona%20Lisa.jpg?width='), gio.imgs[0]);
+  assert.ok(gio.imgs[0].startsWith('https://upload.wikimedia.org/wikipedia/commons/thumb/') && gio.imgs[0].endsWith('px-Mona_Lisa.jpg') && /^https:\/\/commons.wikimedia.org\/wiki\/Special:FilePath\/Mona(%20|_)Lisa.jpg\?width=/.test(gio.imgs[1]), gio.imgs.join(' '));
   assert.strictEqual(ws.find(w => w.title === 'Venus de Milo').type, 'sculpture');
   const ext = ws.find(w => w.title === 'Obra moderna'); assert.deepStrictEqual(ext.imgs, ['https://museo.example/img/obra.jpg']); assert.ok(/derechos/.test(ext.license));
   assert.ok(C.accept(ext, f1) && C.accept(gio, f1), 'accept: pasan con derechos');
@@ -198,6 +198,14 @@ globalThis.fetch = async (url, init) => {
   const mg = C.SOURCE_LIST.find(x => x.id === 'm:magritte'); assert.ok(/Bélgica/.test(mg.place) && /surrealismo/.test(mg.tags) && /Bélgica/.test(mg.tags));
   sparqlLog.length = 0; await C.runSource(mg, C.defaultFilters(), anyCtx);
   assert.ok(/"Musée Magritte"@fr/.test(sparqlLog.filter(q => !/COUNT\(/.test(q)).pop()), 'Magritte: nombre en francés');
+  { // imágenes del tamaño justo y miniaturas directas de Commons
+    const cr = require('crypto'); ['', 'abc', 'Café_ñ_日本.jpg', 'x'.repeat(130)].forEach(x => assert.strictEqual(C.md5(x), cr.createHash('md5').update(x, 'utf8').digest('hex'), 'md5 ' + x));
+    const ci = C.commonsImgs('https://commons.wikimedia.org/wiki/Special:FilePath/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg?width=2000', 1920);
+    assert.strictEqual(ci[0], 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa,_by_Leonardo_da_Vinci,_from_C2RMF_retouched.jpg/1920px-Mona_Lisa,_by_Leonardo_da_Vinci,_from_C2RMF_retouched.jpg');
+    assert.ok(/Special:FilePath\/.*\?width=1920$/.test(ci[1]) && /\/1280px-/.test(ci[2]), 'respaldo: original y 1280 px');
+    assert.strictEqual(C.commonsImgs('https://commons.wikimedia.org/wiki/Special:FilePath/Bad%E0%A4%A.jpg', 1280).length, 2, 'nombre dañado: sin miniatura directa');
+    assert.strictEqual(C.PX({ px: 1280 }), 1280); assert.strictEqual(C.PX({ hq: true }), 3840); assert.strictEqual(C.PX({}), 1920);
+  }
   // Un museo, varias fuentes
   const orsay = museumSrcs.find(x => x.id === 'm:orsay'); const rp = {}; commonsLog.length = 0;
   const fo = C.defaultFilters();
@@ -286,7 +294,7 @@ globalThis.fetch = async (url, init) => {
     globalThis.fetch = wdMock(prev);
     const r = await C.searchPaintings('la noche estrellada', {});
     assert.strictEqual(r.length, 1, 'una obra con imagen'); assert.strictEqual(r[0].title, 'La noche estrellada'); assert.strictEqual(r[0].artist, 'Vincent van Gogh'); assert.strictEqual(r[0].year, 1889); assert.strictEqual(r[0].museum, 'Museo de Arte Moderno de Nueva York');
-    assert.ok(/^https:\/\/commons\.wikimedia\.org\/wiki\/Special:FilePath\/Van_Gogh_-_Starry_Night\.jpg\?width=2000/.test(r[0].imgs[0]), r[0].imgs[0]); assert.strictEqual(r[0].type, 'painting');
+    assert.ok(/^https:\/\/upload\.wikimedia\.org\/wikipedia\/commons\/thumb\/d\/d5\/Van_Gogh_-_Starry_Night\.jpg\/1920px-/.test(r[0].imgs[0]) && /Special:FilePath\/Van_Gogh_-_Starry_Night\.jpg\?width=1920/.test(r[0].imgs[1]), r[0].imgs.join(' ')); assert.strictEqual(r[0].type, 'painting');
     assert.ok(calls.some(u => /metmuseum\.org.*title=true/.test(String(u))), 'la búsqueda por título también consulta al Met (por título)');
     assert.ok(calls.some(u => /data\.rijksmuseum\.nl\/search\/collection\?.*title=/.test(String(u))), 'y al Rijksmuseum');
     { const parts = []; await C.searchPaintings('la noche estrellada', {}, l => parts.push(l.length)); assert.ok(parts.length >= 2, 'los resultados llegan por partes: ' + parts); }

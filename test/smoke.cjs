@@ -101,7 +101,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     A.openMenu(); d.getElementById('titleIn').value = 'noche estrellada'; d.querySelector('[data-act=title-search]').click(); await wait(300);
     assert.strictEqual(d.querySelectorAll('#c-tres .tres').length, 1, 'resultado de la búsqueda por título');
     d.querySelector('#c-tres .tres').click(); await wait(100);
-    assert.strictEqual(S.current.title, 'La noche estrellada', 'la obra elegida se muestra'); assert.ok(!S.menu, 'el menú se cierra al elegirla'); assert.ok(/Special:FilePath\/Starry\.jpg/.test(d.querySelector('.slide.on img').getAttribute('src')), 'se muestra la imagen, no la página: ' + d.querySelector('.slide.on img').getAttribute('src')); assert.strictEqual(d.querySelector('#caption .t').textContent, 'La noche estrellada');
+    assert.strictEqual(S.current.title, 'La noche estrellada', 'la obra elegida se muestra'); assert.ok(!S.menu, 'el menú se cierra al elegirla'); assert.ok(/(Special:FilePath|upload\.wikimedia\.org\/wikipedia\/commons\/thumb\/.*)\/Starry\.jpg/.test(d.querySelector('.slide.on img').getAttribute('src')), 'se muestra la imagen, no la página: ' + JSON.stringify(S.current.imgs) + ' ' + d.querySelector('.slide.on img').getAttribute('src')); assert.strictEqual(d.querySelector('#caption .t').textContent, 'La noche estrellada');
     // buscar por foto
     d.getElementById('photoIn').dispatchEvent(new w.Event('change')); // sin archivo no pasa nada
     const fotoMsg = () => d.getElementById('titleMsg').textContent;
@@ -162,6 +162,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   console.log('tras filtros -> mostradas:', S.shown, '| estados:', JSON.stringify(Object.fromEntries(Object.entries(S.status).map(([k, v]) => [k, v.state + (v.msg ? ':' + v.msg : '')]))));
   { const on = Object.keys(S.f.sources).filter(k => S.f.sources[k]); const keep = S.pool; S.pool = Array.from({ length: 30 }, (_, i) => ({ uid: 'x' + i, src: 'x', title: 'Relleno ' + i, artist: 'A', museum: 'M', imgs: ['https://upload.wikimedia.org/x' + i + '.jpg'], url: 'https://upload.wikimedia.org/x' + i + '.jpg', type: 'painting' })); S.status = {}; S.flight = new Map(); S.cool = {}; S.streak = {}; A.refill(); await wait(5000); S.pool = keep;
     const tried = on.filter(k => S.status[k]).length; assert.strictEqual(tried, on.length, 'el barrido consulta todos los museos seleccionados, no solo 4 (' + tried + '/' + on.length + ')'); }
+  { const mm = w.localStorage.getItem('galeria-arte-v1:memo'); assert.ok(mm && Object.keys(JSON.parse(mm)).length >= 1 && Object.values(JSON.parse(mm)).every(v => typeof v[0] === 'number'), 'los totales de las consultas se guardan en el dispositivo (solo números)'); }
   A.next(); await wait(100); A.prev();
   console.log('historial:', S.hist.length, 'idx', S.hi);
   assert.ok(S.current && S.current.museum, 'la obra trae museo'); assert.strictEqual(w.document.querySelector('#caption .s').textContent, S.current.museum, 'la ficha lleva el museo');

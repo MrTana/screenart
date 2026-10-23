@@ -44,7 +44,7 @@ const idx = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/moma/index.
   assert.ok(/Google Art Project/.test(dec2) && /Featured pictures of paintings/.test(dec2), 'consultas especiales');
   // NGA y Tate: mismas piezas, imágenes IIIF / de Tate con alternativas
   const ng = await C.adapters.ngaFetch(plan, C.defaultFilters(), ctx);
-  assert.ok(ng.length > 5 && /^https:\/\/api\.nga\.gov\/iiif\/[0-9a-f-]{36}\/full\/!1600,1600\/0\/default\.jpg$/.test(ng[0].imgs[0]) && ng[0].imgs.length === 2, 'NGA ' + ng[0].imgs);
+  assert.ok(ng.length > 5 && /^https:\/\/api\.nga\.gov\/iiif\/[0-9a-f-]{36}\/full\/!1920,1920\/0\/default\.jpg$/.test(ng[0].imgs[0]) && ng[0].imgs.length === 2, 'NGA ' + ng[0].imgs);
   assert.ok(/^https:\/\/www\.nga\.gov\/artworks\/\d+$/.test(ng[0].url));
   const ta = await C.adapters.tateFetch(plan, C.defaultFilters(), ctx);
   assert.ok(ta.length > 5 && /^https:\/\/media\.tate\.org\.uk\/art\/images\/work\/\w\/\w+\/\w+_10\.jpg$/.test(ta[0].imgs[0]) && ta[0].imgs.length === 3, 'Tate ' + ta[0].imgs);

@@ -59,7 +59,14 @@ function errText(e) {
 }
 
 /* ───────── fuentes y cola de obras ───────── */
-function ctx() { return { hq: S.st.quality === 'high', keys: S.keys, anyRights: !S.f.soloPD }; }
+/* Ancho de imagen a pedir: el lado largo de la pantalla en píxeles reales, redondeado a 1280 o 1920 (3840 en alta calidad). */
+function screenPx() {
+  if (S.st.quality === 'high') return 3840;
+  let need = 1920;
+  try { const sc = window.screen || {}; need = Math.max(sc.width || 0, sc.height || 0, window.innerWidth || 0, window.innerHeight || 0) * (window.devicePixelRatio || 1); } catch (e) { /* sin datos de pantalla */ }
+  return need && need <= 1280 ? 1280 : 1920;
+}
+function ctx() { return { hq: S.st.quality === 'high', px: screenPx(), keys: S.keys, anyRights: !S.f.soloPD }; }
 function wake() { S.waiters.splice(0).forEach(r => r()); }
 function waitPool(ms) { return new Promise(res => { let d = false; const fin = () => { if (!d) { d = true; res(); } }; S.waiters.push(fin); setTimeout(fin, ms); }); }
 function insertRandom(list) { list.forEach(w => S.pool.splice(C.rand(S.pool.length + 1), 0, w)); wake(); }
@@ -163,7 +170,7 @@ function loadImage(urls) {
       const url = urls[i++], im = new Image();
       let done = false;
       const fin = ok => { if (done) return; done = true; clearTimeout(t); ok ? resolve({ url, w: im.naturalWidth, h: im.naturalHeight }) : next(); };
-      const t = setTimeout(() => { im.onload = im.onerror = null; fin(false); }, 15000);
+      const t = setTimeout(() => { im.onload = im.onerror = null; fin(false); }, 9000); // una imagen que no responde en 9 s se salta
       im.onload = () => fin(true); im.onerror = () => fin(false);
       im.referrerPolicy = 'no-referrer'; im.src = url;
     };

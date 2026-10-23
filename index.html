@@ -414,7 +414,7 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
     <button class="acch" data-act="acc" data-id="skin" aria-expanded="false"><span class="at">Skin</span><span class="as" data-sum="skin"></span><span class="ac">›</span></button>
     <div class="accb"><label class="fld"><span>Aspecto de la interfaz</span><select id="c-skin"></select></label><p class="hint">Material Design 3 y Material 3 Expressive, en claro y oscuro. Solo cambia el menú, el mando y los avisos; la obra y su ficha no cambian.</p></div>
   </section>
-  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión dde1469e48 · 2026-10-22 23:47 UTC</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
+  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 8371bbe50c · 2026-10-23 00:02 UTC</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
   <div id="rcfoot" hidden><button class="btn pri" data-act="rc-update">Buscar actualización</button><p id="rcver"></p></div>
 <div id="tvConnect"><button class="btn pri" data-act="tv-connect">Conectar a la TV</button><div class="row" id="tvRow" hidden><input type="text" id="tvCode" placeholder="Código de la TV (ej. abcd-efgh-jkmn)" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn pri" data-act="tv-go">Abrir mando</button></div><p class="hint" id="tvMsg">El código sale bajo el QR en la pantalla de la TV.</p></div>
 </aside>
@@ -439,6 +439,39 @@ const smp = (plan, a, n) => plan && plan.top ? a.slice(0, n) : sampleN(a, n);
 const norm = s => (s == null ? '' : String(s)).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 const num = v => { const n = parseFloat(v); return isNaN(n) ? null : n; };
 
+/* Tamaño de imagen según la pantalla (ctx.px lo calcula la interfaz). Anchos estándar de Wikimedia: 1280, 1920, 3840. */
+const PX = ctx => (ctx && ctx.px) || (ctx && ctx.hq ? 3840 : 1920);
+/* MD5 (para la dirección directa de las miniaturas de Commons, sin pasar por la redirección de Special:FilePath). */
+function md5(str) {
+  const s = unescape(encodeURIComponent(str)), n = ((s.length + 8) >> 6) + 1, x = new Array(n * 16).fill(0);
+  for (let i = 0; i < s.length; i++) x[i >> 2] |= s.charCodeAt(i) << ((i % 4) * 8);
+  x[s.length >> 2] |= 0x80 << ((s.length % 4) * 8); x[n * 16 - 2] = s.length * 8;
+  const K = [], R = [7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21];
+  for (let i = 0; i < 64; i++) K[i] = Math.floor(Math.abs(Math.sin(i + 1)) * 4294967296) | 0;
+  let a0 = 0x67452301, b0 = 0xefcdab89 | 0, c0 = 0x98badcfe | 0, d0 = 0x10325476;
+  for (let o = 0; o < x.length; o += 16) {
+    let a = a0, b = b0, c = c0, d = d0;
+    for (let i = 0; i < 64; i++) {
+      let f, g;
+      if (i < 16) { f = (b & c) | (~b & d); g = i; } else if (i < 32) { f = (d & b) | (~d & c); g = (5 * i + 1) % 16; } else if (i < 48) { f = b ^ c ^ d; g = (3 * i + 5) % 16; } else { f = c ^ (b | ~d); g = (7 * i) % 16; }
+      const tmp = d; d = c; c = b; const sum = (a + f + K[i] + x[o + g]) | 0; b = (b + ((sum << R[i]) | (sum >>> (32 - R[i])))) | 0; a = tmp;
+    }
+    a0 = (a0 + a) | 0; b0 = (b0 + b) | 0; c0 = (c0 + c) | 0; d0 = (d0 + d) | 0;
+  }
+  return [a0, b0, c0, d0].map(v => { let h = ''; for (let i = 0; i < 4; i++) h += ((v >>> (i * 8)) & 255).toString(16).padStart(2, '0'); return h; }).join('');
+}
+/* Imágenes de Commons: primero la miniatura directa del tamaño justo; si el original es más pequeño (no hay miniatura), la
+   dirección Special:FilePath sirve el original; al final una de 1280 px. */
+function commonsImgs(filePathUrl, px) {
+  try { return commonsImgs0(filePathUrl, px); } catch (e) { const b = filePathUrl.replace(/\?.*$/, ''); return [b + '?width=' + px, b + '?width=1280']; } // nombre raro: solo Special:FilePath
+}
+function commonsImgs0(filePathUrl, px) {
+  const name = decodeURIComponent(filePathUrl.replace(/^.*Special:FilePath\//i, '').replace(/\?.*$/, '')).replace(/ /g, '_');
+  const h = md5(name), enc = encodeURIComponent(name).replace(/%2C/g, ',').replace(/%28/g, '(').replace(/%29/g, ')');
+  const thumb = w => 'https://upload.wikimedia.org/wikipedia/commons/thumb/' + h[0] + '/' + h.slice(0, 2) + '/' + enc + '/' + w + 'px-' + enc;
+  const base = filePathUrl.replace(/\?.*$/, '');
+  return [thumb(px), base + '?width=' + px, thumb(1280)];
+}
 async function getJSON(url, init, timeout) {
   const ctl = new AbortController();
   const t = setTimeout(() => ctl.abort(), timeout || 14000);
@@ -471,10 +504,34 @@ async function mapLimit(items, limit, fn) {
   return out;
 }
 
+/* Los totales (cuántas obras hay para una consulta) se recuerdan en el dispositivo 3 días: así al recargar no se repiten
+   las consultas de conteo, que son las más lentas (sobre todo en Wikidata). Solo números; las listas de obras no se guardan. */
+const MEMO_TTL = 3 * 864e5, MEMO_KEY = 'galeria-arte-v1:memo', MEMO_MAX = 800;
+const memoStore = (() => { try { return typeof window !== 'undefined' && window.localStorage ? window.localStorage : null; } catch (e) { return null; } })();
+let memoDisk = null, memoSaveT = 0;
+function hashKey(s) { let h1 = 0x811c9dc5, h2 = 0x01000193; for (let i = 0; i < s.length; i++) { const c = s.charCodeAt(i); h1 = Math.imul(h1 ^ c, 16777619); h2 = Math.imul(h2 + c, 2246822519) ^ (h2 >>> 13); } return (h1 >>> 0).toString(36) + (h2 >>> 0).toString(36) + s.length.toString(36); }
+function memoLoad() {
+  if (memoDisk) return memoDisk;
+  memoDisk = {};
+  try { const o = memoStore && JSON.parse(memoStore.getItem(MEMO_KEY) || '{}'); if (o && typeof o === 'object') memoDisk = o; } catch (e) { /* caché dañada */ }
+  return memoDisk;
+}
+function memoSave() {
+  if (!memoStore || memoSaveT) return;
+  memoSaveT = setTimeout(() => {
+    memoSaveT = 0;
+    const now = Date.now(), d = memoLoad(), ks = Object.keys(d).filter(k => now - d[k][1] < MEMO_TTL).sort((a, b) => d[b][1] - d[a][1]).slice(0, MEMO_MAX);
+    const o = {}; ks.forEach(k => { o[k] = d[k]; }); memoDisk = o;
+    try { memoStore.setItem(MEMO_KEY, JSON.stringify(o)); } catch (e) { /* almacenamiento lleno */ }
+  }, 2000);
+}
+function memoForget(key) { memoMap.delete(key); const d = memoLoad(), h = hashKey(key); if (d[h]) { delete d[h]; memoSave(); } }
 const memoMap = new Map();
 async function memo(key, fn) {
   if (memoMap.has(key)) return memoMap.get(key);
-  const p = fn().catch(e => { memoMap.delete(key); throw e; });
+  const h = hashKey(key), hit = memoStore ? memoLoad()[h] : null;
+  if (hit && typeof hit[0] === 'number' && Date.now() - hit[1] < MEMO_TTL) { const v = Promise.resolve(hit[0]); memoMap.set(key, v); return v; }
+  const p = fn().then(v => { if (typeof v === 'number' && memoStore) { memoLoad()[h] = [v, Date.now()]; memoSave(); } return v; }, e => { memoMap.delete(key); throw e; });
   memoMap.set(key, p);
   if (memoMap.size > 400) memoMap.delete(memoMap.keys().next().value);
   return p;
@@ -937,7 +994,7 @@ async function smkFetch(plan, f, ctx) {
       src: 'smk', museum: 'SMK, Copenhague', id: o.object_number,
       title: t && t.title, artist: (o.artist && o.artist[0]) || (prod && flipName(prod.creator)) || '',
       date: pd && pd.period, year: pd && pd.start ? parseYear(pd.start.slice(0, 4)) : null,
-      imgs: [iiif ? iiif + '/full/!' + (ctx.hq ? 3000 : 2000) + ',/0/default.jpg' : null, o.image_thumbnail, o.image_native].filter(Boolean),
+      imgs: [iiif ? iiif + '/full/!' + PX(ctx) + ',/0/default.jpg' : null, o.image_thumbnail, o.image_native].filter(Boolean),
       thumb: o.image_thumbnail, url: o.frontend_url, w: o.image_width, h: o.image_height,
       type: classifyType(names), pd: o.public_domain !== false, license: o.public_domain !== false ? 'Dominio público' : 'Con derechos de autor'
     });
@@ -971,7 +1028,7 @@ async function vamFetch(plan, f, ctx) {
     return mk({
       src: 'vam', museum: 'Victoria and Albert Museum', id: o.systemNumber,
       title: o._primaryTitle || o.objectType, artist: flipName(o._primaryMaker && o._primaryMaker.name),
-      date: o._primaryDate, imgs: [root + '!' + (ctx.hq ? 3000 : 1800) + ',' + (ctx.hq ? 3000 : 1800) + '/0/default.jpg'],
+      date: o._primaryDate, imgs: [root + '!' + PX(ctx) + ',' + PX(ctx) + '/0/default.jpg'],
       thumb: root + '!500,500/0/default.jpg', url: 'https://collections.vam.ac.uk/item/' + o.systemNumber,
       type: classifyType(o.objectType), pd: null, license: 'V&A (uso no comercial)'
     });
@@ -993,7 +1050,7 @@ async function miaFetch(plan, f, ctx) {
     return mk({
       src: 'mia', museum: 'Minneapolis Institute of Art', id: o.id,
       title: o.title, artist: o.artist || '', date: o.dated,
-      imgs: [iiif + '!' + (ctx.hq ? 3000 : 1800) + ',' + (ctx.hq ? 3000 : 1800) + '/0/default.jpg', 'https://1.api.artsmia.org/' + o.id + '.jpg'],
+      imgs: [iiif + '!' + PX(ctx) + ',' + PX(ctx) + '/0/default.jpg', 'https://1.api.artsmia.org/' + o.id + '.jpg'],
       thumb: iiif + '!500,500/0/default.jpg', url: 'https://collections.artsmia.org/art/' + o.id,
       w: o.image_width, h: o.image_height, type: classifyType([o.classification, o.medium].join(' ')), pd: o.rights_type === 'Public Domain', license: o.rights_type === 'Public Domain' ? 'Dominio público' : 'Con derechos de autor'
     });
@@ -1050,7 +1107,7 @@ async function rijksFetch(plan, f, ctx) {
     return mk({
       src: 'rijks', museum: 'Rijksmuseum', id: rijksNum(id),
       title: rijksName(o), artist: rijksArtist(o), date, year: ts && ts.begin_of_the_begin ? parseInt(ts.begin_of_the_begin.slice(0, 4), 10) : parseYear(date),
-      imgs: [root + '!' + (ctx.hq ? 4000 : 2000) + ',' + (ctx.hq ? 4000 : 2000) + '/0/default.jpg'],
+      imgs: [root + '!' + PX(ctx) + ',' + PX(ctx) + '/0/default.jpg'],
       thumb: root + '!500,500/0/default.jpg', url: page || ('https://id.rijksmuseum.nl/' + rijksNum(id)),
       type: classifyType(JSON.stringify(typeName || '')), pd: true, license: 'Dominio público (CC0)'
     });
@@ -1343,7 +1400,7 @@ function wdSelect(parts, off, withClass) {
 const FILEPATH = /commons\.wikimedia\.org\/wiki\/Special:FilePath\//i;
 function wdRows(rows, typeQ, ctx, museumName, anyRights) {
   const seen = new Set();
-  const w = ctx.hq ? 3840 : 2000;
+  const w = PX(ctx);
   return rows.filter(r => {
     if (!r.image || !r.item || seen.has(r.item.value)) return false;
     const u = r.image.value;
@@ -1358,7 +1415,7 @@ function wdRows(rows, typeQ, ctx, museumName, anyRights) {
       src: 'wiki', museum: museumName || (r.collLabel && r.collLabel.value) || 'Wikimedia Commons', id: qid,
       title: /^Q\d+$/.test(label || '') ? '' : label, artist: r.creatorLabel && !/^Q\d+$/.test(r.creatorLabel.value) ? r.creatorLabel.value : '',
       date: r.inc ? r.inc.value.slice(0, 4).replace(/^0+/, '') : '', year: r.inc ? parseInt(r.inc.value, 10) : null,
-      imgs: commons ? [raw + '?width=' + w, raw + '?width=1200'] : [raw], thumb: commons ? raw + '?width=500' : raw,
+      imgs: commons ? commonsImgs(raw, w) : [raw], thumb: commons ? raw + '?width=500' : raw,
       url: 'https://www.wikidata.org/wiki/' + qid,
       type: typeQ ? WD_NAME[typeQ] : classifyType(r.clsLabel && r.clsLabel.value),
       pd: anyRights ? null : true, license: commons ? (anyRights ? 'Imagen de Wikimedia Commons' : 'Dominio público (Wikimedia)') : 'Imagen externa, con derechos de autor'
@@ -1460,7 +1517,7 @@ async function harvardFetch(plan, f, ctx) {
     src: 'harvard', museum: 'Harvard Art Museums', id: o.id, title: o.title,
     artist: o.people && o.people[0] ? flipName(o.people[0].displayname || o.people[0].name) : '', date: o.dated,
     year: o.datebegin != null && o.dateend != null && o.datebegin ? Math.round((o.datebegin + o.dateend) / 2) : parseYear(o.dated),
-    imgs: [o.primaryimageurl + '?height=' + (ctx.hq ? 3000 : 1800) + '&width=' + (ctx.hq ? 3000 : 1800)], thumb: o.primaryimageurl + '?height=500&width=500',
+    imgs: [o.primaryimageurl + '?height=' + PX(ctx) + '&width=' + PX(ctx)], thumb: o.primaryimageurl + '?height=500&width=500',
     url: o.url, type: classifyType(o.classification), pd: false, license: 'Harvard (uso no comercial)'
   }));
 }
@@ -1525,7 +1582,7 @@ async function commonsSpecial(kind, plan, f, ctx) {
 }
 async function commonsSearch(queries, plan, ctx, m, label) {
   const API = 'https://commons.wikimedia.org/w/api.php?format=json&formatversion=2&origin=*&action=query';
-  const W = ctx.hq ? 3000 : 1800;
+  const W = PX(ctx);
   let pages = [];
   for (const q of queries) {
     const total = await memo('cm:' + q, async () => {
@@ -1618,7 +1675,7 @@ async function wikipediaFetch(plan, f, ctx, m) {
     if (!total) continue;
     const off = rand(Math.max(1, Math.min(total - 30, 900)));
     const j = await wmJSON(API + '&generator=search&gsrnamespace=0&gsrlimit=30&gsroffset=' + off + '&gsrsearch=' + encodeURIComponent(q) +
-      '&prop=pageimages|description&piprop=original|thumbnail&pithumbsize=' + (ctx.hq ? 2800 : 1600));
+      '&prop=pageimages|description&piprop=original|thumbnail&pithumbsize=' + PX(ctx));
     pages = (j.query && j.query.pages) || [];
     if (pages.length) break;
   }
@@ -1733,7 +1790,7 @@ async function searchWikidataTitle(q, ctx) {
       Object.keys(j.entities || {}).forEach(k => { const l = j.entities[k].labels || {}; names[k] = (l.es || l.en || l.fr || {}).value || ''; });
     } catch (e) { /* sin nombres de artista o museo: se usa la descripción */ }
   }
-  const w = ctx && ctx.hq ? 3840 : 2000;
+  const w = PX(ctx);
   return rows.map(r => {
     const lb = r.e.labels || {}, title = (lb.es || lb.en || lb.fr || {}).value || '';
     const ym = r.time && r.time.time ? String(r.time.time).match(/^([+-])0*(\d+)/) : null;
@@ -1743,7 +1800,7 @@ async function searchWikidataTitle(q, ctx) {
     return mk({
       src: 'wiki', museum: names[r.coll] || 'Wikimedia Commons', id: r.e.id, title,
       artist: names[r.creator] || (byDesc ? byDesc.trim() : ''), date: year != null ? String(year) : '', year,
-      imgs: [raw + '?width=' + w, raw + '?width=1200'], thumb: raw + '?width=300',
+      imgs: commonsImgs(raw, w), thumb: raw + '?width=300',
       url: 'https://www.wikidata.org/wiki/' + r.e.id, type: classifyType(r.desc) || 'painting', pd: null, license: 'Imagen de Wikimedia Commons'
     });
   });
@@ -1903,7 +1960,7 @@ const SHARDS = {
   },
   nga: {
     museum: 'National Gallery of Art (Washington)', license: 'NGA (acceso abierto)',
-    img: (r, hq) => ['https://api.nga.gov/iiif/' + r[4] + '/full/!' + (hq ? 3000 : 1600) + ',' + (hq ? 3000 : 1600) + '/0/default.jpg', 'https://api.nga.gov/iiif/' + r[4] + '/full/!1000,1000/0/default.jpg'],
+    img: (r, px) => ['https://api.nga.gov/iiif/' + r[4] + '/full/!' + px + ',' + px + '/0/default.jpg', 'https://api.nga.gov/iiif/' + r[4] + '/full/!1000,1000/0/default.jpg'],
     url: r => 'https://www.nga.gov/artworks/' + r[0]
   },
   tate: {
@@ -1935,7 +1992,7 @@ async function shardFetch(key, plan, ctx) {
   if (plan.range) hits = hits.filter(r => r[3] != null);
   return sampleN(hits, 40).map(r => mk({
     src: key, museum: S.museum, id: r[0], title: r[1], artist: r[2], date: r[3] == null ? '' : String(r[3]), year: r[3],
-    imgs: S.img(r, ctx && ctx.hq), url: S.url(r), type, pd: null, license: S.license
+    imgs: S.img(r, PX(ctx)), url: S.url(r), type, pd: null, license: S.license
   }));
 }
 const momaFetch = (plan, f, ctx) => shardFetch('moma', plan, ctx);
@@ -1964,7 +2021,7 @@ async function runSource(src, f, ctx) {
 }
 
 const api = {
-  rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
+  md5, commonsImgs, PX, memoForget, rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
   ERAS, STYLES, TYPES, KEYWORDS, EXCLUDES, excluded, MUSEUMS, DEFAULT_MUSEUMS, MUSEUM_SOURCES, ARTIST_SUGGESTIONS, ARTIST_GROUPS, TUNING, keywordToQuery,
   museumCountry, countryCollections, styleIdsOf, searchPaintings, identifyArtwork, countryCollectionName, defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC, museumIdsByTag,
   adapters: { momaFetch, ngaFetch, tateFetch, shardFetch, commonsSpecial, wikidataMuseum, wikipediaFetch, commonsFetch, wikiartFetch, metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }
@@ -2035,7 +2092,14 @@ function errText(e) {
 }
 
 /* ───────── fuentes y cola de obras ───────── */
-function ctx() { return { hq: S.st.quality === 'high', keys: S.keys, anyRights: !S.f.soloPD }; }
+/* Ancho de imagen a pedir: el lado largo de la pantalla en píxeles reales, redondeado a 1280 o 1920 (3840 en alta calidad). */
+function screenPx() {
+  if (S.st.quality === 'high') return 3840;
+  let need = 1920;
+  try { const sc = window.screen || {}; need = Math.max(sc.width || 0, sc.height || 0, window.innerWidth || 0, window.innerHeight || 0) * (window.devicePixelRatio || 1); } catch (e) { /* sin datos de pantalla */ }
+  return need && need <= 1280 ? 1280 : 1920;
+}
+function ctx() { return { hq: S.st.quality === 'high', px: screenPx(), keys: S.keys, anyRights: !S.f.soloPD }; }
 function wake() { S.waiters.splice(0).forEach(r => r()); }
 function waitPool(ms) { return new Promise(res => { let d = false; const fin = () => { if (!d) { d = true; res(); } }; S.waiters.push(fin); setTimeout(fin, ms); }); }
 function insertRandom(list) { list.forEach(w => S.pool.splice(C.rand(S.pool.length + 1), 0, w)); wake(); }
@@ -2139,7 +2203,7 @@ function loadImage(urls) {
       const url = urls[i++], im = new Image();
       let done = false;
       const fin = ok => { if (done) return; done = true; clearTimeout(t); ok ? resolve({ url, w: im.naturalWidth, h: im.naturalHeight }) : next(); };
-      const t = setTimeout(() => { im.onload = im.onerror = null; fin(false); }, 15000);
+      const t = setTimeout(() => { im.onload = im.onerror = null; fin(false); }, 9000); // una imagen que no responde en 9 s se salta
       im.onload = () => fin(true); im.onerror = () => fin(false);
       im.referrerPolicy = 'no-referrer'; im.src = url;
     };
