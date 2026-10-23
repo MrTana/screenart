@@ -1,156 +1,151 @@
 {
- "at": "2026-10-23 03:05 UTC",
- "ok": 19,
+ "at": "2026-10-23 07:32 UTC",
+ "ok": 20,
  "total": 20,
  "results": {
   "The Met": {
    "ok": true,
-   "n": 15,
-   "sample": "Owl on a Pine Branch",
-   "ms": 1340
+   "n": 20,
+   "sample": "Bird among Camellias in Snow",
+   "ms": 1372
   },
   "Art Institute of Chicago": {
    "ok": true,
    "n": 24,
    "err": "imagen no comprobable desde GitHub (protección contra robots)",
-   "sample": "Winged Figure",
-   "ms": 569
+   "sample": "Portrait of a Woman",
+   "ms": 472
   },
   "Cleveland Museum of Art": {
    "ok": true,
    "n": 24,
-   "sample": "Two Putti",
-   "ms": 2652
+   "sample": "Diana and Her Nymphs",
+   "ms": 957
   },
   "Rijksmuseum": {
    "ok": true,
    "n": 8,
-   "sample": "The Fish Market in Antwerp",
-   "ms": 3697
+   "sample": "Morning Visit",
+   "ms": 3478
   },
   "Victoria and Albert": {
    "ok": true,
    "n": 24,
-   "sample": "Painting",
-   "ms": 1691
+   "sample": "Bamburgh Castle",
+   "ms": 1285
   },
   "SMK": {
    "ok": true,
-   "n": 4,
-   "sample": "St Peter, two heads of bearded old men, and two sketches of ",
-   "ms": 2438
+   "n": 9,
+   "sample": "Dyssekammer på sydøst siden\". Lyø",
+   "ms": 1742
   },
   "Minneapolis": {
    "ok": true,
-   "n": 10,
-   "sample": "Pure Sound of the Rivers and Mountains",
-   "ms": 899
+   "n": 9,
+   "sample": "Double Frontispiece for the Kolliat",
+   "ms": 725
   },
   "Smithsonian": {
    "ok": true,
    "n": 24,
-   "sample": "Florida Village",
-   "ms": 2111
+   "sample": "Marine",
+   "ms": 1770
   },
   "Europeana": {
    "ok": true,
    "n": 24,
-   "sample": "Gerhard Richter - Painting",
-   "ms": 2206
+   "sample": "Måltavla",
+   "ms": 1816
   },
   "Wikidata (museo)": {
-   "ok": false,
-   "n": 0,
-   "err": "Tiempo de espera agotado",
-   "ms": 40003,
+   "ok": true,
+   "n": 4,
+   "sample": "A Unicorn Attacks a Deer; a Lynx kills a Hare",
+   "ms": 5633,
    "timing": {
     "app": {
-     "ms": 55,
+     "ms": 25,
      "status": 200,
      "n": "841"
     },
     "conPista": {
-     "ms": 433,
+     "ms": 425,
      "status": 200,
      "n": "841"
     },
     "selApp": {
-     "ms": 65024,
+     "ms": 65013,
      "status": 504,
      "rows": 0,
      "head": "upstream request timeout"
     },
     "selSub": {
-     "ms": 290,
+     "ms": 7519,
      "status": 200,
      "rows": 3
     }
-   },
-   "diag": {
-    "simpleCountMs": 392,
-    "status": 200,
-    "body": "{\n  \"head\" : {\n    \"vars\" : [ \"n\" ]\n  },\n  \"results\" : {\n    \"bindings\" : [ {\n      \"n\" : {\n        \"datatype\" : \"http://www.w3.org/2001/XMLSchema#integer\",\n        \"type\" : \"literal\",\n        \"value\""
    }
   },
   "Wikidata (general)": {
    "ok": true,
-   "n": 35,
-   "sample": "Garden at Bordighera, Impression of Morning",
-   "ms": 1124
+   "n": 57,
+   "sample": "Water Lilies",
+   "ms": 2813
   },
   "Commons": {
    "ok": true,
-   "n": 36,
-   "sample": "Madame Moitessier",
-   "ms": 3065
+   "n": 33,
+   "sample": "The Sultan Mehmet II",
+   "ms": 1423
   },
   "Google Art Project": {
    "ok": true,
-   "n": 39,
-   "sample": "Fishermen at Sea",
-   "ms": 5036
+   "n": 40,
+   "sample": "Ottoman Dynasty, Kneeling Angel, by Shah Quli, mid 16th cent",
+   "ms": 1388
   },
   "Wikipedia": {
    "ok": true,
-   "n": 22,
-   "sample": "En plein air",
-   "ms": 450
+   "n": 16,
+   "sample": "List of most expensive paintings",
+   "ms": 448
   },
   "WikiArt": {
    "ok": true,
    "n": 60,
-   "sample": "The Garden",
-   "ms": 1679
+   "sample": "Sand on the Quayside, Port Marly",
+   "ms": 1604
   },
   "MoMA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "I",
-   "ms": 628
+   "sample": "Academy",
+   "ms": 589
   },
   "NGA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Rue Terre Neuve, Meudon",
-   "ms": 581
+   "sample": "Marcelle Lender Dancing the Bolero in \"Chilpéric",
+   "ms": 533
   },
   "Tate (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "White Collage",
-   "ms": 823
+   "sample": "A Black Model",
+   "ms": 939
   },
   "Louvre (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Saint Antoine abbé",
-   "ms": 475
+   "sample": "Arrivée du roi devant Douai qu'il fait investir par sa caval",
+   "ms": 803
   },
   "Prado (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "La cena de San Benito",
-   "ms": 294
+   "sample": "Retrato de caballero anciano",
+   "ms": 260
   }
  }
 }
