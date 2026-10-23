@@ -44,7 +44,12 @@ const wkey = w => C.norm(w.title) + '|' + C.norm(w.artist);
 /* ───────── avisos ───────── */
 let toastT;
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 3200); }
-function busy() { $('#busy').textContent = 'Buscando obras…'; $('#busy').classList.toggle('on', S.refilling > 0); }
+/* «Buscando obras…»: solo con el menú abierto y en el mando; sobre la obra no aparece nunca (no estorba al ver la pintura).
+   En el mando se sabe por el estado de los museos que manda la TV. */
+function busy() {
+  const loading = REMOTE ? Object.keys(S.status).some(k => S.status[k].state === 'loading') : S.refilling > 0;
+  const el = $('#busy'); el.textContent = 'Buscando obras…'; el.classList.toggle('on', loading && (S.menu || !!REMOTE));
+}
 function showLoader(text, sub, btn) {
   $('#loaderText').textContent = text; $('#loaderSub').textContent = sub || ''; $('#loaderMenu').hidden = !btn; $('#loaderDiag').hidden = !btn;
   $('#loader').hidden = false;
@@ -717,8 +722,8 @@ function renderAll() {
   { const ik = idKeys(); $('#idk-gemini').value = ik.gemini || ''; $('#idk-anthropic').value = ik.anthropic || ''; }
   $('#playBtn').textContent = S.paused ? 'Reanudar' : 'Pausar'; updateFavBtn(); updateSums();
 }
-function openMenu() { if (S.menu) return; S.menu = true; clearTimeout(S.timer); renderAll(); $('#drawer').hidden = false; const b = $('#drawer [data-act=next]'); if (b) b.focus({ preventScroll: true }); }
-function closeMenu() { if (REMOTE || !S.menu) return; S.menu = false; $('#drawer').hidden = true; schedule(); try { document.activeElement.blur(); } catch (e) { /* nada */ } }
+function openMenu() { if (S.menu) return; S.menu = true; clearTimeout(S.timer); renderAll(); $('#drawer').hidden = false; busy(); const b = $('#drawer [data-act=next]'); if (b) b.focus({ preventScroll: true }); }
+function closeMenu() { if (REMOTE || !S.menu) return; S.menu = false; $('#drawer').hidden = true; busy(); schedule(); try { document.activeElement.blur(); } catch (e) { /* nada */ } }
 const toggleArr = (arr, v) => { const i = arr.indexOf(v); i < 0 ? arr.push(v) : arr.splice(i, 1); };
 
 function addArtist(name) { name = (name || '').trim(); if (!name || S.f.artists.some(a => C.norm(a) === C.norm(name))) return; S.f.artists.push(name); render('artists'); render('artistsug'); applyChange(); }
@@ -1320,7 +1325,7 @@ function remoteSrcs(m) { // la TV cuenta cómo va cada museo; aquí se pinta igu
   });
   if (!changed.length) return;
   if (changed.length > 6) render('srcs'); else changed.forEach(updateSrc);
-  sweepInfo(); // si cambian muchos, un solo repintado es más barato que fila por fila
+  sweepInfo(); busy(); // si cambian muchos, un solo repintado es más barato que fila por fila
   scheduleResort();
 }
 function remoteCmd(c) {

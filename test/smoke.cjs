@@ -184,6 +184,10 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     A.present(Object.assign({}, v, { uid: 'tv3', iw: 1600, ih: 1000 }), false); const s3 = d.querySelector('.slide.on');
     assert.ok(!s3.classList.contains('tall') && !d.body.classList.contains('plate-on'), 'horizontal: como siempre, con su ficha');
     A.onAct('mode', 'gallery'); S.paused = false; }
+  { // «Buscando obras…» nunca sobre la obra; sí con el menú abierto
+    A.closeMenu(); S.refilling = 1; const b = d.getElementById('busy');
+    const toggle = () => { A.openMenu(); const on1 = b.classList.contains('on'); A.closeMenu(); return [on1, b.classList.contains('on')]; };
+    const [inMenu, onArt] = toggle(); assert.ok(inMenu && !onArt, 'buscando: visible en el menú (' + inMenu + '), oculto sobre la obra (' + onArt + ')'); S.refilling = 0; }
   // Toques como en un libro electrónico (pantalla de 500 px)
   Object.defineProperty(w, 'innerWidth', { value: 500, configurable: true });
   S.st.caption = 'def'; assert.strictEqual(A.capMode(), 'always', 'móvil sin TV: la ficha siempre visible'); S.st.caption = 'auto'; assert.strictEqual(A.capMode(), 'auto'); S.st.caption = 'def';
