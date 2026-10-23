@@ -70,6 +70,18 @@ for (const [name, fn] of Object.entries(CHECKS)) {
   res.ms = Date.now() - t0; results[name] = res;
   console.log((res.ok ? 'OK   ' : 'FALLA') + ' ' + name + ' · ' + res.n + ' obras · ' + res.ms + ' ms' + (res.err ? ' · ' + res.err : ''));
 }
+// Diagnóstico extra de lo que falle: qué devuelve realmente el servicio.
+async function diagJSON(u) { try { const r = await fetch(u); const tx = await r.text(); return { status: r.status, body: tx.slice(0, 1500) }; } catch (e) { return { error: e.message }; } }
+if (!results.Wikipedia.ok) {
+  const d = await diagJSON('https://en.wikipedia.org/w/api.php?format=json&formatversion=2&origin=*&action=query&generator=search&gsrnamespace=0&gsrlimit=8&gsroffset=0&gsrsearch=' + encodeURIComponent('Claude Monet painting') + '&prop=pageimages|description&piprop=original|thumbnail&pithumbsize=1280');
+  try { const j = JSON.parse(d.body.length < 1500 ? d.body : (await (await fetch('https://en.wikipedia.org/w/api.php?format=json&formatversion=2&origin=*&action=query&generator=search&gsrnamespace=0&gsrlimit=8&gsroffset=0&gsrsearch=' + encodeURIComponent('Claude Monet painting') + '&prop=pageimages|description&piprop=original|thumbnail&pithumbsize=1280')).text()));
+    results.Wikipedia.diag = (j.query && j.query.pages || []).map(p => [p.title, p.description, p.original && p.original.width, p.original && p.original.source && p.original.source.slice(-40)]); }
+  catch (e) { results.Wikipedia.diag = d; }
+}
+if (!results['Wikidata (museo)'].ok) {
+  const t0 = Date.now(); const d = await diagJSON('https://query.wikidata.org/sparql?format=json&query=' + encodeURIComponent('SELECT (COUNT(*) AS ?n) WHERE { ?item wdt:P195 wd:Q51252; wdt:P18 ?i. }'));
+  results['Wikidata (museo)'].diag = { simpleCountMs: Date.now() - t0, status: d.status, body: (d.body || d.error || '').slice(0, 200) };
+}
 const out = { at: new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC', ok: Object.values(results).filter(r => r.ok).length, total: Object.keys(results).length, results };
 fs.writeFileSync(path.join(here, '..', 'data', 'health.json'), JSON.stringify(out, null, 1));
 if (out.ok < out.total) process.exit(1);
