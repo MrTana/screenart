@@ -26,7 +26,7 @@
    "q": "Q2946"
   },
   "orangerie": {
-   "error": "Wikidata no responde"
+   "error": "no encuentro el museo en Wikidata"
   },
   "marmottan": {
    "painting": 148,
@@ -35,7 +35,11 @@
    "q": "Q1327886"
   },
   "petitpalais": {
-   "error": "Wikidata no responde"
+   "painting": 1838,
+   "drawing": 3,
+   "print": 12,
+   "q": "Q59546080",
+   "at": "2026-10-23"
   },
   "lyon": {
    "painting": 341,
@@ -170,7 +174,11 @@
    "q": "Q180788"
   },
   "npglondon": {
-   "error": "Wikidata no responde"
+   "painting": 2463,
+   "drawing": 7,
+   "print": 4,
+   "q": "Q238587",
+   "at": "2026-10-23"
   },
   "courtauld": {
    "painting": 383,
@@ -287,7 +295,7 @@
    "q": "Q842858"
   },
   "ateneum": {
-   "error": "Wikidata no responde"
+   "error": "no encuentro el museo en Wikidata"
   },
   "budapest": {
    "painting": 671,
@@ -302,7 +310,11 @@
    "q": "Q153306"
   },
   "mfa": {
-   "error": "Wikidata no responde"
+   "painting": 2536,
+   "drawing": 58,
+   "print": 10,
+   "q": "Q49133",
+   "at": "2026-10-23"
   },
   "frick": {
    "painting": 142,
@@ -335,7 +347,7 @@
    "q": "Q1976985"
   },
   "neuegalerie": {
-   "error": "Wikidata no responde"
+   "error": "no encuentro el museo en Wikidata"
   },
   "nmwa": {
    "painting": 196,
