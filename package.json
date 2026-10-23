@@ -5,7 +5,7 @@
   "description": "Galería de arte para la TV: obras de museos abiertos que cambian solas",
   "scripts": {
     "build": "node build.mjs",
-    "test": "node test/adapters.test.cjs && node test/smoke.cjs && node test/queue.cjs && node test/pwa.cjs && node test/sources.cjs && node test/remote.cjs && node test/exclude.cjs"
+    "test": "node test/adapters.test.cjs && node test/smoke.cjs && node test/queue.cjs && node test/pwa.cjs && node test/sources.cjs && node test/remote.cjs && node test/exclude.cjs && node test/favloop.cjs"
   },
   "devDependencies": {
     "jsdom": "^25.0.0"

@@ -197,10 +197,10 @@ function orientOK(w, h) {
   return true;
 }
 
-async function pullNext() {
+async function pullNext(maxMs) {
   const epoch = S.epoch, t0 = Date.now();
   let idleSince = 0;
-  while (Date.now() - t0 < 40000) {
+  while (Date.now() - t0 < (maxMs || 40000)) {
     if (epoch !== S.epoch) return null;
     if (!S.pool.length) {
       ensureRefill();
@@ -216,7 +216,9 @@ async function pullNext() {
     const res = await Promise.all(batch.map(async w => {
       if (S.seen.has(w.uid) || (S.current && w.uid === S.current.uid)) return null;
       const r = await loadImage(w.imgs);
-      return r && r.w >= 300 && r.h >= 300 && orientOK(r.w, r.h) ? { w, r } : null;
+      const good = r && r.w >= 300 && r.h >= 300 && orientOK(r.w, r.h);
+      if (!good) S.seen.add(w.uid); // imagen rota o que no encaja: cuenta como vista en esta vuelta y no se reintenta sin fin
+      return good ? { w, r } : null;
     }));
     if (epoch !== S.epoch) return null;
     const ok = res.filter(Boolean);
@@ -272,10 +274,11 @@ async function advance() {
   S.adv = true; S.advAt = Date.now(); clearTimeout(S.timer);
   try {
     let item = null;
-    if (S.nextP && S.nextEpoch === S.epoch) { item = await S.nextP; }
+    let waited = false;
+    if (S.nextP && S.nextEpoch === S.epoch) { item = await S.nextP; waited = true; }
     S.nextP = null; S.ready = null;
     if (epoch !== S.epoch) return;
-    if (!item) item = await pullNext();
+    if (!item) item = await pullNext(waited ? 8000 : 40000); // si la precarga ya esperó, no se espera otros 40 s
     if (epoch !== S.epoch) return;
     if (!item) {
       // Sin obras nuevas: se repite una ya vista para que la pantalla nunca se quede parada.
