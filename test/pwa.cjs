@@ -8,7 +8,7 @@ assert.ok(/^#[0-9a-f]{6}$/i.test(man.theme_color) && /^#[0-9a-f]{6}$/i.test(man.
 const png = f => { const b = fs.readFileSync(root + '/' + f); assert.strictEqual(b.slice(1, 4).toString(), 'PNG', f); return [b.readUInt32BE(16), b.readUInt32BE(20)]; };
 man.icons.forEach(i => { const [w, h] = png(i.src); assert.strictEqual(w + 'x' + h, i.sizes, i.src + ' mide ' + w + 'x' + h); });
 assert.ok(man.icons.some(i => i.sizes === '512x512' && i.purpose === 'any') && man.icons.some(i => i.sizes === '192x192') && man.icons.some(i => i.purpose === 'maskable' && i.sizes === '512x512'), 'iconos 192, 512 y maskable');
-assert.deepStrictEqual(png('icons/apple-touch-icon.png'), [180, 180]); assert.deepStrictEqual(png('icons/favicon-32.png'), [32, 32]);
+assert.deepStrictEqual(png('icons/apple-touch-cat.png'), [180, 180]); assert.deepStrictEqual(png('icons/maskable-cat-512.png'), [512, 512]); assert.deepStrictEqual(png('icons/maskable-cat-192.png'), [192, 192]); assert.deepStrictEqual(png('icons/favicon-32.png'), [32, 32]);
 ['rel="manifest" href="manifest.webmanifest"', 'rel="apple-touch-icon"', 'name="theme-color"', 'apple-mobile-web-app-capable', "serviceWorker.register('sw.js')"].forEach(x => assert.ok(html.includes(x), 'index.html sin ' + x));
 
 assert.ok(/no-cache/.test(fs.readFileSync(root + '/_headers', 'utf8')), '_headers sin no-cache');
