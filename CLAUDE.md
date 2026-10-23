@@ -51,6 +51,12 @@ publicada en **https://screenart.pages.dev** (Cloudflare Pages, se despliega sol
 - **Arranque instantáneo** (cola guardada en el dispositivo), **conteos en caché 3 días**, **conteos de Wikidata en lote**,
   **imágenes al tamaño de la pantalla** (miniaturas directas de Commons), **barrido** de todos los museos seleccionados (4 a la vez).
 - **Presentación «Con cartela»**: verticales y cuadradas a un lado con su cartela al otro, alternando lados.
+- **Pantalla de inicio del móvil** (`#home`, solo en el móvil: no en la TV ni en el mando; `?home=1`/`?home=0` la fuerzan): Escaneo de obra,
+  Galería de arte y Colecciones (de momento abre el menú en «Colección rápida»; el usuario definirá Galería y Colecciones). El botón Atrás
+  del móvil y «Inicio» del menú vuelven a ella (`history.pushState`).
+- **Escáner tipo cámara** (`#scanner`, el mismo desde el inicio y desde el menú): zoom (1× 2× 3× y pellizco; zoom de la cámara si lo tiene,
+  si no ampliación), círculo = escanear (manual; el marco se pone verde cuando está quieto), cuadrado izquierdo = buscar por nombre,
+  derecho = buscar por foto de la galería. Resultados en una hoja desde abajo (`#scanSheet`, que también pide la clave si falta).
 - **Buscar por título** y **por foto** (subir foto o escanear con la cámara; reconoce con la clave de Gemini o Anthropic del usuario).
 - Aspectos (skins) Material 3 y Material 3 Expressive, claro y oscuro: afectan al menú, mando, avisos, fondo y ficha.
 

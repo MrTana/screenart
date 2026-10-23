@@ -615,21 +615,23 @@ async function showFound(w) {
   present(Object.assign({}, item, { url: r.url, url_page: item.url, iw: r.w, ih: r.h })); schedule();
 }
 function renderTres() {
-  $('#c-tres').innerHTML = (S.tres || []).map((w, i) => '<button class="tres" data-act="title-show" data-id="' + i + '"><img alt="" loading="lazy" src="' + esc(w.thumb) + '"><span><b>' + esc(w.title) + '</b>' + esc([C.cleanName(w.artist), w.date || w.year, w.museum].filter(Boolean).join(' · ')) + '</span></button>').join('');
+  $('#c-tres').innerHTML = $('#scanRes').innerHTML = (S.tres || []).map((w, i) => '<button class="tres" data-act="title-show" data-id="' + i + '"><img alt="" loading="lazy" src="' + esc(w.thumb) + '"><span><b>' + esc(w.title) + '</b>' + esc([C.cleanName(w.artist), w.date || w.year, w.museum].filter(Boolean).join(' · ')) + '</span></button>').join('');
   updateSums();
 }
-async function searchTitle() {
-  const el = $('#titleIn'), msg = $('#titleMsg'), q = el.value.trim();
+// Los mensajes de la búsqueda salen a la vez en el menú y en la hoja del escáner.
+const tmsg = t => { $('#titleMsg').textContent = t; $('#scanMsg').textContent = t; };
+async function searchTitle(text) {
+  const q = (typeof text === 'string' ? text : $('#titleIn').value).trim();
   if (!q) return;
-  msg.textContent = 'Buscando «' + q + '» en Wikidata y en los museos…'; S.tres = []; renderTres();
+  tmsg('Buscando «' + q + '» en Wikidata y en los museos…'); S.tres = []; renderTres();
   const mine = S.titleQ = (S.titleQ || 0) + 1;
   try {
-    const res = await C.searchPaintings(q, ctx(), list => { if (mine === S.titleQ) { S.tres = list; renderTres(); msg.textContent = 'Buscando… ' + list.length + ' encontradas'; } });
+    const res = await C.searchPaintings(q, ctx(), list => { if (mine === S.titleQ) { S.tres = list; renderTres(); tmsg('Buscando… ' + list.length + ' encontradas'); } });
     if (mine !== S.titleQ) return;
     S.tres = res;
-    msg.textContent = S.tres.length ? 'Toca una obra para verla ahora.' : 'No encuentro obras con ese título y con imagen. Prueba con el nombre en inglés o en el idioma original.';
+    tmsg(S.tres.length ? 'Toca una obra para verla ahora.' : 'No encuentro obras con ese título y con imagen. Prueba con el nombre en inglés o en el idioma original.');
     renderTres();
-  } catch (e) { msg.textContent = e && e.message && !e.status && !(e instanceof TypeError) ? e.message : 'No pude buscar: ' + errText(e); }
+  } catch (e) { tmsg(e && e.message && !e.status && !(e instanceof TypeError) ? e.message : 'No pude buscar: ' + errText(e)); }
 }
 const idKeys = () => { try { return Object.assign({ gemini: '', anthropic: '' }, lsGet('idkeys', {})); } catch (e) { return { gemini: '', anthropic: '' }; } };
 /* Reduce la foto (máx. 1280 px, JPEG) para que el envío sea ligero; si el navegador no puede, se manda tal cual (hasta 4 MB). */
@@ -654,18 +656,19 @@ function photoToB64(file) {
   });
 }
 async function searchByPhoto(file, pre) { // pre: imagen ya preparada { b64, mime } (la del escáner)
-  const msg = $('#titleMsg'), keys = idKeys();
+  const keys = idKeys();
   if (!file && !pre) return;
-  if (!keys.gemini && !keys.anthropic) { msg.textContent = 'Para reconocer fotos pon antes una clave (abajo, «Clave para reconocer fotos»). La de Gemini es gratuita.'; try { document.querySelector('[data-acc=titulo] details.adv').open = true; } catch (e) { /* sin detalles */ } return; }
+  if (scanOpen()) sheetOpen('res');
+  if (!keys.gemini && !keys.anthropic) { askKey(); return; }
   const mine = S.titleQ = (S.titleQ || 0) + 1;
-  msg.textContent = 'Reconociendo la obra…'; S.tres = []; renderTres();
+  tmsg('Reconociendo la obra…'); S.tres = []; renderTres();
   try {
     const { b64, mime } = pre || await photoToB64(file);
     const id = await C.identifyArtwork(b64, mime, keys);
     if (mine !== S.titleQ) return;
-    if (!id) { msg.textContent = 'No reconozco la obra. Prueba con otra foto más recta, con buena luz y sin reflejos, o búscala por su nombre.'; return; }
+    if (!id) { tmsg('No reconozco la obra. Prueba con otra foto más recta, con buena luz y sin reflejos, o búscala por su nombre.'); return; }
     const label = '«' + (id.title || id.title_en) + '»' + (id.artist ? ', ' + id.artist : '') + (id.year ? ' (' + id.year + ')' : '');
-    msg.textContent = 'Parece ser ' + label + '. Buscándola…';
+    tmsg('Parece ser ' + label + '. Buscándola…');
     const done = list => { if (mine === S.titleQ) { S.tres = rankByArtist(list, id.artist); renderTres(); } };
     let res = await C.searchPaintings(id.title_en || id.title, ctx(), done, id.artist);
     if (id.title && id.title_en && C.norm(id.title) !== C.norm(id.title_en)) {
@@ -673,36 +676,88 @@ async function searchByPhoto(file, pre) { // pre: imagen ya preparada { b64, mim
     }
     if (mine !== S.titleQ) return;
     S.tres = rankByArtist(res, id.artist); renderTres();
-    msg.textContent = S.tres.length ? 'Parece ser ' + label + '. Toca una para verla ahora.' : 'Parece ser ' + label + ', pero no encuentro esa obra con imagen. Prueba a buscarla por su nombre.';
+    tmsg(S.tres.length ? 'Parece ser ' + label + '. Toca una para verla ahora.' : 'Parece ser ' + label + ', pero no encuentro esa obra con imagen. Prueba a buscarla por su nombre.');
   } catch (e) {
-    msg.textContent = e && e.noKey ? 'Falta la clave para reconocer fotos.' : e && (e.status === 400 || e.status === 401 || e.status === 403) ? 'La clave no es válida o no tiene permiso para reconocer imágenes (' + e.status + ').' : e && (e.status === 503 || e.status === 500 || e.status === 502 || e.status === 504 || e.status === 529) ? 'El servicio de reconocimiento está saturado (' + e.status + '). Espera unos segundos y vuelve a intentarlo.' : e && e.status === 429 ? 'Se acabó la cuota de la clave por ahora; prueba más tarde.' : e && e.timeout ? 'No pude reconocer la foto: ' + e.message + '. Prueba de nuevo; si sigue igual, usa la otra clave o una foto más pequeña.' : 'No pude reconocer la foto: ' + errText(e);
+    tmsg(e && e.noKey ? 'Falta la clave para reconocer fotos.' : e && (e.status === 400 || e.status === 401 || e.status === 403) ? 'La clave no es válida o no tiene permiso para reconocer imágenes (' + e.status + ').' : e && (e.status === 503 || e.status === 500 || e.status === 502 || e.status === 504 || e.status === 529) ? 'El servicio de reconocimiento está saturado (' + e.status + '). Espera unos segundos y vuelve a intentarlo.' : e && e.status === 429 ? 'Se acabó la cuota de la clave por ahora; prueba más tarde.' : e && e.timeout ? 'No pude reconocer la foto: ' + e.message + '. Prueba de nuevo; si sigue igual, usa la otra clave o una foto más pequeña.' : 'No pude reconocer la foto: ' + errText(e));
   }
 }
+/* Sin clave para reconocer: se dice dónde ponerla (en el escáner, en la propia hoja; en el menú, abajo del todo). */
+function askKey() {
+  if (scanOpen()) { sheetOpen('key'); tmsg('Para reconocer obras hace falta una clave (aquí debajo). La de Gemini es gratuita.'); return; }
+  tmsg('Para reconocer fotos pon antes una clave (abajo, «Clave para reconocer fotos»). La de Gemini es gratuita.');
+  try { document.querySelector('[data-acc=titulo] details.adv').open = true; } catch (e) { /* sin detalles */ }
+}
 /* ───────── escáner con la cámara ─────────
-   En vez de hacer una foto, la cámara analiza el vídeo: cuando la imagen dentro del marco está quieta y nítida durante un momento,
-   se recorta ese marco y se manda a reconocer. También se puede pulsar «Escanear ya». Sin cámara disponible, se abre la cámara del sistema. */
-const SC = { stream: null, timer: 0, prev: null, still: 0, busy: false };
-const SCAN_NEED = 5; // muestras quietas seguidas (cada 250 ms ≈ 1,2 s)
+   Funciona como la app de cámara: zoom (con los dedos o con 1× 2× 3×), el círculo escanea lo que hay dentro del marco,
+   el cuadrado izquierdo busca por nombre y el derecho por una foto de la galería. Mientras la imagen está quieta y nítida el
+   marco se pone verde. Al escanear, la imagen se congela y los resultados salen en una hoja desde abajo; al cerrarla, sigue la cámara.
+   Sin cámara disponible, el círculo abre la cámara del sistema. */
+const SC = { stream: null, timer: 0, prev: null, still: 0, busy: false, zoom: 1, zmin: 1, zmax: 4, hw: null, pinch: null };
+const scanOpen = () => !$('#scanner').hidden;
 async function openScanner() {
   const md = navigator.mediaDevices;
-  if (!md || typeof md.getUserMedia !== 'function') { scanFallback(); return; }
-  let stream;
-  try { stream = await md.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false }); }
-  catch (e) { toast(e && e.name === 'NotAllowedError' ? 'Sin permiso para la cámara: se abre la cámara del sistema' : 'No pude abrir la cámara: se abre la del sistema'); scanFallback(); return; }
-  SC.stream = stream; SC.prev = null; SC.still = 0; SC.busy = false;
-  const v = $('#scanVideo'); v.srcObject = stream; try { await v.play(); } catch (e) { /* algunos navegadores ya reproducen solos */ }
-  $('#scanner').hidden = false; $('#scanHint').textContent = 'Encuadra la pintura dentro del marco y mantén el móvil quieto';
-  $('#scanFrame').classList.remove('ok'); $('#scanProg').style.width = '0';
-  clearInterval(SC.timer); SC.timer = setInterval(scanTick, 250);
+  SC.prev = null; SC.still = 0; SC.busy = false; SC.hw = null; SC.zoom = 1; SC.zmin = 1; SC.zmax = 4;
+  $('#scanner').hidden = false; $('#scanner').classList.remove('frozen'); sheetClose(true);
+  $('#scanFrame').classList.remove('ok'); $('#scanVideo').style.transform = '';
+  { const ik = idKeys(); $('#idk-gemini-s').value = ik.gemini || ''; $('#idk-anthropic-s').value = ik.anthropic || ''; }
+  let stream = null;
+  if (md && typeof md.getUserMedia === 'function') {
+    $('#scanHint').textContent = 'Abriendo la cámara…';
+    try { stream = await md.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false }); }
+    catch (e) { $('#scanHint').textContent = e && e.name === 'NotAllowedError' ? 'Sin permiso para la cámara: pulsa el círculo para usar la del sistema' : 'No pude abrir la cámara: pulsa el círculo para usar la del sistema'; }
+  } else $('#scanHint').textContent = 'Pulsa el círculo para hacer la foto con la cámara del sistema';
+  if (!scanOpen()) { if (stream) try { stream.getTracks().forEach(tr => tr.stop()); } catch (e) { /* ya parada */ } return; } // se cerró mientras pedía permiso
+  SC.stream = stream;
+  if (stream) {
+    const v = $('#scanVideo'); v.srcObject = stream; try { await v.play(); } catch (e) { /* algunos navegadores ya reproducen solos */ }
+    try { // zoom de la propia cámara si lo tiene (más nítido); si no, se amplía la imagen
+      const tr = stream.getVideoTracks()[0], cz = tr.getCapabilities && tr.getCapabilities().zoom;
+      if (cz && cz.max > cz.min) { SC.hw = tr; SC.zmin = Math.max(1, cz.min); SC.zmax = Math.min(10, cz.max); SC.zoom = Math.max(SC.zmin, (tr.getSettings && tr.getSettings().zoom) || SC.zmin); }
+    } catch (e) { /* sin datos de la cámara */ }
+    $('#scanHint').textContent = 'Encuadra la obra dentro del marco';
+    clearInterval(SC.timer); SC.timer = setInterval(scanTick, 250);
+  }
+  renderZoom();
 }
 function scanFallback() { const i = $('#photoIn'); i.setAttribute('capture', 'environment'); i.click(); setTimeout(() => i.removeAttribute('capture'), 1000); }
 function closeScanner() {
-  clearInterval(SC.timer); SC.timer = 0;
+  clearInterval(SC.timer); SC.timer = 0; SC.busy = false; SC.pinch = null;
   if (SC.stream) { try { SC.stream.getTracks().forEach(tr => tr.stop()); } catch (e) { /* ya parada */ } }
-  SC.stream = null; const v = $('#scanVideo'); try { v.srcObject = null; } catch (e) { /* nada */ }
-  $('#scanner').hidden = true;
+  SC.stream = null; SC.hw = null; const v = $('#scanVideo'); try { v.srcObject = null; } catch (e) { /* nada */ }
+  const was = scanOpen(); $('#scanner').hidden = true; sheetClose(true);
+  if (was && HOME && history.state && history.state.ga === 'scan') try { history.back(); } catch (e) { /* sin historial */ }
 }
-/* Zona del vídeo que corresponde al marco (el vídeo se muestra recortado para llenar la pantalla). */
+/* Zoom: botones 1× 2× 3× (el que está más cerca muestra el valor real, como en la cámara) y pellizco con dos dedos. */
+function renderZoom() {
+  const box = $('#scanZoom'), steps = [1, 2, 3, 5].filter(z => z >= SC.zmin && z <= SC.zmax);
+  if (!SC.stream || steps.length < 2) { box.hidden = true; return; }
+  box.hidden = false;
+  const near = steps.reduce((a, z) => (Math.abs(z - SC.zoom) < Math.abs(a - SC.zoom) ? z : a), steps[0]);
+  const fmt = z => (Math.round(z * 10) / 10).toString().replace('.', ',') + '×';
+  box.innerHTML = steps.map(z => '<button data-act="scan-zoom" data-id="' + z + '" aria-pressed="' + (z === near) + '">' + (z === near ? fmt(SC.zoom) : fmt(z)) + '</button>').join('');
+}
+function setZoom(z) {
+  z = Math.max(SC.zmin, Math.min(SC.zmax, +z || 1)); if (Math.abs(z - SC.zoom) < 0.01 && SC.zoom === z) { renderZoom(); return; }
+  SC.zoom = z; SC.prev = null;
+  if (SC.hw) { try { const p = SC.hw.applyConstraints({ advanced: [{ zoom: z }] }); if (p && p.catch) p.catch(() => {}); } catch (e) { /* la cámara no aceptó el zoom */ } }
+  else $('#scanVideo').style.transform = z > 1.001 ? 'scale(' + z + ')' : '';
+  renderZoom();
+}
+/* Hoja de resultados: «res» (escaneo o foto), «name» (buscar por nombre) o «key» (falta la clave). */
+function sheetOpen(mode) {
+  const sh = $('#scanSheet'); sh.hidden = false; $('#scanner').classList.add('sheet');
+  $('#scanSheetT').textContent = mode === 'name' ? 'Buscar por nombre' : mode === 'key' ? 'Falta una clave' : 'Resultados';
+  $('#scanNameRow').hidden = mode !== 'name'; $('#scanKeys').hidden = mode !== 'key'; if (mode === 'key') $('#scanKeys').open = true;
+  if (mode === 'name') { tmsg(''); S.tres = []; renderTres(); setTimeout(() => { try { $('#scanTitleIn').focus(); } catch (e) { /* nada */ } }, 50); }
+}
+function sheetClose(quiet) {
+  $('#scanSheet').hidden = true; $('#scanner').classList.remove('frozen', 'sheet');
+  if (quiet) return;
+  S.titleQ = (S.titleQ || 0) + 1; SC.busy = false; // lo que aún llegue de una búsqueda anterior ya no se pinta
+  const v = $('#scanVideo'); if (SC.stream) { try { const p = v.play(); if (p && p.catch) p.catch(() => {}); } catch (e) { /* nada */ } clearInterval(SC.timer); SC.timer = setInterval(scanTick, 250); }
+}
+/* Zona del vídeo que corresponde al marco (el vídeo se muestra recortado para llenar la pantalla y, con zoom sin cámara que lo tenga, ampliado:
+   getBoundingClientRect ya da el tamaño ampliado, así que el recorte sale bien en los dos casos). */
 function scanRect() {
   const v = $('#scanVideo'), fr = $('#scanFrame').getBoundingClientRect(), vr = v.getBoundingClientRect();
   const vw = v.videoWidth, vh = v.videoHeight; if (!vw || !vh || !vr.width) return null;
@@ -711,7 +766,7 @@ function scanRect() {
   return { x, y, w: Math.min(vw - x, fr.width / k), h: Math.min(vh - y, fr.height / k) };
 }
 function scanTick() {
-  if (SC.busy) return;
+  if (SC.busy || !$('#scanSheet').hidden) return;
   const v = $('#scanVideo'), r = scanRect(); if (!r) return;
   try {
     const c = SC.small || (SC.small = document.createElement('canvas')); c.width = 48; c.height = 36;
@@ -723,14 +778,14 @@ function scanTick() {
     diff /= lum.length; edge /= lum.length; SC.prev = lum;
     const quiet = had && diff < 4.5, detail = edge > 1.2; // quieto y con detalle (no una pared lisa ni desenfocado)
     SC.still = quiet && detail ? SC.still + 1 : 0;
-    $('#scanProg').style.width = Math.min(100, SC.still / SCAN_NEED * 100) + '%';
-    $('#scanFrame').classList.toggle('ok', SC.still > 0);
-    $('#scanHint').textContent = !detail ? 'Acércate a la pintura: no veo bastante detalle' : quiet ? 'Escaneando… no te muevas' : 'Encuadra la pintura dentro del marco y mantén el móvil quieto';
-    if (SC.still >= SCAN_NEED) scanCapture();
+    $('#scanFrame').classList.toggle('ok', SC.still >= 2);
+    $('#scanHint').textContent = !detail ? 'Acércate a la obra: no veo bastante detalle' : SC.still >= 2 ? 'Listo: pulsa el círculo para escanear' : 'Encuadra la obra dentro del marco';
   } catch (e) { /* el vídeo aún no está listo */ }
 }
 function scanCapture() {
   if (SC.busy) return;
+  if (!SC.stream) { scanFallback(); return; } // sin cámara en la página: la del sistema
+  const k0 = idKeys(); if (!k0.gemini && !k0.anthropic) { askKey(); return; }
   const v = $('#scanVideo'), r = scanRect();
   if (!r) { toast('La cámara aún no está lista'); return; }
   SC.busy = true;
@@ -741,10 +796,54 @@ function scanCapture() {
     const d = c.toDataURL('image/jpeg', 0.85);
     if (!/^data:image\/jpeg;base64,/.test(d)) throw new Error('sin imagen');
     if (navigator.vibrate) try { navigator.vibrate(60); } catch (e) { /* sin vibración */ }
-    closeScanner();
+    try { v.pause(); } catch (e) { /* nada */ } clearInterval(SC.timer); $('#scanner').classList.add('frozen'); // la imagen se queda congelada mientras se reconoce
     searchByPhoto(null, { b64: d.split(',')[1], mime: 'image/jpeg' });
   } catch (e) { SC.busy = false; toast('No pude leer la imagen de la cámara'); }
 }
+// Pellizcar con dos dedos amplía; la rueda del ratón también (en el ordenador).
+(function () {
+  const sc = $('#scanner'), dist = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  sc.addEventListener('touchstart', e => { if (e.touches.length === 2 && SC.stream && $('#scanSheet').hidden) SC.pinch = { d: dist(e.touches) || 1, z: SC.zoom }; }, { passive: true });
+  sc.addEventListener('touchmove', e => { if (SC.pinch && e.touches.length === 2) { e.preventDefault(); setZoom(SC.pinch.z * dist(e.touches) / SC.pinch.d); } }, { passive: false });
+  sc.addEventListener('touchend', e => { if (e.touches.length < 2) SC.pinch = null; }, { passive: true });
+  sc.addEventListener('wheel', e => { if (!SC.stream || !$('#scanSheet').hidden) return; e.preventDefault(); setZoom(SC.zoom * (e.deltaY < 0 ? 1.1 : 1 / 1.1)); }, { passive: false });
+})();
+
+/* ───────── pantalla de inicio (solo en el móvil, no en la TV ni en el mando) ─────────
+   Escaneo de obra, Galería de arte y Colecciones. El botón Atrás del móvil vuelve de la galería o de la cámara al inicio. */
+const HOME = !REMOTE && (() => {
+  if (Q.get('home') === '1') return true;
+  if (Q.get('home') === '0' || Q.get('tv') === '1') return false;
+  try {
+    const wv = window.innerWidth || 1024, hv = window.innerHeight || 768;
+    const coarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+    return Math.min(wv, hv) <= 600 && (coarse || wv <= 600);
+  } catch (e) { return false; }
+})();
+const homeOpen = () => !$('#home').hidden;
+function navPush(k) { if (HOME) try { history.pushState({ ga: k }, ''); } catch (e) { /* sin historial */ } }
+function showHome() { if (!HOME) return; if (S.menu) closeMenu(); if (scanOpen()) closeScanner(); $('#home').hidden = false; }
+function leaveHome() {
+  if (!homeOpen()) return;
+  $('#home').hidden = true; navPush('gallery');
+  if (touchLayout() && !lsGet('tapHint', false)) { lsSet('tapHint', true); setTimeout(() => toast('Toca el borde derecho: siguiente · el izquierdo: anterior · el centro: menú'), 2500); }
+}
+function homeAct(act) {
+  if (act === 'home-scan') { navPush('scan'); openScanner(); return; }
+  if (act === 'home-gallery') { leaveHome(); return; }
+  if (act === 'home-collections') { // de momento abre el menú en «Colección rápida»
+    leaveHome(); openMenu();
+    const sel = $('#c-presets'); try { sel.scrollIntoView({ block: 'center' }); sel.focus({ preventScroll: true }); if (sel.showPicker) sel.showPicker(); } catch (e) { /* el navegador no abre la lista solo */ }
+    return;
+  }
+  if (act === 'home') { showHome(); if (history.state && history.state.ga) try { history.back(); } catch (e) { /* sin historial */ } }
+}
+window.addEventListener('popstate', e => {
+  if (!HOME) return;
+  const k = e.state && e.state.ga;
+  if (k !== 'scan' && scanOpen()) closeScanner();
+  if (!k) showHome();
+});
 function rankByArtist(list, artist) {
   const a = C.norm(artist || '').split(/\s+/).filter(x => x.length > 2).pop();
   if (!a) return list;
@@ -752,7 +851,12 @@ function rankByArtist(list, artist) {
 }
 function showTitleResult(i) {
   const w = (S.tres || [])[+i]; if (!w) return;
-  if (REMOTE) { if (!RC.gotState) { toast('Todavía no hay conexión con la TV'); return; } relaySend({ t: 'cmd', c: 'show', w: slimWork(w) }); toast('Enviada a la TV: ' + w.title); return; }
+  if (REMOTE) { if (!RC.gotState) { toast('Todavía no hay conexión con la TV'); return; } relaySend({ t: 'cmd', c: 'show', w: slimWork(w) }); toast('Enviada a la TV: ' + w.title); if (scanOpen()) closeScanner(); return; }
+  if (scanOpen()) { // desde la cámara: se cierra y se ve la obra en la galería
+    const fromHome = homeOpen();
+    if (fromHome && HOME && history.state && history.state.ga === 'scan') { try { history.replaceState({ ga: 'gallery' }, ''); } catch (e) { /* sin historial */ } }
+    closeScanner(); if (fromHome) { $('#home').hidden = true; }
+  }
   closeMenu(); showFound(w);
 }
 async function addMuseumByName() {
@@ -858,9 +962,15 @@ function onAct(act, id) {
     case 'add-museum': addMuseumByName(); break;
     case 'title-search': searchTitle(); break;
     case 'photo': $('#photoIn').removeAttribute('capture'); $('#photoIn').click(); break;
-    case 'scan': openScanner(); break;
+    case 'scan': navPush('scan'); openScanner(); break;
     case 'scan-close': closeScanner(); break;
     case 'scan-now': scanCapture(); break;
+    case 'scan-photo': $('#photoIn').removeAttribute('capture'); $('#photoIn').click(); break;
+    case 'scan-name': sheetOpen('name'); break;
+    case 'scan-name-go': searchTitle($('#scanTitleIn').value); break;
+    case 'scan-zoom': setZoom(+id); break;
+    case 'sheet-close': sheetClose(); break;
+    case 'home-scan': case 'home-gallery': case 'home-collections': case 'home': homeAct(act); break;
     case 'title-show': showTitleResult(id); break;
     case 'era': toggleArr(f.eras, id); f.yearFrom = f.yearTo = ''; $('#yFrom').value = $('#yTo').value = ''; render('eras'); applyChange(); break;
     case 'style': toggleArr(f.styles, id); render('styles'); applyChange(); break;
@@ -900,7 +1010,7 @@ function touchLayout() {
 }
 // Deslizar el dedo también cambia de obra.
 let swipe = null;
-document.addEventListener('touchstart', e => { const t = e.touches[0]; swipe = e.touches.length === 1 && !S.menu ? { x: t.clientX, y: t.clientY } : null; }, { passive: true });
+document.addEventListener('touchstart', e => { const t = e.touches[0]; swipe = e.touches.length === 1 && !S.menu && !scanOpen() && !homeOpen() ? { x: t.clientX, y: t.clientY } : null; }, { passive: true });
 document.addEventListener('touchend', e => {
   if (!swipe || S.menu) return;
   const t = e.changedTouches[0], dx = t.clientX - swipe.x, dy = t.clientY - swipe.y; swipe = null;
@@ -912,6 +1022,7 @@ document.addEventListener('click', e => {
   if (e.target.id === 'loaderMenu') { openMenu(); return; }
   if (e.target.id === 'loaderDiag') { diagnose(); return; }
   if (e.target.closest('#pair')) { hidePair(); return; }
+  if (e.target.closest('#scanner') || e.target.closest('#home')) return;
   if (REMOTE) return;
   if (e.target.closest('#drawer') || e.target.closest('#diag')) return;
   if (S.menu) { closeMenu(); return; }
@@ -926,11 +1037,21 @@ document.addEventListener('click', e => {
 ['mousemove', 'touchstart', 'pointerdown'].forEach(ev => document.addEventListener(ev, activity, { passive: true }));
 document.addEventListener('change', e => {
   if (e.target.id === 'photoIn') { const f = e.target.files && e.target.files[0]; e.target.value = ''; searchByPhoto(f); }
-  else if (e.target.id === 'idk-gemini' || e.target.id === 'idk-anthropic') { const k = idKeys(); k[e.target.id.slice(4)] = e.target.value.trim(); lsSet('idkeys', k); toast('Clave guardada en este dispositivo'); }
+  else if (/^idk-(gemini|anthropic)(-s)?$/.test(e.target.id)) {
+    const name = e.target.id.split('-')[1], k = idKeys(); k[name] = e.target.value.trim(); lsSet('idkeys', k);
+    $('#idk-' + name).value = $('#idk-' + name + '-s').value = k[name]; toast('Clave guardada en este dispositivo');
+    if (scanOpen() && (k.gemini || k.anthropic)) tmsg('Clave guardada. Ya puedes escanear: cierra esta hoja y pulsa el círculo.');
+  }
 });
 document.addEventListener('keydown', e => {
   activity();
-  if (!$('#scanner').hidden) { if (e.key === 'Escape' || e.key === 'Backspace' || e.key === 'GoBack') { e.preventDefault(); closeScanner(); } return; }
+  if (scanOpen()) {
+    const inField = /^(input|textarea)$/i.test(e.target.tagName || '');
+    if (inField && e.key === 'Enter' && e.target.id === 'scanTitleIn') { e.preventDefault(); searchTitle(e.target.value); return; }
+    if (e.key === 'Escape' || e.key === 'GoBack' || (e.key === 'Backspace' && !inField)) { e.preventDefault(); if (!$('#scanSheet').hidden) sheetClose(); else closeScanner(); }
+    return;
+  }
+  if (homeOpen()) return;
   const tag = (e.target.tagName || '').toLowerCase(), typing = tag === 'input' || tag === 'textarea';
   if (typing) {
     if (e.key === 'Enter') { if (e.target.id === 'artistIn') { addArtist(e.target.value); e.target.value = ''; } if (e.target.id === 'kwIn') { addKeyword(e.target.value); e.target.value = ''; } if (e.target.id === 'museumIn') addMuseumByName(); if (e.target.id === 'titleIn') searchTitle(); if (e.target.id === 'tvCode') onAct('tv-go'); if (e.target.id === 'exwIn') { addExWord(e.target.value); e.target.value = ''; } }
@@ -1434,7 +1555,8 @@ function init() {
   if (REMOTE) { initRemote(); return; }
   applyLook(); renderAll(); activity(); keepAwake();
   document.body.classList.add('active');
-  if (touchLayout() && !lsGet('tapHint', false)) { lsSet('tapHint', true); setTimeout(() => toast('Toca el borde derecho: siguiente · el izquierdo: anterior · el centro: menú'), 2500); }
+  if (HOME) { $('#home').hidden = false; $('#homeBtn').hidden = false; try { history.replaceState(null, ''); } catch (e) { /* sin historial */ } }
+  else if (touchLayout() && !lsGet('tapHint', false)) { lsSet('tapHint', true); setTimeout(() => toast('Toca el borde derecho: siguiente · el izquierdo: anterior · el centro: menú'), 2500); }
   showLoader('Buscando obras en los museos…', 'Pulsa Intro o toca la pantalla para abrir los filtros.', false);
   planSweep();
   if (loadStash()) refill();
@@ -1443,6 +1565,6 @@ function init() {
   advance();
   initTV();
 }
-window.ArtApp = { openScanner, closeScanner, scanCapture, cloudSync, checkUpdate, applyUpdate, S, next, prev, advance, openMenu, closeMenu, refill, onAct, render, renderAll, applyChange, present, pullNext, captionMs, capMode, parseCode, Remote: () => RC };
+window.ArtApp = { openScanner, closeScanner, scanCapture, setZoom, showHome, HOME, cloudSync, checkUpdate, applyUpdate, S, next, prev, advance, openMenu, closeMenu, refill, onAct, render, renderAll, applyChange, present, pullNext, captionMs, capMode, parseCode, Remote: () => RC };
 init();
 })();
