@@ -1,87 +1,87 @@
 {
- "at": "2026-10-23 10:31 UTC",
- "ok": 18,
+ "at": "2026-10-23 12:28 UTC",
+ "ok": 20,
  "total": 20,
  "results": {
   "The Met": {
-   "ok": false,
-   "n": 0,
-   "err": "sin obras",
-   "ms": 1065
+   "ok": true,
+   "n": 16,
+   "sample": "Flowers in a Blue Vase",
+   "ms": 1646
   },
   "Art Institute of Chicago": {
    "ok": true,
-   "n": 9,
+   "n": 13,
    "err": "imagen no comprobable desde GitHub (protección contra robots)",
-   "sample": "Three Boats in Harbor, San Vigilio",
-   "ms": 552
+   "sample": "Mother and Child",
+   "ms": 805
   },
   "Cleveland Museum of Art": {
    "ok": true,
    "n": 24,
-   "sample": "Dr. James Stuart; Mary Campbell Stuart",
-   "ms": 827
+   "sample": "The Parrot Addresses Khujasta at the Beginning of the Fiftee",
+   "ms": 1336
   },
   "Rijksmuseum": {
    "ok": true,
-   "n": 3,
-   "sample": "Portrait of a Man",
-   "ms": 2924
+   "n": 8,
+   "sample": "Three Painted Wall Hangings of a Dutch landscape",
+   "ms": 4087
   },
   "Victoria and Albert": {
    "ok": true,
    "n": 24,
    "sample": "Painting",
-   "ms": 1634
+   "ms": 1707
   },
   "SMK": {
    "ok": true,
-   "n": 5,
-   "sample": "Ærkeengelen Michael ved Helvedes Port med sværd i hånden",
-   "ms": 2329
+   "n": 20,
+   "sample": "Hedevig Margretha Thomsen, f. Jürgensen",
+   "ms": 1427
   },
   "Minneapolis": {
    "ok": true,
-   "n": 1,
-   "sample": "Saint-Séverin No. 2 (recto); Study for 'The City, ' with the",
-   "ms": 1244
+   "n": 11,
+   "sample": "Expo Mouth #10",
+   "ms": 761
   },
   "Smithsonian": {
    "ok": true,
    "n": 24,
-   "sample": "Untitled (landscape, cloudy sky)",
-   "ms": 1589
+   "sample": "Ships at Anchor, Cherbourg no. I",
+   "ms": 1335
   },
   "Europeana": {
    "ok": true,
    "n": 24,
    "sample": "Painting",
-   "ms": 3024
+   "ms": 2160
   },
   "Wikidata (museo)": {
    "ok": true,
-   "n": 1,
-   "sample": "Sin título",
-   "ms": 1036,
+   "n": 3,
+   "sample": "Statue of Leonardo da Vinci",
+   "ms": 801,
    "timing": {
     "app": {
-     "ms": 59,
+     "ms": 14,
      "status": 200,
      "n": "841"
     },
     "conPista": {
-     "ms": 219,
+     "ms": 432,
      "status": 200,
      "n": "841"
     },
     "selApp": {
-     "ms": 65022,
+     "ms": 65052,
      "status": 504,
      "rows": 0,
      "head": "upstream request timeout"
     },
     "selSub": {
-     "ms": 543,
+     "ms": 459,
      "status": 200,
      "rows": 3
     }
@@ -89,63 +89,63 @@
   },
   "Wikidata (general)": {
    "ok": true,
-   "n": 53,
-   "sample": "Mujeres en el jardín",
-   "ms": 602
+   "n": 39,
+   "sample": "The Parc Monceau",
+   "ms": 684
   },
   "Commons": {
    "ok": true,
-   "n": 29,
-   "sample": "Cadmus slays the dragon",
-   "ms": 3457
+   "n": 36,
+   "sample": "Still Life with Apples and a Pomegranate",
+   "ms": 3811
   },
   "Google Art Project": {
    "ok": true,
    "n": 40,
-   "sample": "An Eclogue",
-   "ms": 1873
+   "sample": "Grainstacks Snow Effect",
+   "ms": 5751
   },
   "Wikipedia": {
    "ok": true,
-   "n": 14,
-   "sample": "Olympia (Manet)",
-   "ms": 485
+   "n": 23,
+   "sample": "En plein air",
+   "ms": 775
   },
   "WikiArt": {
-   "ok": false,
-   "n": 0,
-   "err": "Tiempo de espera agotado",
-   "ms": 14001
+   "ok": true,
+   "n": 60,
+   "sample": "Camille Monet in the Garden at the House in Argenteuil",
+   "ms": 2040
   },
   "MoMA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Inside Between",
-   "ms": 747
+   "sample": "Nabaye Tabastan for L.T. & R.",
+   "ms": 582
   },
   "NGA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Sweet Tremulous Leaves",
-   "ms": 753
+   "sample": "A Princess of Saxony",
+   "ms": 1018
   },
   "Tate (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Roads to Eternity",
-   "ms": 1273
+   "sample": "89/5/75/D",
+   "ms": 1367
   },
   "Louvre (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Vierge à l'enfant entre saint Jean-Baptiste et saint Antoine",
-   "ms": 361
+   "sample": "Allégorie de la trêve de 1609 entre l'archiduc d'Autriche, g",
+   "ms": 455
   },
   "Prado (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "El infante Antonio Pascual de Borbón",
-   "ms": 321
+   "sample": "San Juan Evangelista",
+   "ms": 450
   }
  }
 }
