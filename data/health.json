@@ -1,87 +1,87 @@
 {
- "at": "2026-10-23 07:32 UTC",
- "ok": 20,
+ "at": "2026-10-23 10:05 UTC",
+ "ok": 19,
  "total": 20,
  "results": {
   "The Met": {
    "ok": true,
-   "n": 20,
-   "sample": "Bird among Camellias in Snow",
-   "ms": 1372
+   "n": 21,
+   "sample": "Summer Flowers",
+   "ms": 13153
   },
   "Art Institute of Chicago": {
    "ok": true,
-   "n": 24,
+   "n": 12,
    "err": "imagen no comprobable desde GitHub (protección contra robots)",
-   "sample": "Portrait of a Woman",
-   "ms": 472
+   "sample": "The Powerhouse, Falls Village, Connecticut",
+   "ms": 599
   },
   "Cleveland Museum of Art": {
    "ok": true,
    "n": 24,
-   "sample": "Diana and Her Nymphs",
-   "ms": 957
+   "sample": "Seated Manjusri",
+   "ms": 2192
   },
   "Rijksmuseum": {
    "ok": true,
    "n": 8,
-   "sample": "Morning Visit",
-   "ms": 3478
+   "sample": "A Man and a Woman",
+   "ms": 4045
   },
   "Victoria and Albert": {
    "ok": true,
    "n": 24,
-   "sample": "Bamburgh Castle",
-   "ms": 1285
+   "sample": "Landscape",
+   "ms": 1826
   },
   "SMK": {
    "ok": true,
-   "n": 9,
-   "sample": "Dyssekammer på sydøst siden\". Lyø",
-   "ms": 1742
+   "n": 5,
+   "sample": "En jagt hvori prinsesserne deltager, tildels i mandlige drag",
+   "ms": 2444
   },
   "Minneapolis": {
    "ok": true,
-   "n": 9,
-   "sample": "Double Frontispiece for the Kolliat",
-   "ms": 725
+   "n": 17,
+   "sample": "Allegorical Self-Portrait",
+   "ms": 816
   },
   "Smithsonian": {
    "ok": true,
    "n": 24,
-   "sample": "Marine",
-   "ms": 1770
+   "sample": "Lilliputian King",
+   "ms": 1717
   },
   "Europeana": {
    "ok": true,
    "n": 24,
-   "sample": "Måltavla",
-   "ms": 1816
+   "sample": "Gemälde",
+   "ms": 2110
   },
   "Wikidata (museo)": {
    "ok": true,
-   "n": 4,
-   "sample": "A Unicorn Attacks a Deer; a Lynx kills a Hare",
-   "ms": 5633,
+   "n": 10,
+   "sample": "Sin título",
+   "ms": 825,
    "timing": {
     "app": {
-     "ms": 25,
+     "ms": 17,
      "status": 200,
      "n": "841"
     },
     "conPista": {
-     "ms": 425,
+     "ms": 127,
      "status": 200,
      "n": "841"
     },
     "selApp": {
-     "ms": 65013,
+     "ms": 65146,
      "status": 504,
      "rows": 0,
      "head": "upstream request timeout"
     },
     "selSub": {
-     "ms": 7519,
+     "ms": 632,
      "status": 200,
      "rows": 3
     }
@@ -89,63 +89,63 @@
   },
   "Wikidata (general)": {
    "ok": true,
-   "n": 57,
-   "sample": "Water Lilies",
-   "ms": 2813
+   "n": 40,
+   "sample": "Dr. Leclenché",
+   "ms": 665
   },
   "Commons": {
    "ok": true,
-   "n": 33,
-   "sample": "The Sultan Mehmet II",
-   "ms": 1423
+   "n": 31,
+   "sample": "Blühende Apfelbäume",
+   "ms": 5234
   },
   "Google Art Project": {
    "ok": true,
-   "n": 40,
-   "sample": "Ottoman Dynasty, Kneeling Angel, by Shah Quli, mid 16th cent",
-   "ms": 1388
+   "n": 39,
+   "sample": "The Wayfarer",
+   "ms": 5353
   },
   "Wikipedia": {
    "ok": true,
-   "n": 16,
-   "sample": "List of most expensive paintings",
-   "ms": 448
+   "n": 17,
+   "sample": "Women in the Garden",
+   "ms": 559
   },
   "WikiArt": {
-   "ok": true,
-   "n": 60,
-   "sample": "Sand on the Quayside, Port Marly",
-   "ms": 1604
+   "ok": false,
+   "n": 0,
+   "err": "Tiempo de espera agotado",
+   "ms": 14696
   },
   "MoMA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Academy",
-   "ms": 589
+   "sample": "New Drone",
+   "ms": 813
   },
   "NGA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Marcelle Lender Dancing the Bolero in \"Chilpéric",
-   "ms": 533
+   "sample": "Le Havre",
+   "ms": 1045
   },
   "Tate (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "A Black Model",
-   "ms": 939
+   "sample": "Untitled",
+   "ms": 1537
   },
   "Louvre (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Arrivée du roi devant Douai qu'il fait investir par sa caval",
-   "ms": 803
+   "sample": "Le Conseil des dieux",
+   "ms": 428
   },
   "Prado (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Retrato de caballero anciano",
-   "ms": 260
+   "sample": "Santiago Miranda",
+   "ms": 392
   }
  }
 }
