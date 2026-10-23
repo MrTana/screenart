@@ -1,87 +1,87 @@
 {
- "at": "2026-10-23 12:28 UTC",
+ "at": "2026-10-23 14:00 UTC",
  "ok": 20,
  "total": 20,
  "results": {
   "The Met": {
    "ok": true,
-   "n": 16,
-   "sample": "Flowers in a Blue Vase",
-   "ms": 1646
+   "n": 19,
+   "sample": "Stationery box with decoration of grapes and squirrels",
+   "ms": 2079
   },
   "Art Institute of Chicago": {
    "ok": true,
-   "n": 13,
+   "n": 24,
    "err": "imagen no comprobable desde GitHub (protección contra robots)",
-   "sample": "Mother and Child",
-   "ms": 805
+   "sample": "View of Cotopaxi",
+   "ms": 612
   },
   "Cleveland Museum of Art": {
    "ok": true,
    "n": 24,
-   "sample": "The Parrot Addresses Khujasta at the Beginning of the Fiftee",
-   "ms": 1336
+   "sample": "Plants and Insects",
+   "ms": 1431
   },
   "Rijksmuseum": {
    "ok": true,
    "n": 8,
-   "sample": "Three Painted Wall Hangings of a Dutch landscape",
-   "ms": 4087
+   "sample": "Memory",
+   "ms": 3343
   },
   "Victoria and Albert": {
    "ok": true,
    "n": 24,
-   "sample": "Painting",
-   "ms": 1707
+   "sample": "Landscape with River: Moonlight",
+   "ms": 1628
   },
   "SMK": {
    "ok": true,
-   "n": 20,
-   "sample": "Hedevig Margretha Thomsen, f. Jürgensen",
-   "ms": 1427
+   "n": 21,
+   "sample": "Stomach, lap and leg of a small boy",
+   "ms": 1418
   },
   "Minneapolis": {
    "ok": true,
-   "n": 11,
-   "sample": "Expo Mouth #10",
-   "ms": 761
+   "n": 16,
+   "sample": "Spring Tree Grove Before Rain",
+   "ms": 1494
   },
   "Smithsonian": {
    "ok": true,
-   "n": 24,
-   "sample": "Ships at Anchor, Cherbourg no. I",
-   "ms": 1335
+   "n": 23,
+   "sample": "Forest Scene",
+   "ms": 1605
   },
   "Europeana": {
    "ok": true,
    "n": 24,
-   "sample": "Painting",
-   "ms": 2160
+   "sample": "Gerhard Richter - Painting",
+   "ms": 2135
   },
   "Wikidata (museo)": {
    "ok": true,
-   "n": 3,
-   "sample": "Statue of Leonardo da Vinci",
-   "ms": 801,
+   "n": 1,
+   "sample": "Venus and Amore",
+   "ms": 605,
    "timing": {
     "app": {
-     "ms": 14,
+     "ms": 46,
      "status": 200,
      "n": "841"
     },
     "conPista": {
-     "ms": 432,
+     "ms": 136,
      "status": 200,
      "n": "841"
     },
     "selApp": {
-     "ms": 65052,
+     "ms": 65016,
      "status": 504,
      "rows": 0,
      "head": "upstream request timeout"
     },
     "selSub": {
-     "ms": 459,
+     "ms": 383,
      "status": 200,
      "rows": 3
     }
@@ -89,63 +89,63 @@
   },
   "Wikidata (general)": {
    "ok": true,
-   "n": 39,
-   "sample": "The Parc Monceau",
-   "ms": 684
+   "n": 42,
+   "sample": "On the Boat",
+   "ms": 429
   },
   "Commons": {
    "ok": true,
-   "n": 36,
-   "sample": "Still Life with Apples and a Pomegranate",
-   "ms": 3811
+   "n": 34,
+   "sample": "Portrait of a Standing Woman . Alternative title(s): A Dutch",
+   "ms": 7017
   },
   "Google Art Project": {
    "ok": true,
    "n": 40,
-   "sample": "Grainstacks Snow Effect",
-   "ms": 5751
+   "sample": "Self portrait in Smock Félix Nadar",
+   "ms": 2733
   },
   "Wikipedia": {
    "ok": true,
-   "n": 23,
-   "sample": "En plein air",
-   "ms": 775
+   "n": 20,
+   "sample": "Impression, Sunrise",
+   "ms": 492
   },
   "WikiArt": {
    "ok": true,
    "n": 60,
-   "sample": "Camille Monet in the Garden at the House in Argenteuil",
-   "ms": 2040
+   "sample": "Seascape at Berck, Fishing Boats and Fishermen",
+   "ms": 1409
   },
   "MoMA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Nabaye Tabastan for L.T. & R.",
-   "ms": 582
+   "sample": "Card Trick",
+   "ms": 921
   },
   "NGA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "A Princess of Saxony",
-   "ms": 1018
+   "sample": "Self-Portrait",
+   "ms": 970
   },
   "Tate (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "89/5/75/D",
-   "ms": 1367
+   "sample": "You Can’t Please All",
+   "ms": 1896
   },
   "Louvre (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Allégorie de la trêve de 1609 entre l'archiduc d'Autriche, g",
-   "ms": 455
+   "sample": "La récolte de la manne",
+   "ms": 2371
   },
   "Prado (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "San Juan Evangelista",
-   "ms": 450
+   "sample": "El poeta Manuel José Quintana",
+   "ms": 382
   }
  }
 }
