@@ -9,7 +9,7 @@ const Q = (() => { try { return new URLSearchParams(location.search); } catch (e
 // Con «?c=código» la página es el mando del móvil: no muestra obras, controla la TV.
 const REMOTE = /^[a-z0-9]{6,24}$/i.test(Q.get('c') || '') ? Q.get('c').toLowerCase() : '';
 function lsGet(k, def) { try { const v = localStorage.getItem(KEY + ':' + k); return v ? JSON.parse(v) : def; } catch (e) { return def; } }
-function lsSet(k, v) { if (REMOTE && !['rc', 'idkeys', 'keys', 'keysent', 'favs', 'favdel', 'keyt', 'cloudv', 'cloudsent'].includes(k)) return; // el mando solo guarda su código y lo que comparte con la versión móvil (claves y favoritas)
+function lsSet(k, v) { if (REMOTE && !['upd', 'rc', 'idkeys', 'keys', 'keysent', 'favs', 'favdel', 'keyt', 'cloudv', 'cloudsent'].includes(k)) return; // el mando solo guarda su código y lo que comparte con la versión móvil (claves y favoritas)
    try { localStorage.setItem(KEY + ':' + k, JSON.stringify(v)); } catch (e) { /* sin almacenamiento */ } }
 
 /* ───────── estado ───────── */
@@ -264,7 +264,7 @@ function schedule() {
   clearTimeout(S.timer);
   document.documentElement.style.setProperty('--dur', S.st.interval + 's');
   if (S.paused || S.menu) return;
-  S.timer = setTimeout(next, S.st.interval * 1000);
+  S.timer = setTimeout(() => { if (!applyUpdate()) next(); }, S.st.interval * 1000);
 }
 async function advance() {
   if (S.adv && Date.now() - S.advAt < 90000) return;
@@ -840,13 +840,44 @@ $('#yTo').addEventListener('change', e => { S.f.yearTo = e.target.value; S.f.era
     }
     saveAll(); updateSums(); if (S.f.sources[k]) applyChange(); });
 });
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { keepAwake(); cloudSyncSoon(); } else saveStash(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { keepAwake(); cloudSyncSoon(); checkUpdate(); } else saveStash(); });
 window.addEventListener('pagehide', saveStash);
 let lock = null;
 async function keepAwake() { try { if ('wakeLock' in navigator) lock = await navigator.wakeLock.request('screen'); } catch (e) { /* no disponible */ } }
 
 /* ───────── app instalable (PWA) ───────── */
 /* Borra copias guardadas y service worker, y recarga la página desde internet. */
+/* Actualización automática: cada 20 min (y al volver a la app) se mira la versión publicada (sw.js lleva la huella de la
+   compilación). Si cambió, la TV se recarga sola justo al pasar a la siguiente obra (nunca con el menú abierto ni en pausa);
+   gracias al arranque instantáneo sigue con la obra que tocaba. El mando se recarga cuando nadie lo está tocando. */
+async function checkUpdate() {
+  if (!/^https?:$/.test(location.protocol)) return false;
+  try {
+    const r = await fetch('sw.js?v=' + Date.now(), { cache: 'no-store' }); if (!r.ok) return false;
+    const m = /VERSION\s*=\s*'([0-9a-f]{6,})'/.exec(await r.text()), cur = buildVer();
+    if (!m || !cur || m[1] === cur) return false;
+    const last = lsGet('upd', {}); if (last.to === m[1] && Date.now() - last.at < 1800000) return false; // ya se intentó: no entrar en bucle
+    S.updateTo = m[1]; S.updatePending = true;
+    if (REMOTE) remoteUpdateSoon();
+    return true;
+  } catch (e) { return false; }
+}
+function reloadNow() {
+  lsSet('upd', { to: S.updateTo, at: Date.now() }); saveStash();
+  const u = location.pathname + '?' + (REMOTE ? 'c=' + REMOTE + '&' : '') + (Q.get('tv') ? 'tv=' + Q.get('tv') + '&' : '') + 'r=' + Date.now();
+  (S.reloadHook || (x => location.replace(x)))(u);
+}
+function applyUpdate() {
+  if (!S.updatePending || S.menu || S.paused || REMOTE) return false;
+  S.updatePending = false; reloadNow(); return true;
+}
+function remoteUpdateSoon() {
+  clearTimeout(S.updT);
+  S.updT = setTimeout(function tick() {
+    if (Date.now() - touchAt < 15000 || (document.activeElement && /input|textarea|select/i.test(document.activeElement.tagName))) { S.updT = setTimeout(tick, 5000); return; }
+    S.updatePending = false; reloadNow();
+  }, 3000);
+}
 async function forceUpdate() {
   toast('Buscando la versión más reciente…');
   try {
@@ -1250,6 +1281,7 @@ function remoteSetSoon() {
 function initRemote() {
   RC.code = REMOTE; lsSet('rc', REMOTE);
   setTimeout(cloudSync, 1500); setInterval(cloudSync, 600000);
+  setTimeout(checkUpdate, 60000); setInterval(checkUpdate, 1200000);
   document.body.classList.add('rc');
   { // las claves guardadas en la versión móvil (mismo navegador) viajan a la TV; las de demostración no
     const pk = lsGet('keys', {}), nd = (v, d) => (v && v !== d ? v : '');
@@ -1274,10 +1306,11 @@ function init() {
   showLoader('Buscando obras en los museos…', 'Pulsa Intro o toca la pantalla para abrir los filtros.', false);
   planSweep();
   if (loadStash()) refill();
-  setTimeout(cloudSync, 2500); setInterval(cloudSync, 600000); // con obras guardadas se muestran ya y los museos se consultan igual en segundo plano
+  setTimeout(cloudSync, 2500); setInterval(cloudSync, 600000);
+  setTimeout(checkUpdate, 60000); setInterval(checkUpdate, 1200000); // con obras guardadas se muestran ya y los museos se consultan igual en segundo plano
   advance();
   initTV();
 }
-window.ArtApp = { cloudSync, S, next, prev, advance, openMenu, closeMenu, refill, onAct, render, renderAll, applyChange, present, pullNext, captionMs, capMode, parseCode, Remote: () => RC };
+window.ArtApp = { cloudSync, checkUpdate, applyUpdate, S, next, prev, advance, openMenu, closeMenu, refill, onAct, render, renderAll, applyChange, present, pullNext, captionMs, capMode, parseCode, Remote: () => RC };
 init();
 })();

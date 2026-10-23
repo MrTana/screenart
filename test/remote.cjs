@@ -43,6 +43,7 @@ function make(url, opt) {
   const w = dom.window; w.__ART_TUNING = { sparqlPause: 5 };
   w.fetch = async (u, init) => {
     u = String(u);
+    if (/sw\.js\?v=/.test(u)) return { ok: true, status: 200, text: async () => "const VERSION = '" + (w.__swVer || 'abc0000000') + "';" };
     if (opt.noFetch) throw new TypeError('Failed to fetch');
     const rm = /\/api\/relay\/([a-z0-9]+)\/sync$/.exec(u);
     if (rm) { if (opt.noOwn) return { ok: false, status: 503, json: async () => ({}) }; const st = rooms[rm[1]] = rooms[rm[1]] || MG.emptyState(); const b = JSON.parse(init.body); MG.applyOps(st, b.ops); const out = b.v === st.v ? { v: st.v, same: true } : JSON.parse(JSON.stringify(st)); return { ok: true, status: 200, json: async () => out }; }
@@ -221,6 +222,20 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     await tv5.ArtApp.cloudSync(); assert.strictEqual(tv5.ArtApp.S.keys.harvard, 'HARV-NUBE', 'la clave del móvil llega a la TV por la nube');
     // sin relé propio configurado (503) todo sigue por los relés públicos
     const tv6 = make('https://example.test/?tv=1', { noOwn: true }); await wait(2200); assert.ok(!/Relé propio/.test(tv6.document.getElementById('pairSt').textContent), 'sin relé propio no se anuncia');
+  }
+  { // actualización automática
+    const tv7 = make('https://example.test/?tv=0'); await wait(1500); const A7 = tv7.ArtApp; let to = null; A7.S.reloadHook = u => { to = u; };
+    const cur = /Versión\s+(\w+)/.exec(tv7.document.querySelector('.ver').textContent)[1];
+    tv7.__swVer = cur; assert.strictEqual(await A7.checkUpdate(), false, 'misma versión: nada');
+    tv7.__swVer = 'f00dbeef12'; assert.strictEqual(await A7.checkUpdate(), true, 'versión nueva detectada');
+    A7.S.menu = true; assert.strictEqual(A7.applyUpdate(), false, 'con el menú abierto no se recarga'); A7.S.menu = false;
+    assert.strictEqual(A7.applyUpdate(), true); assert.ok(to && /[?&]tv=0&r=\d+$/.test(to), 'se recarga conservando ?tv: ' + to);
+    assert.ok(tv7.localStorage.getItem('galeria-arte-v1:upd'), 'apunta el intento');
+    assert.strictEqual(await A7.checkUpdate(), false, 'no entra en bucle si la versión no cambia tras recargar');
+    // el mando se recarga solo cuando nadie lo toca
+    const ph7 = make('https://example.test/?c=' + code); await wait(300); let pto = null; ph7.ArtApp.S.reloadHook = u => { pto = u; };
+    ph7.__swVer = 'f00dbeef12'; await ph7.ArtApp.checkUpdate(); await wait(3600);
+    assert.ok(pto && /\?c=[a-z0-9]+&r=\d+$/.test(pto), 'el mando se recarga con su código: ' + pto);
   }
   // en el móvil nada cierra el menú
   ph.ArtApp.closeMenu(); assert.ok(!p.getElementById('drawer').hidden, 'el menú del móvil no se cierra');
