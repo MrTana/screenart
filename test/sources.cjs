@@ -70,6 +70,7 @@ const WDFX = { 'index.json': { painting: [{ f: 'painting-0.json', n: 3, y0: 1503
     const rp = {}; await C.runSource(prado, C.defaultFilters(), Object.assign({}, ctx, { report: (n, c, e) => { rp[n] = e ? 'x' : c; } }));
     assert.strictEqual(rp.Directa, 0, 'sin lista todavía: no es un error, el museo sigue con sus otras fuentes');
   }
+  { const ko = await C.adapters.momaFetch(Object.assign({}, plan, { style: C.STYLES.find(x => x.id === 'korean') }), C.defaultFilters(), ctx); assert.strictEqual(ko.length, 0, 'las listas de museos no inventan pintura coreana'); }
   // catálogo de artistas y estilos
   const names = [].concat(...C.ARTIST_GROUPS.map(g => g.names));
   assert.ok(new Set(names).size >= 200 && names.includes('Remedios Varo'), 'al menos 200 artistas');

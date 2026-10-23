@@ -433,7 +433,7 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
     <button class="acch" data-act="acc" data-id="skin" aria-expanded="false"><span class="at">Skin</span><span class="as" data-sum="skin"></span><span class="ac">›</span></button>
     <div class="accb"><label class="fld"><span>Aspecto de la interfaz</span><select id="c-skin"></select></label><p class="hint">Material Design 3 y Material 3 Expressive, en claro y oscuro. Solo cambia el menú, el mando y los avisos; la obra y su ficha no cambian.</p></div>
   </section>
-  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 0512e737f9 · 2026-10-23 14:24 CEST</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
+  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 7b88acc590 · 2026-10-23 15:58 CEST</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
   <div id="rcfoot" hidden><button class="btn pri" data-act="rc-update">Buscar actualización</button><p id="rcver"></p></div>
 <div id="tvConnect"><button class="btn pri" data-act="tv-connect">Conectar a la TV</button><div class="row" id="tvRow" hidden><input type="text" id="tvCode" placeholder="Código de la TV (ej. abcd-efgh-jkmn)" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn pri" data-act="tv-go">Abrir mando</button></div><p class="hint" id="tvMsg">El código sale bajo el QR en la pantalla de la TV.</p></div>
 </aside>
@@ -726,7 +726,19 @@ const STYLE_MORE = {
   abstractexp: ['Franz Kline', 'Lee Krasner', 'Joan Mitchell', 'Arshile Gorky', 'Clyfford Still', 'Adolph Gottlieb', 'Hans Hofmann', 'Philip Guston', 'Helen Frankenthaler', 'Sam Francis', 'Elaine de Kooning', 'Grace Hartigan', 'William Baziotes', 'Bradley Walker Tomlin', 'Pousette-Dart'],
   pop: ['James Rosenquist', 'Tom Wesselmann', 'Claes Oldenburg', 'Richard Hamilton', 'Peter Blake', 'Robert Indiana', 'Ed Ruscha', 'Wayne Thiebaud', 'Marisol', 'Evelyne Axell', 'Mimmo Rotella', 'Pauline Boty', 'Equipo Crónica', 'Martial Raysse']
 };
+STYLE_MORE.latam = ['Anita Malfatti', 'Di Cavalcanti', 'Candido Portinari', 'Lasar Segall', 'Vicente do Rego Monteiro', 'Ismael Nery', 'Alfredo Volpi', 'Tomie Ohtake', 'Djanira', 'Pedro Figari', 'Antonio Berni', 'Emilio Pettoruti', 'Raquel Forner', 'Armando Reverón', 'Oswaldo Guayasamín', 'José Sabogal', 'Amelia Peláez', 'Víctor Manuel', 'Carlos Enríquez', 'Francisco Toledo', 'María Izquierdo', 'Fernando de Szyszlo', 'Alejandro Obregón', 'Débora Arango'];
+STYLE_MORE.impressionism.push('William Merritt Chase');
+STYLE_MORE.opart = ['Alejandro Otero', 'Gego', 'Julio Le Parc', 'Lygia Clark', 'Hélio Oiticica', 'Mercedes Pardo', 'Omar Rayo', 'Matilde Pérez'];
+STYLE_MORE.abstract.push('Carmen Herrera', 'Tomás Maldonado', 'Lidy Prati', 'Mira Schendel', 'Fanny Sanín', 'Loló Soldevilla');
 Object.keys(STYLE_MORE).forEach(id => { const s = STYLES.find(x => x.id === id); if (s) STYLE_MORE[id].forEach(n => { if (!s.artists.includes(n)) s.artists.push(n); }); });
+/* Estilos definidos por la cultura o el lugar, no por una lista cerrada de artistas: se buscan por nombre y categoría (Commons, Wikidata,
+   APIs de museos) y no se filtran por artista; las listas precargadas de los museos no los saben distinguir y no participan. */
+[
+  { id: 'korean', es: 'Pintura coreana', q: 'Korean painting Joseon', range: [1392, 1910], wd: 'Korean painting', cat: 'Paintings of Korea', artists: ['Kim Hong-do', 'Jeong Seon', 'Shin Yun-bok', 'An Gyeon', 'Kim Jeong-hui', 'Jang Seung-eop', 'Sin Saimdang', 'Gang Se-hwang', 'Yun Du-seo', 'Yi Am'] },
+  { id: 'virreinal', es: 'Pintura virreinal', q: 'colonial painting viceroyalty New Spain Peru Cusco School', range: [1550, 1820], wd: 'Cusco School', cat: 'Cusco School', artists: ['Cristóbal de Villalpando', 'Miguel Cabrera', 'Juan Correa', 'Gregorio Vásquez de Arce', 'Melchor Pérez de Holguín', 'Diego Quispe Tito', 'Baltasar de Echave', 'José de Ibarra', 'Nicolás Enríquez', 'Bernardo Bitti', 'Marcos Zapata', 'Basilio Santa Cruz'] }
+].forEach(s => { if (!STYLES.some(x => x.id === s.id)) STYLES.push(Object.assign({ loose: true }, s)); });
+['chinese', 'persian', 'mughal'].forEach(id => { const s = STYLES.find(x => x.id === id); if (s) s.loose = true; });
+STYLES.sort((x, y) => x.range[0] - y.range[0] || x.range[1] - y.range[1]);
 const styleArtistMatch = (w, s) => { const a = norm(w.artist || ''); return !!a && (s.artists || []).some(n => { const t = norm(n).split(/\s+/).filter(x => x.length > 1); return t.length && t.every(x => a.includes(x)); }); };
 
 /* Estilos de una obra (para las colecciones rápidas basadas en favoritas): por el artista (los de la lista de cada estilo) y, si hay varios
@@ -865,7 +877,7 @@ function accept(w, f) {
   if (styles.length && w.year != null && !styles.some(s => w.year >= s.range[0] - 15 && w.year <= s.range[1] + 15)) return false;
   // Con estilo elegido, la obra entra si la fuente ya comprobó su estilo o si su artista es de ese estilo; la fecha sola no basta
   // (así no se cuela, por ejemplo, una impresionista de 1925 en «Surrealismo»). Los estilos sin lista de artistas no se filtran así.
-  if (styles.length && !(w.sid && styles.some(s => s.id === w.sid)) && styles.some(s => (s.artists || []).length) && !styles.some(s => styleArtistMatch(w, s))) return false;
+  if (styles.length && !(w.sid && styles.some(s => s.id === w.sid)) && styles.some(s => (s.artists || []).length) && !styles.some(s => s.loose) && !styles.some(s => styleArtistMatch(w, s))) return false;
   if (f.artists && f.artists.length) {
     const a = norm(w.artist);
     if (!f.artists.some(n => norm(n).split(/\s+/).every(t => a.includes(t)))) return false;
@@ -2125,6 +2137,7 @@ async function shardFetch(key, plan, ctx) {
   if (!parts.length) return [];
   const who = plan.artist ? norm(plan.artist) : null, kw = plan.keyword ? norm(plan.keyword) : null;
   /* sin artista ni palabra: un trozo al azar; con ellos hay que mirar todos los del tipo */
+  if (plan.style && plan.style.loose && !who) return []; // estilos de una cultura (china, coreana, virreinal…): estas listas no los distinguen
   // Con un estilo elegido, las listas no saben de estilos: se buscan las obras de los artistas de ese estilo.
   const st = !who && plan.style && (plan.style.artists || []).length ? plan.style : null;
   const chosen = who || kw || st ? shuffle(parts.slice()).slice(0, 16) : [pick(parts)];
@@ -2161,7 +2174,7 @@ const QUICK_COLLECTIONS = [
   { key: 'm:neoclasicismo', es: 'Neoclasicismo', s: ['neoclassicism'], y: [1750, 1820] },
   { key: 'm:romanticismo', es: 'Romanticismo', s: ['romanticism', 'hudson'] },
   { key: 'm:realismo', es: 'Realismo', s: ['realism', 'barbizon'], y: [1840, 1880] },
-  { key: 'm:impresionismo', es: 'Impresionismo', s: ['impressionism'], y: [1865, 1900] },
+  { key: 'm:impresionismo', es: 'Impresionismo', s: ['impressionism'], y: [1865, 1925] },
   { key: 'm:postimpresionismo', es: 'Postimpresionismo', s: ['postimpressionism', 'neoimp', 'nabis'] },
   { key: 'm:simbolismo', es: 'Simbolismo', s: ['symbolism', 'prer'] },
   { key: 'm:primitivismo', es: 'Primitivismo', a: ['Gauguin', 'Henri Rousseau', 'Modigliani', 'Nolde', 'Pechstein', 'Seraphine Louis'], y: [1885, 1930] },
@@ -2192,7 +2205,47 @@ const QUICK_COLLECTIONS = [
   { key: 'm:minimalismo', es: 'Minimalismo', a: ['Agnes Martin', 'Frank Stella', 'Robert Ryman', 'Ellsworth Kelly', 'Brice Marden'], y: [1958, 1990] },
   { key: 'm:hiperrealismo', es: 'Hiperrealismo', s: ['photorealism'] },
   { key: 'm:postmodernidad', es: 'Postmodernidad', s: ['neoexp'], y: [1975, 2000] },
-  { key: 'm:streetart', es: 'Street Art', s: ['streetart'] }
+  { key: 'm:streetart', es: 'Street Art', s: ['streetart'] },
+  // Asia
+  { g: 'Asia', key: 'a:ukiyoe', es: 'Ukiyo-e (Japón)', s: ['ukiyoe'] },
+  { g: 'Asia', key: 'a:shinhanga', es: 'Shin-hanga (grabado japonés moderno)', a: ['Kawase Hasui', 'Yoshida Hiroshi', 'Ohara Koson', 'Ito Shinsui', 'Hashiguchi Goyo', 'Torii Kotondo', 'Natori Shunsen', 'Tsuchiya Koitsu', 'Ishiwata Koitsu', 'Takahashi Shotei', 'Takahashi Hiroaki'], y: [1905, 1960] },
+  { g: 'Asia', key: 'a:nihonga', es: 'Pintura japonesa: Rinpa y Nihonga', s: ['nihonga'] },
+  { g: 'Asia', key: 'a:china', es: 'Pintura china', s: ['chinese'] },
+  { g: 'Asia', key: 'a:corea', es: 'Pintura coreana', s: ['korean'] },
+  { g: 'Asia', key: 'a:miniaturas', es: 'Miniaturas persas, indias y mogolas', s: ['persian', 'mughal'] },
+  // Latinoamérica
+  { g: 'Latinoamérica', key: 'l:virreinal', es: 'Pintura virreinal', s: ['virreinal'], y: [1550, 1820] },
+  { g: 'Latinoamérica', key: 'l:paisajemx', es: 'Paisaje mexicano del siglo XIX', a: ['José María Velasco', 'Eugenio Landesio', 'Dr. Atl', 'Gerardo Murillo', 'Cleofas Almanza', 'Luis Coto', 'Joaquín Clausell', 'Conrado Tapia', 'Salvador Murillo', 'Gonzalo Argüelles Bringas', 'Johann Moritz Rugendas', 'Daniel Thomas Egerton', 'Casimiro Castro', 'Edouard Pingret', 'Carl Nebel', 'José Jara', 'Francisco Goitia', 'Pedro Gualdi', 'Jean-Baptiste Louis Gros'], y: [1830, 1950] },
+  { g: 'Latinoamérica', key: 'l:moderno', es: 'Arte latinoamericano moderno (con el modernismo brasileño)', s: ['latam'] },
+  { g: 'Latinoamérica', key: 'l:muralismo', es: 'Muralismo mexicano', s: ['muralism'] },
+  { g: 'Latinoamérica', key: 'l:mujeres', es: 'Mujeres artistas de Latinoamérica', a: [
+    'Frida Kahlo', 'María Izquierdo', 'Remedios Varo', 'Leonora Carrington', 'Olga Costa', 'Lilia Carrillo', 'Fanny Rabel', 'Aurora Reyes', 'Nahui Olin', 'Rosa Rolanda', 'Lola Cueto', 'Elena Huerta', 'Alice Rahon', 'Cordelia Urueta', 'Isabel Villaseñor', 'Tina Modotti', 'Lola Álvarez Bravo', 'Graciela Iturbide', 'Joy Laville', 'Leticia Tarragó', 'Marysole Wörner Baz', 'Rocío Maldonado', 'Elena Climent',
+    'Tarsila do Amaral', 'Anita Malfatti', 'Lygia Clark', 'Lygia Pape', 'Djanira', 'Maria Martins', 'Tomie Ohtake', 'Georgina de Albuquerque', 'Zina Aita', 'Patrícia Galvão', 'Beatriz Milhazes', 'Adriana Varejão', 'Anna Maria Maiolino', 'Maria Leontina', 'Judith Lauand', 'Mira Schendel', 'Abigail de Andrade', 'Noêmia Mourão', 'Anna Bella Geiger',
+    'Raquel Forner', 'Norah Borges', 'Lidy Prati', 'Marta Minujín', 'Lola Mora', 'Emilia Bertolé', 'Marta Boto', 'Lía Correa Morales', 'Ana Weiss', 'Leonor Vassena', 'Raquel Rabinovich', 'Liliana Porter',
+    'Amalia Nieto', 'Petrona Viera', 'María Freire',
+    'Laura Rodig', 'Ana Cortés', 'Inés Puyó', 'Henriette Petit', 'Violeta Parra', 'Rebeca Matte', 'Marta Colvin', 'Delia del Carril',
+    'Débora Arango', 'Beatriz González', 'Fanny Sanín', 'Ana Mercedes Hoyos', 'Olga de Amaral', 'Feliza Bursztyn', 'Judith Márquez', 'Lucy Tejada', 'Doris Salcedo',
+    'Gego', 'Elsa Gramcko', 'Mercedes Pardo', 'Luisa Richter', 'Tecla Tofano', 'Luisa Palacios', 'Elisa Elvira Zuloaga', 'Marisol Escobar',
+    'Amelia Peláez', 'Carmen Herrera', 'Loló Soldevilla', 'Zilia Sánchez', 'Ana Mendieta', 'Antonia Eiriz', 'Belkis Ayón', 'María Magdalena Campos-Pons',
+    'Julia Codesido', 'Tilsa Tsuchiya', 'Teresa Burga', 'Araceli Gilbert', 'Margarita Azurdia', 'Myrna Báez', 'Olga Albizu', 'María Luisa Pacheco', 'Marina Núñez del Prado', 'Olga Blinder', 'Edith Jiménez', 'Clara Ledesma'] },
+  // Norteamérica
+  { g: 'Norteamérica', key: 'n:colonial', es: 'Retrato colonial americano', a: ['John Singleton Copley', 'Gilbert Stuart', 'Charles Willson Peale', 'Benjamin West', 'Ralph Earl', 'John Trumbull', 'Rembrandt Peale', 'Joseph Blackburn', 'John Smibert', 'Robert Feke'], y: [1730, 1830] },
+  { g: 'Norteamérica', key: 'n:hudson', es: 'Escuela del río Hudson', s: ['hudson'] },
+  { g: 'Norteamérica', key: 'n:luminismo', es: 'Luminismo (americano, español y belga)', a: ['Fitz Henry Lane', 'Martin Johnson Heade', 'Sanford Robinson Gifford', 'John Frederick Kensett', 'Fitz Hugh Lane', 'Joaquín Sorolla', 'Ignacio Pinazo', 'Cecilio Pla', 'Teodoro Andreu', 'Navarro Llorens', 'Emile Claus', 'Anna Boch', 'Jenny Montigny', 'Jan Sluijters', 'Leo Gestel', 'Ferdinand Hart Nibbrig'], y: [1840, 1930] },
+  { g: 'Norteamérica', key: 'n:oeste', es: 'El Oeste americano', a: ['Albert Bierstadt', 'Thomas Moran', 'Frederic Remington', 'Charles Marion Russell', 'George Catlin', 'Karl Bodmer', 'Alfred Jacob Miller', 'Charles Schreyvogel', 'Frank Tenney Johnson', 'Seth Eastman'], y: [1830, 1925] },
+  { g: 'Norteamérica', key: 'n:ashcan', es: 'Escuela Ashcan', a: ['Robert Henri', 'John Sloan', 'George Bellows', 'George Luks', 'Everett Shinn', 'William Glackens', 'Ernest Lawson', 'Arthur Bowen Davies', 'Maurice Prendergast'], y: [1895, 1935] },
+  { g: 'Norteamérica', key: 'n:hopper', es: 'Hopper y la escena americana', s: ['regionalism'] },
+  { g: 'Norteamérica', key: 'n:grupo7', es: 'Grupo de los Siete (Canadá)', a: ['Tom Thomson', 'Lawren Harris', 'A. Y. Jackson', 'J. E. H. MacDonald', 'Arthur Lismer', 'Frederick Varley', 'Franklin Carmichael', 'Frank Johnston', 'Emily Carr', 'A. J. Casson', 'Edwin Holgate'], y: [1910, 1945] },
+  // Europa
+  { g: 'Europa', key: 'e:flamencos', es: 'Primitivos flamencos', s: ['earlynl'] },
+  { g: 'Europa', key: 'e:holandes', es: 'Siglo de Oro holandés', s: ['dutch'] },
+  { g: 'Europa', key: 'e:espanol', es: 'Siglo de Oro español', s: ['spanishgolden'] },
+  { g: 'Europa', key: 'e:prerrafaelitas', es: 'Prerrafaelitas', s: ['prer'] },
+  { g: 'Europa', key: 'e:academico', es: 'Arte académico', s: ['academic'] },
+  { g: 'Europa', key: 'e:danesa', es: 'Edad de Oro danesa y pintores de Skagen', a: ['Hammershøi', 'Krøyer', 'Anna Ancher', 'Michael Ancher', 'Købke', 'Eckersberg', 'Jens Juel', 'Rørbye', 'Constantin Hansen', 'L. A. Ring', 'Viggo Johansen', 'Laurits Tuxen', 'Wilhelm Bendz', 'Johan Thomas Lundbye'], y: [1790, 1920] },
+  { g: 'Europa', key: 'e:nordicos', es: 'Pintores nórdicos', a: ['Anders Zorn', 'Carl Larsson', 'Gallen-Kallela', 'Albert Edelfelt', 'Harald Sohlberg', 'Nikolai Astrup', 'Bruno Liljefors', 'Eugène Jansson', 'Prins Eugen', 'Helene Schjerfbeck', 'Hugo Simberg', 'Peder Balke', 'Frits Thaulow', 'Christian Krohg', 'Theodor Kittelsen', 'Edvard Munch'], y: [1850, 1935] },
+  { g: 'Europa', key: 'e:itinerantes', es: 'Itinerantes rusos', a: ['Repin', 'Shishkin', 'Levitan', 'Kramskoi', 'Surikov', 'Vasnetsov', 'Aivazovsky', 'Perov', 'Savrasov', 'Kuindzhi', 'Polenov', 'Nikolai Ge', 'Makovsky', 'Yaroshenko', 'Myasoyedov', 'Vereshchagin'], y: [1860, 1915] },
+  { g: 'Europa', key: 'e:bizantino', es: 'Bizantino e iconos', s: ['byzantine'] }
 ];
 function quickFilters(q) { // filtros de una colección rápida sobre una base ya a cero
   return { styles: (q.s || []).slice(), artists: (q.a || []).slice(), yearFrom: q.y ? String(q.y[0]) : '', yearTo: q.y ? String(q.y[1]) : '' };
@@ -2730,7 +2783,7 @@ const chip = (act, id, label, on, cls) => '<button class="chip' + (cls ? ' ' + c
 const opts = (list, cur) => list.map(o => '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(cur) ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join('');
 const R = {
   // La colección elegida sigue marcada mientras no se toque ningún filtro; si se cambia alguno, pasa a «Filtros a tu gusto».
-  presets: () => { const cur = currentPreset(); return '<option value=""' + (cur ? '' : ' selected') + '>' + (S.st.preset && !cur ? 'Filtros a tu gusto' : 'Elegir una colección…') + '</option>' + presetList().map((p, i, l) => (i === 2 ? '<optgroup label="Movimientos">' : '') + '<option value="' + esc(p.key) + '"' + (p.key === cur ? ' selected' : '') + '>' + esc(p.es) + '</option>' + (i === l.length - 1 && i >= 2 ? '</optgroup>' : '')).join(''); },
+  presets: () => { const cur = currentPreset(); return '<option value=""' + (cur ? '' : ' selected') + '>' + (S.st.preset && !cur ? 'Filtros a tu gusto' : 'Elegir una colección…') + '</option>' + presetList().map((p, i, l) => { const g = i < 2 ? '' : (p.g || 'Movimientos'), pg = i < 3 ? '' : (l[i - 1].g || 'Movimientos'); return (g && g !== pg ? (i > 2 ? '</optgroup>' : '') + '<optgroup label="' + esc(g) + '">' : '') + '<option value="' + esc(p.key) + '"' + (p.key === cur ? ' selected' : '') + '>' + esc(p.es) + '</option>' + (i === l.length - 1 && g ? '</optgroup>' : ''); }).join(''); },
   eras: () => C.ERAS.map(e => chip('era', e.id, e.es, S.f.eras.includes(e.id))).join(''),
   styles: () => C.STYLES.map(s => chip('style', s.id, s.es, S.f.styles.includes(s.id))).join(''),
   artists: () => S.f.artists.map(a => chip('rm-artist', a, a, true, 'rm')).join('') || '<span class="hint" style="font-size:14px;color:var(--muted)">Ninguno. Se muestran todos los artistas.</span>',
