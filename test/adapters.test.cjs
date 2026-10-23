@@ -227,6 +227,11 @@ globalThis.fetch = async (url, init) => {
     const r1 = await C.adapters.wikidataMuseum(ms[1].museum, C.makePlan(fc), fc, anyCtx);
     assert.ok(sparqlLog.some(q => /COUNT\(/.test(q) && !/GROUP BY/.test(q)) && Array.isArray(r1), 'lote fallido: conteo individual');
   }
+  { // autor desconocido en Wikidata: llega como dirección .well-known/genid y no se muestra
+    assert.strictEqual(C.cleanName('http://www.wikidata.org/.well-known/genid/d5c26625e26979200f2270d7f26a30f8'), '');
+    assert.strictEqual(C.cleanName('Q12345'), ''); assert.strictEqual(C.cleanName('Jean-Pierre Houël'), 'Jean-Pierre Houël');
+    assert.strictEqual(C.mk({ src: 'wiki', id: 'Q1', title: 'Allégorie', artist: 'http://www.wikidata.org/.well-known/genid/abc', imgs: ['https://x/a.jpg'] }).artist, '');
+  }
   // Un museo, varias fuentes
   const orsay = museumSrcs.find(x => x.id === 'm:orsay'); const rp = {}; commonsLog.length = 0;
   const fo = C.defaultFilters();

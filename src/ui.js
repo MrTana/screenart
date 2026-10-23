@@ -240,7 +240,7 @@ function captionMs() { const s = +S.st.interval || 30; return (s >= 1800 ? 300 :
 function setCaption(w) {
   const c = $('#caption');
   c.querySelector('.t').textContent = w.title;
-  c.querySelector('.m').textContent = [w.artist, w.date || w.year].filter(Boolean).join(' · ');
+  c.querySelector('.m').textContent = [C.cleanName(w.artist), w.date || w.year].filter(Boolean).join(' · ');
   c.querySelector('.s').textContent = w.museum || '';
   clearTimeout(S.capT);
   const cm = capMode();
@@ -254,7 +254,7 @@ function isTall(item, img) { const w = item.iw || (img && img.naturalWidth), h =
 function layoutSlide(s, item) {
   const img = s.querySelector('img'), plate = s.querySelector('.plate');
   plate.querySelector('.pt').textContent = item.title || '';
-  plate.querySelector('.pm').textContent = [item.artist, item.date || item.year].filter(Boolean).join(' · ');
+  plate.querySelector('.pm').textContent = [C.cleanName(item.artist), item.date || item.year].filter(Boolean).join(' · ');
   plate.querySelector('.ps').textContent = item.museum || '';
   S.side = !S.side;
   const apply = () => {
@@ -610,7 +610,7 @@ async function showFound(w) {
   present(Object.assign({}, item, { url: r.url, url_page: item.url, iw: r.w, ih: r.h })); schedule();
 }
 function renderTres() {
-  $('#c-tres').innerHTML = (S.tres || []).map((w, i) => '<button class="tres" data-act="title-show" data-id="' + i + '"><img alt="" loading="lazy" src="' + esc(w.thumb) + '"><span><b>' + esc(w.title) + '</b>' + esc([w.artist, w.date || w.year, w.museum].filter(Boolean).join(' · ')) + '</span></button>').join('');
+  $('#c-tres').innerHTML = (S.tres || []).map((w, i) => '<button class="tres" data-act="title-show" data-id="' + i + '"><img alt="" loading="lazy" src="' + esc(w.thumb) + '"><span><b>' + esc(w.title) + '</b>' + esc([C.cleanName(w.artist), w.date || w.year, w.museum].filter(Boolean).join(' · ')) + '</span></button>').join('');
   updateSums();
 }
 async function searchTitle() {
@@ -1255,7 +1255,7 @@ function remoteNow(n) {
   if (!n) return;
   remoteFavStyles(n.favStyles);
   S.current = { uid: n.uid }; S.nowFav = !!n.fav; S.paused = !!n.paused;
-  $('#rcnow').hidden = false; $('#rcT').textContent = n.title || ''; $('#rcA').textContent = [n.artist, n.date].filter(Boolean).join(' · ');
+  $('#rcnow').hidden = false; $('#rcT').textContent = n.title || ''; $('#rcA').textContent = [C.cleanName(n.artist), n.date].filter(Boolean).join(' · ');
   const im = $('#rcImg'); if (n.thumb && im.dataset.u !== n.thumb) { im.dataset.u = n.thumb; im.src = n.thumb; }
   $('#playBtn').textContent = S.paused ? 'Reanudar' : 'Pausar'; updateFavBtn();
 }

@@ -431,6 +431,13 @@ function cleanDate(d) {
   const i = s.search(/\bQS:/); if (i >= 0) s = s.slice(0, i);
   return s.replace(/\s+(date|title|label|description)\s*$/i, '').replace(/^(date|fecha):\s*/i, '').trim().slice(0, 40);
 }
+/* Nombres que no son nombres: Wikidata devuelve una dirección (…/.well-known/genid/…) cuando el autor es «desconocido», y a veces
+   llega solo el identificador (Q123). Eso no se muestra nunca. */
+function cleanName(s) {
+  s = s == null ? '' : String(s).replace(/\s*\bQS:.*$/, '').trim();
+  if (!s || /^(https?:\/\/|www\.)/i.test(s) || /\.well-known\/genid\//i.test(s) || /^Q\d+$/.test(s)) return '';
+  return s.slice(0, 90);
+}
 function mk(p) {
   const imgs = [];
   (p.imgs || []).filter(Boolean).forEach(u => { if (/^http:\/\//.test(u)) imgs.push(u.replace(/^http:/, 'https:')); imgs.push(u); });
@@ -438,7 +445,7 @@ function mk(p) {
     uid: p.src + ':' + p.id,
     src: p.src, museum: p.museum,
     title: cleanTitle(p.title) || 'Sin título',
-    artist: (p.artist && String(p.artist).replace(/\s*\bQS:.*$/, '').trim().slice(0, 90)) || '',
+    artist: cleanName(p.artist),
     date: cleanDate(p.date), year: p.year == null ? parseYear(cleanDate(p.date)) : p.year,
     imgs, thumb: p.thumb || imgs[imgs.length - 1] || '',
     url: p.url || '', w: p.w || null, h: p.h || null,
@@ -1679,7 +1686,7 @@ async function runSource(src, f, ctx) {
 }
 
 const api = {
-  WD_SHARDS, wdMuseumQuery, wdSelect, md5, commonsImgs, PX, memoForget, primeWikidataCounts, rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
+  cleanName, WD_SHARDS, wdMuseumQuery, wdSelect, md5, commonsImgs, PX, memoForget, primeWikidataCounts, rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
   ERAS, STYLES, TYPES, KEYWORDS, EXCLUDES, excluded, MUSEUMS, DEFAULT_MUSEUMS, MUSEUM_SOURCES, ARTIST_SUGGESTIONS, ARTIST_GROUPS, TUNING, keywordToQuery,
   museumCountry, countryCollections, styleIdsOf, searchPaintings, identifyArtwork, countryCollectionName, defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC, museumIdsByTag,
   adapters: { momaFetch, ngaFetch, tateFetch, shardFetch, commonsSpecial, wikidataMuseum, wikipediaFetch, commonsFetch, wikiartFetch, metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }
