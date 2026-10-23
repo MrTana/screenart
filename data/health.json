@@ -1,128 +1,183 @@
 {
- "at": "2026-10-23 02:29 UTC",
+ "at": "2026-10-23 02:38 UTC",
  "ok": 18,
  "total": 20,
  "results": {
   "The Met": {
    "ok": true,
-   "n": 18,
-   "sample": "Window onto Bamboo on a Rainy Day",
-   "ms": 1412
+   "n": 27,
+   "sample": "Passage from “A Modern-Day Wen Xuan: Selections of Refined L",
+   "ms": 1099
   },
   "Art Institute of Chicago": {
    "ok": true,
-   "n": 24,
+   "n": 20,
    "err": "imagen no comprobable desde GitHub (protección contra robots)",
-   "sample": "Violet and Silver—The Deep Sea",
-   "ms": 656
+   "sample": "Exotic garden",
+   "ms": 570
   },
   "Cleveland Museum of Art": {
    "ok": true,
    "n": 24,
-   "sample": "Interior of a Church",
-   "ms": 2380
+   "sample": "Christ and the Woman Taken in Adultery",
+   "ms": 1105
   },
   "Rijksmuseum": {
    "ok": true,
    "n": 8,
-   "sample": "Portrait of Pieter Dircksz, called Long Beard, Council Membe",
-   "ms": 3670
+   "sample": "Anthony van Dyck wooing his Model",
+   "ms": 3570
   },
   "Victoria and Albert": {
    "ok": true,
    "n": 24,
    "sample": "Painting",
-   "ms": 1817
+   "ms": 1460
   },
   "SMK": {
    "ok": true,
-   "n": 6,
-   "sample": "Landskab med en vej ved en flod",
-   "ms": 2525
+   "n": 34,
+   "sample": "A Cabinet with Objects of Art",
+   "ms": 4547
   },
   "Minneapolis": {
    "ok": true,
-   "n": 7,
-   "sample": "At the Spring",
-   "ms": 1310
+   "n": 2,
+   "sample": "Bamboo and Chinese Poems [left of a pair]",
+   "ms": 838
   },
   "Smithsonian": {
    "ok": true,
    "n": 24,
-   "sample": "Gas Tanks at End of 23rd Street, New York",
-   "ms": 1420
+   "sample": "The Boy Stands on the Burning Deck",
+   "ms": 1556
   },
   "Europeana": {
    "ok": true,
    "n": 24,
-   "sample": "Måltavla",
-   "ms": 2103
+   "sample": "[Painting]",
+   "ms": 1860
   },
   "Wikidata (museo)": {
    "ok": false,
    "n": 0,
    "err": "Tiempo de espera agotado",
-   "ms": 40186
+   "ms": 40188,
+   "diag": {
+    "simpleCountMs": 138,
+    "status": 200,
+    "body": "{\n  \"head\" : {\n    \"vars\" : [ \"n\" ]\n  },\n  \"results\" : {\n    \"bindings\" : [ {\n      \"n\" : {\n        \"datatype\" : \"http://www.w3.org/2001/XMLSchema#integer\",\n        \"type\" : \"literal\",\n        \"value\""
+   }
   },
   "Wikidata (general)": {
    "ok": true,
-   "n": 40,
-   "sample": "Blanche Hoschedé as a Child",
-   "ms": 604
+   "n": 50,
+   "sample": "Houses of Parliament, Sunlight Effect (Le Parlement, effet d",
+   "ms": 1151
   },
   "Commons": {
    "ok": true,
    "n": 35,
-   "sample": "Concierto de angeles",
-   "ms": 4612
+   "sample": "Pariška branjevka",
+   "ms": 8443
   },
   "Google Art Project": {
    "ok": true,
    "n": 40,
-   "sample": "Annunciation",
-   "ms": 6041
+   "sample": "The Triumph of the Innocents",
+   "ms": 5942
   },
   "Wikipedia": {
    "ok": false,
    "n": 0,
    "err": "sin obras",
-   "ms": 496
+   "ms": 479,
+   "diag": [
+    [
+     "Musée Marmottan Monet",
+     "Art museum in Paris, France",
+     512,
+     "rg&utm_campaign=api&utm_content=original"
+    ],
+    [
+     "Houses of Parliament (Monet series)",
+     "1899–1901 series of paintings by Claude Monet",
+     null,
+     null
+    ],
+    [
+     "Water Lilies (Monet series)",
+     "Series of paintings by Claude Monet",
+     3463,
+     "rg&utm_campaign=api&utm_content=original"
+    ],
+    [
+     "List of paintings by Claude Monet",
+     "",
+     2790,
+     "rg&utm_campaign=api&utm_content=original"
+    ],
+    [
+     "La Grenouillère (Monet)",
+     "Painting by Claude Monet",
+     3679,
+     "rg&utm_campaign=api&utm_content=original"
+    ],
+    [
+     "Woman with a Parasol – Madame Monet and Her Son",
+     "1875 painting by Claude Monet",
+     6001,
+     "rg&utm_campaign=api&utm_content=original"
+    ],
+    [
+     "Weeping Willow (Monet)",
+     "1918 oil painting by Oscar-Claude Monet",
+     1026,
+     "rg&utm_campaign=api&utm_content=original"
+    ],
+    [
+     "Claude Monet Painting in his Studio",
+     "1874 painting by Édouard Manet",
+     5700,
+     "rg&utm_campaign=api&utm_content=original"
+    ]
+   ]
   },
   "WikiArt": {
    "ok": true,
    "n": 60,
-   "sample": "Langland Bay",
-   "ms": 1978
+   "sample": "The Garden",
+   "ms": 1891
   },
   "MoMA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Premise",
-   "ms": 619
+   "sample": "Great American Nude, 2",
+   "ms": 1018
   },
   "NGA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "The Races at Longchamp",
-   "ms": 730
+   "sample": "Abraham Clark and His Children",
+   "ms": 912
   },
   "Tate (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Landscape Study",
-   "ms": 11621
+   "sample": "Comedy",
+   "ms": 1415
   },
   "Louvre (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Corbeille de fleurs",
-   "ms": 1152
+   "sample": "Lambert Sigisbert Adam l'Aîné",
+   "ms": 3261
   },
   "Prado (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Santo Domingo de Guzmán",
-   "ms": 458
+   "sample": "La Flagelación o Cristo atado a la Columna",
+   "ms": 345
   }
  }
 }
