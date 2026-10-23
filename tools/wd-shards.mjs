@@ -31,10 +31,18 @@ async function sparql(q, tries = 5) {
   throw new Error('Wikidata no responde');
 }
 
+/* Museo sin identificador: candidatos por el buscador de Wikidata (cada nombre y su idioma, también con el apóstrofo tipográfico)
+   y se queda el que tenga más obras con imagen (contando sus departamentos). */
+async function search(name, lang) {
+  const u = 'https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json&type=item&limit=6&language=' + lang + '&uselang=' + lang + '&search=' + encodeURIComponent(name);
+  try { const r = await fetch(u, { headers: { 'User-Agent': UA } }); return r.ok ? ((await r.json()).search || []).map(x => x.id) : []; } catch (e) { return []; }
+}
 async function resolve(m) {
   if (m.ids && m.ids.length) return m.ids;
-  const vals = m.labels.map(([l, lang]) => '"' + esc(l) + '"@' + lang).join(' ');
-  const rows = await sparql('SELECT ?c (COUNT(DISTINCT ?item) AS ?n) WHERE { VALUES ?l { ' + vals + ' } ?c rdfs:label ?l. ?item wdt:P195 ?c; wdt:P18 ?img. } GROUP BY ?c ORDER BY DESC(?n) LIMIT 1');
+  const cands = new Set();
+  for (const [l, lang] of m.labels) for (const v of new Set([l, l.replace(/'/g, '\u2019')])) (await search(v, lang)).forEach(id => cands.add(id));
+  if (!cands.size) return [];
+  const rows = await sparql('SELECT ?c (COUNT(DISTINCT ?item) AS ?n) WHERE { VALUES ?c { ' + [...cands].map(q => 'wd:' + q).join(' ') + ' } ?item wdt:P195/wdt:P361* ?c; wdt:P18 ?img. } GROUP BY ?c ORDER BY DESC(?n) LIMIT 1');
   const top = rows[0];
   if (!top || +top.n.value < MIN) return [];
   return [top.c.value.split('/').pop()];
