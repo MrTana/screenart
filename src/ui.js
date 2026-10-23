@@ -669,13 +669,13 @@ async function searchByPhoto(file, pre) { // pre: imagen ya preparada { b64, mim
     if (!id) { tmsg('No reconozco la obra. Prueba con otra foto más recta, con buena luz y sin reflejos, o búscala por su nombre.'); return; }
     const label = '«' + (id.title || id.title_en) + '»' + (id.artist ? ', ' + id.artist : '') + (id.year ? ' (' + id.year + ')' : '');
     tmsg('Parece ser ' + label + '. Buscándola…');
-    const done = list => { if (mine === S.titleQ) { S.tres = rankByArtist(list, id.artist); renderTres(); } };
+    const done = list => { if (mine === S.titleQ) { S.tres = rankFound(list, id); renderTres(); } };
     let res = await C.searchPaintings(id.title_en || id.title, ctx(), done, id.artist);
     if (id.title && id.title_en && C.norm(id.title) !== C.norm(id.title_en)) {
       try { const more = await C.searchPaintings(id.title, ctx(), null, id.artist); res = res.concat(more.filter(m => !res.some(r => r.uid === m.uid))); } catch (e) { /* con la primera búsqueda basta */ }
     }
     if (mine !== S.titleQ) return;
-    S.tres = rankByArtist(res, id.artist); renderTres();
+    S.tres = rankFound(res, id); renderTres();
     tmsg(S.tres.length ? 'Parece ser ' + label + '. Toca una para verla ahora.' : 'Parece ser ' + label + ', pero no encuentro esa obra con imagen. Prueba a buscarla por su nombre.');
   } catch (e) {
     tmsg(e && e.noKey ? 'Falta la clave para reconocer fotos.' : e && (e.status === 400 || e.status === 401 || e.status === 403) ? 'La clave no es válida o no tiene permiso para reconocer imágenes (' + e.status + ').' : e && (e.status === 503 || e.status === 500 || e.status === 502 || e.status === 504 || e.status === 529) ? 'El servicio de reconocimiento está saturado (' + e.status + '). Espera unos segundos y vuelve a intentarlo.' : e && e.status === 429 ? 'Se acabó la cuota de la clave por ahora; prueba más tarde.' : e && e.timeout ? 'No pude reconocer la foto: ' + e.message + '. Prueba de nuevo; si sigue igual, usa la otra clave o una foto más pequeña.' : 'No pude reconocer la foto: ' + errText(e));
@@ -844,10 +844,20 @@ window.addEventListener('popstate', e => {
   if (k !== 'scan' && scanOpen()) closeScanner();
   if (!k) showHome();
 });
-function rankByArtist(list, artist) {
-  const a = C.norm(artist || '').split(/\s+/).filter(x => x.length > 2).pop();
-  if (!a) return list;
-  return list.slice().sort((x, y) => (C.norm(y.artist).includes(a) ? 1 : 0) - (C.norm(x.artist).includes(a) ? 1 : 0));
+/* Ordena lo encontrado según lo que reconoció la foto: primero las del mismo artista y con más palabras del título.
+   Si alguna es del artista reconocido, se quitan las de otros artistas (antes salían obras con títulos parecidos de cualquiera). */
+function rankFound(list, id) {
+  const words = t => C.norm(t || '').replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(x => x.length > 2 && !/^(the|del|las|los|una|les|des|and|with|con|por|para|sur|von|van|der|het)$/.test(x));
+  const a = words(id.artist).pop(), tw = [words(id.title), words(id.title_en)].filter(x => x.length);
+  const sc = w => {
+    const t = C.norm(w.title), byA = !!a && C.norm(w.artist).includes(a);
+    const tit = tw.length ? Math.max.apply(null, tw.map(ws => ws.filter(x => t.includes(x)).length / ws.length)) : 0;
+    return { w, byA, tit, s: (byA ? 2 : 0) + tit };
+  };
+  let rows = list.map(sc);
+  if (rows.some(r => r.byA)) rows = rows.filter(r => r.byA);
+  else if (rows.some(r => r.tit >= 0.5)) rows = rows.filter(r => r.tit >= 0.5);
+  return rows.sort((x, y) => y.s - x.s).map(r => r.w);
 }
 function showTitleResult(i) {
   const w = (S.tres || [])[+i]; if (!w) return;
