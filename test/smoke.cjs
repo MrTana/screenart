@@ -133,7 +133,12 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     assert.ok(clean(S.f) && !S.f.onlyFavs, 'Todo el arte: sin ningún filtro (el artista elegido antes ya no queda)');
     assert.deepStrictEqual(Object.keys(S.f.sources).filter(k => !S.f.sources[k]), ['m:harvard'], 'Todo el arte: todos los museos salvo los que piden clave y no hay');
     assert.ok(!d.querySelectorAll('#c-artists .chip.rm').length, 'el menú ya no muestra el artista');
-    dirty(); pick('Mis favoritas');
+    const selp = () => { const sel = d.getElementById('c-presets'); return [sel.value, sel.options[sel.selectedIndex].textContent]; };
+    assert.strictEqual(selp()[0], 'todo', 'la colección elegida queda marcada');
+    A.renderAll(); assert.strictEqual(selp()[0], 'todo', 'sigue marcada al volver a abrir el menú');
+    A.onAct('era', 'mod'); assert.deepStrictEqual(selp(), ['', 'Filtros a tu gusto'], 'al tocar un filtro deja de estar marcada'); A.onAct('era', 'mod');
+    assert.strictEqual(selp()[0], 'todo', 'si se deshace el cambio vuelve a marcarse');
+    dirty(); pick('Mis favoritas'); assert.strictEqual(selp()[0], 'favs');
     assert.ok(clean(S.f) && S.f.onlyFavs, 'Mis favoritas: solo favoritas, sin otros filtros');
     S.favs = favs0; A.render('presets'); }
   { const paris = C0().SOURCE_LIST.filter(x => x.museum && x.museum.city === 'París').map(x => x.id); pick('Todo el arte'); Object.keys(S.f.sources).forEach(k => { S.f.sources[k] = paris.includes(k); }); A.renderAll(); A.applyChange(); await wait(800); }

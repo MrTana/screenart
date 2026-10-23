@@ -130,7 +130,6 @@ button{cursor:pointer}
 .mode-plate .slide.tall.noplate .frame{gap:0}
 .mode-plate .slide.tall:not(.noplate) .plate{display:flex;flex-direction:column;gap:1.1vmin;flex:0 1 30vw;max-width:30vw;min-width:0;color:var(--md-on-surface)}
 .mode-plate .slide.tall.alt .plate{text-align:right;align-items:flex-end}
-.plate::before{content:'';width:3.5vw;min-width:28px;height:2px;margin-bottom:1.4vmin;background:currentColor;opacity:.35}
 .plate .pt{font:500 clamp(20px,2.5vw,46px)/1.18 var(--sans);text-wrap:balance;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
 .plate .pm{font:400 clamp(15px,1.55vw,27px)/1.4 var(--sans);color:var(--md-on-surface-variant)}
 .plate .ps{margin-top:.6vmin;font:500 clamp(12px,1.15vw,20px)/1.4 var(--sans);letter-spacing:.6px;color:var(--md-on-surface-variant);opacity:.85}
@@ -431,7 +430,7 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
     <button class="acch" data-act="acc" data-id="skin" aria-expanded="false"><span class="at">Skin</span><span class="as" data-sum="skin"></span><span class="ac">›</span></button>
     <div class="accb"><label class="fld"><span>Aspecto de la interfaz</span><select id="c-skin"></select></label><p class="hint">Material Design 3 y Material 3 Expressive, en claro y oscuro. Solo cambia el menú, el mando y los avisos; la obra y su ficha no cambian.</p></div>
   </section>
-  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 262cecf364 · 2026-10-23 07:12 UTC</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
+  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 8e2cf7a27f · 2026-10-23 07:22 UTC</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
   <div id="rcfoot" hidden><button class="btn pri" data-act="rc-update">Buscar actualización</button><p id="rcver"></p></div>
 <div id="tvConnect"><button class="btn pri" data-act="tv-connect">Conectar a la TV</button><div class="row" id="tvRow" hidden><input type="text" id="tvCode" placeholder="Código de la TV (ej. abcd-efgh-jkmn)" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn pri" data-act="tv-go">Abrir mando</button></div><p class="hint" id="tvMsg">El código sale bajo el QR en la pantalla de la TV.</p></div>
 </aside>
@@ -2445,7 +2444,10 @@ async function advance() {
    Al abrir con los mismos filtros, la primera obra sale de ahí (y su imagen suele estar en la caché del navegador) mientras los
    museos se consultan en segundo plano. Con otros filtros, o pasada una semana, se ignora. */
 const STASH_MAX = 40, STASH_TTL = 7 * 864e5;
-function filterSig(f) { return JSON.stringify(slimF(f)); }
+function filterSig(f) { // firma estable (claves ordenadas): la misma en la TV y en el mando
+  const st = v => Array.isArray(v) ? '[' + v.map(st).join(',') + ']' : v && typeof v === 'object' ? '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + st(v[k])).join(',') + '}' : JSON.stringify(v === undefined ? null : v);
+  return st(slimF(f));
+}
 function prefetch() {
   const ep = S.epoch; S.nextEpoch = ep; S.ready = null;
   S.nextP = pullNext().then(it => { if (ep === S.epoch) { S.ready = it; saveStashSoon(); } return it; });
@@ -2563,7 +2565,7 @@ async function diagnose(quiet) {
 /* ───────── cambio de filtros ───────── */
 let applyT;
 function applyChange() {
-  saveAll();
+  saveAll(); render('presets');
   if (REMOTE) return;
   clearTimeout(applyT);
   applyT = setTimeout(() => {
@@ -2614,6 +2616,7 @@ function favStyleIds() {
   const ids = []; S.favs.forEach(w => C.styleIdsOf(w).forEach(id => { if (!ids.includes(id)) ids.push(id); }));
   return ids;
 }
+function currentPreset() { return S.st.preset && S.st.presetSig === filterSig(S.f) ? S.st.preset : ''; }
 function presetList() {
   return [{ key: 'todo', es: 'Todo el arte' }, { key: 'favs', es: 'Mis favoritas (' + S.favs.length + ')', favs: true }];
 }
@@ -2627,7 +2630,8 @@ const CAPTIONS = [['def', 'Predeterminada (móvil: siempre visible; con TV: al i
 const chip = (act, id, label, on, cls) => '<button class="chip' + (cls ? ' ' + cls : '') + '" data-act="' + act + '" data-id="' + esc(id) + '" aria-pressed="' + !!on + '">' + esc(label) + '</button>';
 const opts = (list, cur) => list.map(o => '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(cur) ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join('');
 const R = {
-  presets: () => '<option value="">Elegir una colección…</option>' + presetList().map(p => '<option value="' + esc(p.key) + '">' + esc(p.es) + '</option>').join(''),
+  // La colección elegida sigue marcada mientras no se toque ningún filtro; si se cambia alguno, pasa a «Filtros a tu gusto».
+  presets: () => { const cur = currentPreset(); return '<option value=""' + (cur ? '' : ' selected') + '>' + (S.st.preset && !cur ? 'Filtros a tu gusto' : 'Elegir una colección…') + '</option>' + presetList().map(p => '<option value="' + esc(p.key) + '"' + (p.key === cur ? ' selected' : '') + '>' + esc(p.es) + '</option>').join(''); },
   eras: () => C.ERAS.map(e => chip('era', e.id, e.es, S.f.eras.includes(e.id))).join(''),
   styles: () => C.STYLES.map(s => chip('style', s.id, s.es, S.f.styles.includes(s.id))).join(''),
   artists: () => S.f.artists.map(a => chip('rm-artist', a, a, true, 'rm')).join('') || '<span class="hint" style="font-size:14px;color:var(--muted)">Ninguno. Se muestran todos los artistas.</span>',
@@ -2904,7 +2908,7 @@ function onAct(act, id) {
       const nf = C.defaultFilters(); // todo a cero
       C.SOURCE_LIST.forEach(s => { const nk = s.museum && s.museum.needsKey; nf.sources[s.id] = !(nk && !hasKey(nk)); }); // todos los museos (salvo los que piden una clave que no hay)
       if (p.favs) { nf.onlyFavs = true; if (!S.favs.length) toast('Aún no tienes favoritas'); }
-      S.f = nf; S.mfilter = ''; try { $('#museumFilter').value = ''; } catch (e) { /* sin campo */ }
+      S.f = nf; S.st.preset = p.key; S.st.presetSig = filterSig(nf); S.mfilter = ''; try { $('#museumFilter').value = ''; } catch (e) { /* sin campo */ }
       renderAll(); applyChange(); break;
     }
     case 'src': f.sources[id] = !f.sources[id]; render('srcs'); applyChange(); break;
@@ -3003,7 +3007,7 @@ document.addEventListener('keydown', e => {
 [['presets', 'preset'], ['artgroup', 'artgroup'], ['orient', 'orient'], ['mode', 'mode'], ['interval', 'interval'], ['caption', 'caption'], ['skin', 'skin']].forEach(([box, act]) => {
   $('#' + BOX[box]).addEventListener('change', e => {
     const v = e.target.value;
-    if (act === 'preset') { if (v === '') return; onAct('preset', v); e.target.value = ''; return; }
+    if (act === 'preset') { if (v === '') return; onAct('preset', v); return; } // queda marcada la elegida
     onAct(act, v);
   });
 });

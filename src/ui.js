@@ -312,7 +312,10 @@ async function advance() {
    Al abrir con los mismos filtros, la primera obra sale de ahí (y su imagen suele estar en la caché del navegador) mientras los
    museos se consultan en segundo plano. Con otros filtros, o pasada una semana, se ignora. */
 const STASH_MAX = 40, STASH_TTL = 7 * 864e5;
-function filterSig(f) { return JSON.stringify(slimF(f)); }
+function filterSig(f) { // firma estable (claves ordenadas): la misma en la TV y en el mando
+  const st = v => Array.isArray(v) ? '[' + v.map(st).join(',') + ']' : v && typeof v === 'object' ? '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + st(v[k])).join(',') + '}' : JSON.stringify(v === undefined ? null : v);
+  return st(slimF(f));
+}
 function prefetch() {
   const ep = S.epoch; S.nextEpoch = ep; S.ready = null;
   S.nextP = pullNext().then(it => { if (ep === S.epoch) { S.ready = it; saveStashSoon(); } return it; });
@@ -430,7 +433,7 @@ async function diagnose(quiet) {
 /* ───────── cambio de filtros ───────── */
 let applyT;
 function applyChange() {
-  saveAll();
+  saveAll(); render('presets');
   if (REMOTE) return;
   clearTimeout(applyT);
   applyT = setTimeout(() => {
@@ -481,6 +484,7 @@ function favStyleIds() {
   const ids = []; S.favs.forEach(w => C.styleIdsOf(w).forEach(id => { if (!ids.includes(id)) ids.push(id); }));
   return ids;
 }
+function currentPreset() { return S.st.preset && S.st.presetSig === filterSig(S.f) ? S.st.preset : ''; }
 function presetList() {
   return [{ key: 'todo', es: 'Todo el arte' }, { key: 'favs', es: 'Mis favoritas (' + S.favs.length + ')', favs: true }];
 }
@@ -494,7 +498,8 @@ const CAPTIONS = [['def', 'Predeterminada (móvil: siempre visible; con TV: al i
 const chip = (act, id, label, on, cls) => '<button class="chip' + (cls ? ' ' + cls : '') + '" data-act="' + act + '" data-id="' + esc(id) + '" aria-pressed="' + !!on + '">' + esc(label) + '</button>';
 const opts = (list, cur) => list.map(o => '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(cur) ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join('');
 const R = {
-  presets: () => '<option value="">Elegir una colección…</option>' + presetList().map(p => '<option value="' + esc(p.key) + '">' + esc(p.es) + '</option>').join(''),
+  // La colección elegida sigue marcada mientras no se toque ningún filtro; si se cambia alguno, pasa a «Filtros a tu gusto».
+  presets: () => { const cur = currentPreset(); return '<option value=""' + (cur ? '' : ' selected') + '>' + (S.st.preset && !cur ? 'Filtros a tu gusto' : 'Elegir una colección…') + '</option>' + presetList().map(p => '<option value="' + esc(p.key) + '"' + (p.key === cur ? ' selected' : '') + '>' + esc(p.es) + '</option>').join(''); },
   eras: () => C.ERAS.map(e => chip('era', e.id, e.es, S.f.eras.includes(e.id))).join(''),
   styles: () => C.STYLES.map(s => chip('style', s.id, s.es, S.f.styles.includes(s.id))).join(''),
   artists: () => S.f.artists.map(a => chip('rm-artist', a, a, true, 'rm')).join('') || '<span class="hint" style="font-size:14px;color:var(--muted)">Ninguno. Se muestran todos los artistas.</span>',
@@ -771,7 +776,7 @@ function onAct(act, id) {
       const nf = C.defaultFilters(); // todo a cero
       C.SOURCE_LIST.forEach(s => { const nk = s.museum && s.museum.needsKey; nf.sources[s.id] = !(nk && !hasKey(nk)); }); // todos los museos (salvo los que piden una clave que no hay)
       if (p.favs) { nf.onlyFavs = true; if (!S.favs.length) toast('Aún no tienes favoritas'); }
-      S.f = nf; S.mfilter = ''; try { $('#museumFilter').value = ''; } catch (e) { /* sin campo */ }
+      S.f = nf; S.st.preset = p.key; S.st.presetSig = filterSig(nf); S.mfilter = ''; try { $('#museumFilter').value = ''; } catch (e) { /* sin campo */ }
       renderAll(); applyChange(); break;
     }
     case 'src': f.sources[id] = !f.sources[id]; render('srcs'); applyChange(); break;
@@ -870,7 +875,7 @@ document.addEventListener('keydown', e => {
 [['presets', 'preset'], ['artgroup', 'artgroup'], ['orient', 'orient'], ['mode', 'mode'], ['interval', 'interval'], ['caption', 'caption'], ['skin', 'skin']].forEach(([box, act]) => {
   $('#' + BOX[box]).addEventListener('change', e => {
     const v = e.target.value;
-    if (act === 'preset') { if (v === '') return; onAct('preset', v); e.target.value = ''; return; }
+    if (act === 'preset') { if (v === '') return; onAct('preset', v); return; } // queda marcada la elegida
     onAct(act, v);
   });
 });
