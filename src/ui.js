@@ -899,7 +899,7 @@ async function keepAwake() { try { if ('wakeLock' in navigator) lock = await nav
 
 /* ───────── app instalable (PWA) ───────── */
 /* Borra copias guardadas y service worker, y recarga la página desde internet. */
-/* Actualización automática: cada 20 min (y al volver a la app) se mira la versión publicada (sw.js lleva la huella de la
+/* Actualización automática: cada 5 min (y al volver a la app) se mira la versión publicada (sw.js lleva la huella de la
    compilación). Si cambió, la TV se recarga sola justo al pasar a la siguiente obra (nunca con el menú abierto ni en pausa);
    gracias al arranque instantáneo sigue con la obra que tocaba. El mando se recarga cuando nadie lo está tocando. */
 async function checkUpdate() {
@@ -1334,7 +1334,7 @@ function remoteSetSoon() {
 function initRemote() {
   RC.code = REMOTE; lsSet('rc', REMOTE);
   setTimeout(cloudSync, 1500); setInterval(cloudSync, 600000);
-  setTimeout(checkUpdate, 60000); setInterval(checkUpdate, 1200000);
+  setTimeout(checkUpdate, 30000); setInterval(checkUpdate, 300000);
   document.body.classList.add('rc');
   { // las claves guardadas en la versión móvil (mismo navegador) viajan a la TV; las de demostración no
     const pk = lsGet('keys', {}), nd = (v, d) => (v && v !== d ? v : '');
@@ -1360,7 +1360,7 @@ function init() {
   planSweep();
   if (loadStash()) refill();
   setTimeout(cloudSync, 2500); setInterval(cloudSync, 600000);
-  setTimeout(checkUpdate, 60000); setInterval(checkUpdate, 1200000); // con obras guardadas se muestran ya y los museos se consultan igual en segundo plano
+  setTimeout(checkUpdate, 30000); setInterval(checkUpdate, 300000); // con obras guardadas se muestran ya y los museos se consultan igual en segundo plano
   advance();
   initTV();
 }
