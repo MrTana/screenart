@@ -92,7 +92,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   assert.ok(!tv.document.getElementById('pair').hidden, 'el QR sigue hasta que el móvil manda una orden');
   assert.ok(posts <= 3, 'hello y estado caben en pocos mensajes: ' + posts);
   assert.ok(/Relé propio ✓ · Relé 3 de 3 brokers/.test(tv.document.getElementById('pairSt').textContent), 'la TV muestra el estado del relé: ' + tv.document.getElementById('pairSt').textContent);
-  assert.strictEqual(ph.localStorage.length, 1, 'el móvil solo guarda el código (no pisa filtros)');
+  { const ks = Array.from({ length: ph.localStorage.length }, (_, i) => ph.localStorage.key(i).replace('galeria-arte-v1:', '')).sort(); assert.ok(ks.every(k => ['rc', 'rskin'].includes(k)) && ks.includes('rc'), 'el móvil solo guarda el código y el aspecto (no pisa filtros): ' + ks); }
 
   // órdenes
   const h0 = tvA.S.hist.length;
@@ -239,6 +239,14 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     ph7.__swVer = 'f00dbeef12'; await ph7.ArtApp.checkUpdate(); await wait(3600);
     assert.ok(pto && /\?c=[a-z0-9]+&r=\d+$/.test(pto), 'el mando se recarga con su código: ' + pto);
   }
+  { // el mando toma el aspecto de la TV al conectar (también tras recargarse), aunque la versión móvil use otro
+    tvA.onAct('skin', 'm3e-dark'); await wait(50);
+    const ph8 = make('https://example.test/?c=' + code, { ls: { st: { skin: 'm3-light' } } });
+    for (let i = 0; i < 30 && !/Conectado/.test(ph8.document.getElementById('rcstat').textContent); i++) await wait(100);
+    assert.strictEqual(ph8.document.documentElement.dataset.skin, 'm3e-dark', 'el mando usa los colores de la TV: ' + ph8.document.documentElement.dataset.skin);
+    assert.strictEqual(ph8.document.getElementById('c-skin').value, 'm3e-dark', 'y el selector coincide');
+    const ph9 = make('https://example.test/?c=' + code, { ls: { st: { skin: 'm3-light' }, rskin: 'm3e-dark' }, noMQTT: true, noOwn: true, noSSE: true }); await wait(100);
+    assert.strictEqual(ph9.document.documentElement.dataset.skin, 'm3e-dark', 'al recargarse, el mando arranca ya con el último aspecto de la TV'); }
   // en el móvil nada cierra el menú
   ph.ArtApp.closeMenu(); assert.ok(!p.getElementById('drawer').hidden, 'el menú del móvil no se cierra');
   console.log('mando OK · mensajes:', posts);

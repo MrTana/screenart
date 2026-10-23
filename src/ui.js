@@ -9,7 +9,7 @@ const Q = (() => { try { return new URLSearchParams(location.search); } catch (e
 // Con «?c=código» la página es el mando del móvil: no muestra obras, controla la TV.
 const REMOTE = /^[a-z0-9]{6,24}$/i.test(Q.get('c') || '') ? Q.get('c').toLowerCase() : '';
 function lsGet(k, def) { try { const v = localStorage.getItem(KEY + ':' + k); return v ? JSON.parse(v) : def; } catch (e) { return def; } }
-function lsSet(k, v) { if (REMOTE && !['upd', 'rc', 'idkeys', 'keys', 'keysent', 'favs', 'favdel', 'keyt', 'cloudv', 'cloudsent'].includes(k)) return; // el mando solo guarda su código y lo que comparte con la versión móvil (claves y favoritas)
+function lsSet(k, v) { if (REMOTE && !['rskin', 'upd', 'rc', 'idkeys', 'keys', 'keysent', 'favs', 'favdel', 'keyt', 'cloudv', 'cloudsent'].includes(k)) return; // el mando solo guarda su código y lo que comparte con la versión móvil (claves y favoritas)
    try { localStorage.setItem(KEY + ':' + k, JSON.stringify(v)); } catch (e) { /* sin almacenamiento */ } }
 
 /* ───────── estado ───────── */
@@ -802,7 +802,7 @@ function onAct(act, id) {
     case 'key-test': testKey(id); break;
     case 'mode': S.st.mode = id; applyLook(); saveAll(); render('mode'); if (S.current) { S.side = !S.side; layoutSlide(slides[S.layer], S.current); } break;
     case 'interval': S.st.interval = +id; saveAll(); render('interval'); schedule(); break;
-    case 'skin': S.st.skin = SKIN_BAR[id] ? id : 'm3-dark'; applyLook(); saveAll(); render('skin'); updateSums(); break;
+    case 'skin': S.st.skin = SKIN_BAR[id] ? id : 'm3-dark'; applyLook(); if (REMOTE) lsSet('rskin', S.st.skin); saveAll(); render('skin'); updateSums(); break;
     case 'caption': S.st.caption = id; saveAll(); render('caption'); if (S.current) { setCaption(S.current); S.side = !S.side; layoutSlide(slides[S.layer], S.current); } break;
     case 'opt':
       if (id === 'kb') { S.st.kenburns = !S.st.kenburns; applyLook(); saveAll(); render('opts'); }
@@ -1295,6 +1295,7 @@ function remoteHandle(m) {
     RC.gotState = true; clearTimeout(RC.helloT);
     (m.custom || []).forEach(c => { try { if (c && c.id) { C.addMuseum(c); if (!S.custom.some(x => x.id === c.id)) S.custom.push(c); } } catch (e) { /* museo dañado */ } });
     S.f = normFilters(m.f); if (m.st) S.st = Object.assign(S.st, m.st);
+    applyLook(); lsSet('rskin', S.st.skin); // el aspecto del mando es el de la TV (antes solo cambiaba el selector, no los colores)
     S.tvFavStyles = Array.isArray(m.favStyles) ? m.favStyles : (S.tvFavStyles || []);
     renderAll(); remoteNow(m.now); remoteVer(m.ver); remoteKeys(m.keyset);
     if (!RC.synced) { RC.synced = true; relaySend({ t: 'fs', u: S.favs.map(w => w.uid).slice(0, 400) }); remoteSyncKeys(); }
@@ -1341,6 +1342,7 @@ function initRemote() {
     const pk = lsGet('keys', {}), nd = (v, d) => (v && v !== d ? v : '');
     S.keys = { europeana: nd(pk.europeana, 'api2demo'), si: nd(pk.si, 'DEMO_KEY'), harvard: nd(pk.harvard, '') };
   }
+  { const rs = lsGet('rskin', ''); if (SKIN_BAR[rs]) S.st.skin = rs; } // hasta que llegue el estado de la TV, el último aspecto usado en el mando
   S.menu = true; applyLook(); renderAll();
   $('#rcinfo').hidden = false; $('#rcfoot').hidden = false; $('#drawer').hidden = false; remoteVer('');
   document.title = 'Mando · Galería de arte';
