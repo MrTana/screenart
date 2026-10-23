@@ -989,7 +989,8 @@ function wdParts(plan, opts) {
   else parts.push('OPTIONAL { ?item wdt:P170 ?creator. }');
   parts.push(typeQ ? '?item wdt:P31 wd:' + typeQ + '.' : 'OPTIONAL { ?item wdt:P31 ?cls. }');
   // P18 = imagen en Commons. P6500 = imagen externa de obras con derechos de autor.
-  parts.push(opts.anyRights ? '{ ?item wdt:P18 ?image. } UNION { ?item wdt:P6500 ?image. }' : '?item wdt:P18 ?image.');
+  // Ruta alternativa (no UNION): con UNION, Wikidata recorría todas las imágenes antes de cruzar con el museo y se agotaba el tiempo.
+  parts.push(opts.anyRights ? '?item wdt:P18|wdt:P6500 ?image.' : '?item wdt:P18 ?image.');
   parts.push('OPTIONAL { ?item wdt:P571 ?inc. } OPTIONAL { ?creator wdt:P570 ?death. }' + (m ? '' : ' OPTIONAL { ?item wdt:P195 ?coll. }'));
   if (plan.range) {
     const yr = 'YEAR(?inc) >= ' + Math.round(plan.range[0]) + ' && YEAR(?inc) <= ' + Math.round(plan.range[1]);
@@ -1310,7 +1311,10 @@ async function wikipediaFetch(plan, f, ctx, m) {
   return pages.map(p => {
     const o = p.original, t = p.thumbnail, desc = p.description || '';
     if (!o || !ART_DESC.test(desc) || (o.width || 0) < 700 || (o.height || 0) < 500) return null;
-    if (!/\.(jpe?g|png|webp|gif)$/i.test(o.source)) return null;
+    // Wikipedia añade «?utm_source=…» a las direcciones de imagen: se quita (y la extensión se mira sin él).
+    const clean = u => (u || '').replace(/\?utm_[^#]*$/, '');
+    o.source = clean(o.source); if (t) t.source = clean(t.source);
+    if (!/\.(jpe?g|png|webp|gif)$/i.test(o.source.replace(/[?#].*$/, ''))) return null;
     if (m && norm(p.title).includes(norm(m.q))) return null;
     const by = /\bby ([^,;(]{3,60})/i.exec(desc);
     return mk({

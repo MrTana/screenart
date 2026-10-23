@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* Se ejecuta también al cambiar este archivo. */
 /* Prueba diaria contra los servicios reales: cada fuente hace una búsqueda de verdad y se comprueba que la primera imagen carga.
    Resultado en data/health.json (la app lo muestra en «Probar fuentes»). Sale con error si alguna falla, para que GitHub avise. */
 import fs from 'fs';

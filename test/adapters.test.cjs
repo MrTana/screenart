@@ -20,7 +20,7 @@ const fx = {
   rijksVis: { digitally_shown_by: [{ id: 'https://id.rijksmuseum.nl/5008910398567010810098' }] },
   rijksDig: { access_point: [{ id: 'https://iiif.micr.io/RFwqO' }] },
   wpPages: [
-    { pageid: 5, title: 'Water Lilies (Monet)', description: '1906 painting by Claude Monet', original: { source: 'https://upload.wikimedia.org/x/Nympheas.jpg', width: 3000, height: 2000 }, thumbnail: { source: 'https://upload.wikimedia.org/t/1600px-N.jpg', width: 1600, height: 1067 } },
+    { pageid: 5, title: 'Water Lilies (Monet)', description: '1906 painting by Claude Monet', original: { source: 'https://upload.wikimedia.org/x/Nympheas.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original', width: 3000, height: 2000 }, thumbnail: { source: 'https://upload.wikimedia.org/t/1600px-N.jpg', width: 1600, height: 1067 } },
     { pageid: 6, title: "Musée d'Orsay", description: 'art museum in Paris', original: { source: 'https://upload.wikimedia.org/x/Orsay.jpg', width: 3000, height: 2000 } },
     { pageid: 7, title: 'Un político', description: 'French politician', original: { source: 'https://upload.wikimedia.org/x/P.jpg', width: 3000, height: 2000 } },
     { pageid: 8, title: 'Sin imagen', description: 'painting by Nobody' }
@@ -167,7 +167,7 @@ globalThis.fetch = async (url, init) => {
   let ws = await C.runSource(louvre, f1, anyCtx);
   const sel = sparqlLog.filter(q => !/COUNT\(/.test(q)).pop();
   assert.ok(/wd:Q19675/.test(sel) && /"Musée du Louvre"@fr/.test(sel), 'Louvre: código y nombre');
-  assert.ok(/UNION/.test(sel) && /P6500/.test(sel), 'incluye imágenes de obras con derechos');
+  assert.ok(/wdt:P18\|wdt:P6500 ?image/.test(sel), 'incluye imágenes de obras con derechos (ruta alternativa, sin UNION)');
   assert.ok(!/wdt:P31 wd:/.test(sel) && /OPTIONAL \{ \?item wdt:P31 \?cls/.test(sel), 'sin restringir el tipo de obra');
   assert.ok(!/YEAR\(\?inc\) <= 1930/.test(sel), 'sin filtro de dominio público');
   const wsAll = ws; ws = ws.filter(w => w.src === 'wiki');
@@ -236,7 +236,7 @@ globalThis.fetch = async (url, init) => {
   const euq = decodeURIComponent(calls.filter(u => u.includes('api.europeana.eu/record')).pop() || ''); assert.ok(/DATA_PROVIDER:\("[^)]*Orsay/.test(euq), 'Europeana por museo filtra por institución: ' + euq);
   assert.ok(ow.some(w => w.src === 'europeana' && w.museum === 'Orsay'), 'Europeana: la obra lleva el museo');
   assert.ok(commonsLog.some(x => x.includes("Musée d'Orsay")), 'Commons busca por el nombre del museo');
-  const wpw = ow.find(w => w.src === 'wikipedia'); assert.ok(wpw && wpw.title === 'Water Lilies (Monet)' && wpw.artist === 'Claude Monet' && wpw.year === 1906 && wpw.museum === 'Orsay', 'Wikipedia: ' + JSON.stringify(wpw));
+  const wpw = ow.find(w => w.src === 'wikipedia'); assert.ok(wpw && wpw.title === 'Water Lilies (Monet)' && wpw.artist === 'Claude Monet' && wpw.year === 1906 && wpw.museum === 'Orsay' && wpw.imgs.includes('https://upload.wikimedia.org/x/Nympheas.jpg'), 'Wikipedia (también con ?utm_ en la imagen): ' + JSON.stringify(wpw));
   assert.ok(!ow.some(w => w.title === "Musée d'Orsay" || w.title === 'Un político' || w.title === 'Sin imagen'), 'Wikipedia descarta el museo, personas y artículos sin imagen');
   const met = museumSrcs.find(x => x.id === 'm:met'); const rpm = {};
   const mw = await C.runSource(met, fo, Object.assign({}, anyCtx, { report: (n, c) => { rpm[n] = c; } }));
