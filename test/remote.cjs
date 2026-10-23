@@ -114,7 +114,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   { // colecciones rápidas en el mando: las mismas dos, y al elegir una la TV queda sin el artista puesto antes
     tvA.S.favs = []; ph.ArtApp.onAct('fav'); await wait(600);
     const opts = Array.from(p.querySelectorAll('#c-presets option')).map(o => o.textContent).slice(1);
-    assert.ok(opts.length === 2 && opts[0] === 'Todo el arte' && /^Mis favoritas \(\d+\)$/.test(opts[1]), 'el mando muestra las dos colecciones: ' + opts.join(' | '));
+    assert.ok(opts.length > 40 && opts[0] === 'Todo el arte' && /^Mis favoritas \(\d+\)$/.test(opts[1]) && opts.includes('Barroco'), 'el mando muestra las mismas colecciones: ' + opts.slice(0, 4).join(' | '));
     ph.ArtApp.S.f.artists = ['Monet']; ph.ArtApp.onAct('preset', 'todo'); await wait(1700);
     assert.ok(!tvA.S.f.artists.length && !tvA.S.f.onlyFavs, 'Todo el arte desde el mando borra el artista en la TV');
     tvA.renderAll(); assert.strictEqual(tv.document.getElementById('c-presets').value, 'todo', 'la TV también la muestra marcada'); assert.strictEqual(p.getElementById('c-presets').value, 'todo', 'y el mando'); }

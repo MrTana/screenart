@@ -486,7 +486,7 @@ function favStyleIds() {
 }
 function currentPreset() { return S.st.preset && S.st.presetSig === filterSig(S.f) ? S.st.preset : ''; }
 function presetList() {
-  return [{ key: 'todo', es: 'Todo el arte' }, { key: 'favs', es: 'Mis favoritas (' + S.favs.length + ')', favs: true }];
+  return [{ key: 'todo', es: 'Todo el arte' }, { key: 'favs', es: 'Mis favoritas (' + S.favs.length + ')', favs: true }].concat(C.QUICK_COLLECTIONS);
 }
 const ORIENT = [['any', 'Cualquiera'], ['landscape', 'Horizontal'], ['portrait', 'Vertical'], ['square', 'Cuadrada']];
 const MODES = [['gallery', 'Obra completa'], ['plate', 'Con cartela (verticales a un lado)'], ['frame', 'Con marco'], ['fill', 'Llenar (recorta)']];
@@ -499,7 +499,7 @@ const chip = (act, id, label, on, cls) => '<button class="chip' + (cls ? ' ' + c
 const opts = (list, cur) => list.map(o => '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(cur) ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join('');
 const R = {
   // La colección elegida sigue marcada mientras no se toque ningún filtro; si se cambia alguno, pasa a «Filtros a tu gusto».
-  presets: () => { const cur = currentPreset(); return '<option value=""' + (cur ? '' : ' selected') + '>' + (S.st.preset && !cur ? 'Filtros a tu gusto' : 'Elegir una colección…') + '</option>' + presetList().map(p => '<option value="' + esc(p.key) + '"' + (p.key === cur ? ' selected' : '') + '>' + esc(p.es) + '</option>').join(''); },
+  presets: () => { const cur = currentPreset(); return '<option value=""' + (cur ? '' : ' selected') + '>' + (S.st.preset && !cur ? 'Filtros a tu gusto' : 'Elegir una colección…') + '</option>' + presetList().map((p, i, l) => (i === 2 ? '<optgroup label="Movimientos">' : '') + '<option value="' + esc(p.key) + '"' + (p.key === cur ? ' selected' : '') + '>' + esc(p.es) + '</option>' + (i === l.length - 1 && i >= 2 ? '</optgroup>' : '')).join(''); },
   eras: () => C.ERAS.map(e => chip('era', e.id, e.es, S.f.eras.includes(e.id))).join(''),
   styles: () => C.STYLES.map(s => chip('style', s.id, s.es, S.f.styles.includes(s.id))).join(''),
   artists: () => S.f.artists.map(a => chip('rm-artist', a, a, true, 'rm')).join('') || '<span class="hint" style="font-size:14px;color:var(--muted)">Ninguno. Se muestran todos los artistas.</span>',
@@ -776,6 +776,7 @@ function onAct(act, id) {
       const nf = C.defaultFilters(); // todo a cero
       C.SOURCE_LIST.forEach(s => { const nk = s.museum && s.museum.needsKey; nf.sources[s.id] = !(nk && !hasKey(nk)); }); // todos los museos (salvo los que piden una clave que no hay)
       if (p.favs) { nf.onlyFavs = true; if (!S.favs.length) toast('Aún no tienes favoritas'); }
+      if (p.s || p.a || p.y) Object.assign(nf, C.quickFilters(p));
       S.f = nf; S.st.preset = p.key; S.st.presetSig = filterSig(nf); S.mfilter = ''; try { $('#museumFilter').value = ''; } catch (e) { /* sin campo */ }
       renderAll(); applyChange(); break;
     }

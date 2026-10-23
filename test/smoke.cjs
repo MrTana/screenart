@@ -126,7 +126,8 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   { // colecciones rápidas: solo «Todo el arte» y «Mis favoritas»; cada una borra los filtros de abajo
     const favs0 = S.favs; S.favs = [{ uid: 'f1', title: 'A', imgs: ['https://x/a.jpg'] }, { uid: 'f2', title: 'B', imgs: ['https://x/b.jpg'] }]; A.render('presets');
     const opts = Array.from(d.querySelectorAll('#c-presets option')).map(o => o.textContent);
-    assert.deepStrictEqual(opts.slice(1), ['Todo el arte', 'Mis favoritas (2)'], 'solo dos colecciones: ' + opts.join(' | '));
+    assert.deepStrictEqual(opts.slice(1, 3), ['Todo el arte', 'Mis favoritas (2)'], 'primero Todo el arte y Mis favoritas: ' + opts.join(' | '));
+    assert.ok(opts.includes('Barroco') && opts.includes('Surrealismo y realismo mágico') && opts.length === 3 + C0().QUICK_COLLECTIONS.length && d.querySelector('#c-presets optgroup[label=Movimientos]'), 'y los movimientos');
     const dirty = () => { A.onAct('era', 'mod'); S.f.styles = ['surrealism']; S.f.artists = ['Monet']; S.f.keywords = ['caballos']; S.f.exclude = ['portraits']; S.f.noWords = ['x']; S.f.orientation = 'landscape'; S.f.soloPD = true; Object.keys(S.f.sources).forEach(k => { S.f.sources[k] = k === 'm:met'; }); };
     const clean = f => !f.eras.length && !f.styles.length && !f.artists.length && !f.keywords.length && !f.exclude.length && !f.noWords.length && f.orientation === 'any' && !f.soloPD && !f.yearFrom && !f.yearTo;
     dirty(); pick('Todo el arte');
@@ -140,6 +141,13 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     assert.strictEqual(selp()[0], 'todo', 'si se deshace el cambio vuelve a marcarse');
     dirty(); pick('Mis favoritas'); assert.strictEqual(selp()[0], 'favs');
     assert.ok(clean(S.f) && S.f.onlyFavs, 'Mis favoritas: solo favoritas, sin otros filtros');
+    dirty(); pick('Renacimiento del Norte');
+    assert.ok(S.f.artists.includes('Memling') && S.f.yearFrom === '1400' && S.f.yearTo === '1600' && !S.f.styles.length && !S.f.eras.length && !S.f.exclude.length && S.f.orientation === 'any' && !S.f.onlyFavs, 'Renacimiento del Norte: solo sus artistas y años');
+    assert.strictEqual(selp()[0], 'm:renacnorte');
+    dirty(); pick('Barroco'); assert.strictEqual(JSON.stringify(S.f.styles), '["baroque","dutch","spanishgolden"]'); assert.ok(!S.f.artists.length && !S.f.yearFrom && S.f.orientation === 'any', 'Barroco: solo sus estilos');
+    dirty(); pick('Surrealismo y realismo mágico'); assert.strictEqual(JSON.stringify(S.f.styles), '["surrealism","magicreal"]');
+    assert.ok(C0().accept({ imgs: ['x'], year: 1490, artist: 'El Bosco' }, Object.assign(C0().defaultFilters(), C0().quickFilters(C0().QUICK_COLLECTIONS.find(q => q.key === 'm:renacnorte')))), 'El Bosco entra en Renacimiento del Norte');
+    assert.ok(C0().accept({ imgs: ['x'], year: 1500, artist: 'Alberto Durero' }, Object.assign(C0().defaultFilters(), C0().quickFilters(C0().QUICK_COLLECTIONS.find(q => q.key === 'm:renacnorte')))), 'Durero (en español) también');
     S.favs = favs0; A.render('presets'); }
   { const paris = C0().SOURCE_LIST.filter(x => x.museum && x.museum.city === 'París').map(x => x.id); pick('Todo el arte'); Object.keys(S.f.sources).forEach(k => { S.f.sources[k] = paris.includes(k); }); A.renderAll(); A.applyChange(); await wait(800); }
   { const rows = () => Array.from(d.querySelectorAll('#c-msrcs .src')), on = r => r.getAttribute('aria-pressed') === 'true';

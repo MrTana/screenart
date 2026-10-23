@@ -1670,6 +1670,57 @@ DIRECT.moma = momaFetch; DIRECT.nga = ngaFetch; DIRECT.tate = tateFetch; DIRECT.
 const MUSEUM_SOURCES = [];
 MUSEUMS.forEach(m => { const src = museumSource(m); SOURCE_LIST.push(src); MUSEUM_SOURCES.push(src); });
 
+/* Colecciones rápidas por movimiento (basadas en historia-arte.com/movimientos). Cada una se aplica sobre los filtros a cero y con
+   todos los museos: s = estilos, a = solo esos artistas (basta con que el nombre de la obra contenga todas sus palabras, por eso hay
+   variantes como «Bosch»/«Bosco»), y = años desde–hasta. */
+const QUICK_COLLECTIONS = [
+  { key: 'm:protorenac', es: 'Proto-Renacimiento', s: ['gothic'], y: [1300, 1400] },
+  { key: 'm:quattrocento', es: 'Quattrocento', s: ['renaissance'], y: [1400, 1500] },
+  { key: 'm:cinquecento', es: 'Cinquecento', s: ['renaissance'], y: [1500, 1600] },
+  { key: 'm:manierismo', es: 'Manierismo', s: ['mannerism'], y: [1520, 1610] },
+  { key: 'm:renacnorte', es: 'Renacimiento del Norte', a: ['Jan van Eyck', 'Weyden', 'Memling', 'Hieronymus Bosch', 'El Bosco', 'Durer', 'Cranach', 'Holbein', 'Bruegel', 'Brueghel', 'Gerard David', 'Massys', 'Matsys', 'Altdorfer'], y: [1400, 1600] },
+  { key: 'm:barroco', es: 'Barroco', s: ['baroque', 'dutch', 'spanishgolden'] },
+  { key: 'm:rococo', es: 'Rococó', s: ['rococo'] },
+  { key: 'm:neoclasicismo', es: 'Neoclasicismo', s: ['neoclassicism'], y: [1750, 1820] },
+  { key: 'm:romanticismo', es: 'Romanticismo', s: ['romanticism', 'hudson'] },
+  { key: 'm:realismo', es: 'Realismo', s: ['realism', 'barbizon'], y: [1840, 1880] },
+  { key: 'm:impresionismo', es: 'Impresionismo', s: ['impressionism'], y: [1865, 1900] },
+  { key: 'm:postimpresionismo', es: 'Postimpresionismo', s: ['postimpressionism', 'neoimp', 'nabis'] },
+  { key: 'm:simbolismo', es: 'Simbolismo', s: ['symbolism', 'prer'] },
+  { key: 'm:primitivismo', es: 'Primitivismo', a: ['Gauguin', 'Henri Rousseau', 'Modigliani', 'Nolde', 'Pechstein', 'Seraphine Louis'], y: [1885, 1930] },
+  { key: 'm:artnouveau', es: 'Art Nouveau', s: ['artnouveau'] },
+  { key: 'm:artdeco', es: 'Art Decó', s: ['artdeco'] },
+  { key: 'm:orientalismo', es: 'Orientalismo', s: ['orientalism'] },
+  { key: 'm:fauvismo', es: 'Fauvismo', s: ['fauvism'] },
+  { key: 'm:futurismo', es: 'Futurismo', s: ['futurism'] },
+  { key: 'm:expresionismo', es: 'Expresionismo', s: ['expressionism'] },
+  { key: 'm:cubismo', es: 'Cubismo', s: ['cubism'] },
+  { key: 'm:dada', es: 'Dadaísmo', s: ['dada'] },
+  { key: 'm:nuevaobj', es: 'Nueva Objetividad', s: ['newobj'] },
+  { key: 'm:suprematismo', es: 'Suprematismo', a: ['Malevich', 'Lissitzky', 'Rozanova', 'Kliun', 'Popova', 'Suetin', 'Chashnik'], y: [1913, 1930] },
+  { key: 'm:constructivismo', es: 'Constructivismo', s: ['constructivism'] },
+  { key: 'm:abstracto', es: 'Arte Abstracto', s: ['abstract'] },
+  { key: 'm:metafisica', es: 'Pintura Metafísica', a: ['Chirico', 'Carlo Carra', 'Morandi', 'Savinio', 'Pisis'], y: [1911, 1930] },
+  { key: 'm:surrealismo', es: 'Surrealismo y realismo mágico', s: ['surrealism', 'magicreal'] },
+  { key: 'm:orfismo', es: 'Orfismo', a: ['Robert Delaunay', 'Sonia Delaunay', 'Kupka', 'Picabia', 'Morgan Russell', 'Macdonald-Wright'], y: [1910, 1930] },
+  { key: 'm:neoplasticismo', es: 'Neoplasticismo', s: ['destijl'] },
+  { key: 'm:precisionismo', es: 'Precisionismo', a: ['Charles Sheeler', 'Charles Demuth', "O'Keeffe", 'Niles Spencer', 'Ralston Crawford', 'Lozowick'], y: [1915, 1950] },
+  { key: 'm:expabstracto', es: 'Expresionismo Abstracto', s: ['abstractexp', 'colorfield'] },
+  { key: 'm:artbrut', es: 'Art Brut', a: ['Dubuffet', 'Wolfli', 'Aloise Corbaz', 'Chaissac', 'Henry Darger', 'Martin Ramirez', 'Augustin Lesage'] },
+  { key: 'm:informalismo', es: 'Informalismo', s: ['informel'] },
+  { key: 'm:nuevafig', es: 'Nueva Figuración', a: ['Francis Bacon', 'Lucian Freud', 'Jose Luis Cuevas', 'Jorge de la Vega', 'Macció', 'Luis Felipe Noe', 'Ernesto Deira'], y: [1945, 1975] },
+  { key: 'm:opart', es: 'Op Art y arte cinético', s: ['opart'] },
+  { key: 'm:pop', es: 'Pop Art', s: ['pop'] },
+  { key: 'm:realismosocial', es: 'Realismo social', s: ['socialrealism', 'regionalism'] },
+  { key: 'm:minimalismo', es: 'Minimalismo', a: ['Agnes Martin', 'Frank Stella', 'Robert Ryman', 'Ellsworth Kelly', 'Brice Marden'], y: [1958, 1990] },
+  { key: 'm:hiperrealismo', es: 'Hiperrealismo', s: ['photorealism'] },
+  { key: 'm:postmodernidad', es: 'Postmodernidad', s: ['neoexp'], y: [1975, 2000] },
+  { key: 'm:streetart', es: 'Street Art', s: ['streetart'] }
+];
+function quickFilters(q) { // filtros de una colección rápida sobre una base ya a cero
+  return { styles: (q.s || []).slice(), artists: (q.a || []).slice(), yearFrom: q.y ? String(q.y[0]) : '', yearTo: q.y ? String(q.y[1]) : '' };
+}
+
 /* Ejecuta una fuente: consulta concreta y, si no hay resultados, versiones cada vez más relajadas. */
 async function runSource(src, f, ctx) {
   const plan = makePlan(f);
@@ -1686,7 +1737,7 @@ async function runSource(src, f, ctx) {
 }
 
 const api = {
-  cleanName, WD_SHARDS, wdMuseumQuery, wdSelect, md5, commonsImgs, PX, memoForget, primeWikidataCounts, rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
+  QUICK_COLLECTIONS, quickFilters, cleanName, WD_SHARDS, wdMuseumQuery, wdSelect, md5, commonsImgs, PX, memoForget, primeWikidataCounts, rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
   ERAS, STYLES, TYPES, KEYWORDS, EXCLUDES, excluded, MUSEUMS, DEFAULT_MUSEUMS, MUSEUM_SOURCES, ARTIST_SUGGESTIONS, ARTIST_GROUPS, TUNING, keywordToQuery,
   museumCountry, countryCollections, styleIdsOf, searchPaintings, identifyArtwork, countryCollectionName, defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC, museumIdsByTag,
   adapters: { momaFetch, ngaFetch, tateFetch, shardFetch, commonsSpecial, wikidataMuseum, wikipediaFetch, commonsFetch, wikiartFetch, metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }
