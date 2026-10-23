@@ -59,7 +59,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   // clic en estilo Impresionismo y en una fuente
   d.querySelector('#c-styles [data-id=impressionism]').click();
   const pick = name => { const sel = d.getElementById('c-presets'); const o = Array.from(sel.options).find(x => x.textContent === name || x.textContent.startsWith(name + ' (')); sel.value = o.value; sel.dispatchEvent(new w.Event('change')); return !!o; };
-  assert.ok(pick('Museos de Francia'), 'colección por país');
+  assert.ok(pick('Todo el arte'), 'colección rápida');
   console.log('filtros tras preset:', JSON.stringify({ styles: S.f.styles, types: S.f.types }));
   d.querySelector('#c-artist-sug [data-act=add-sug]').click();
   console.log('artistas:', JSON.stringify(S.f.artists), '| chips artista:', d.querySelectorAll('#c-artists .chip').length);
@@ -122,33 +122,21 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     assert.strictEqual(d.querySelectorAll('#c-tres .tres').length, 1, 'la foto se reconoce y se busca: ' + fotoMsg()); assert.ok(/Parece ser «La noche estrellada», Vincent van Gogh \(1889\)/.test(fotoMsg()), fotoMsg());
     d.querySelector('#c-tres .tres').click(); await wait(100); assert.strictEqual(S.current.title, 'La noche estrellada', 'se muestra la obra reconocida');
     w.fetch = f0; }
-  const C0 = () => w.ArtCore; const favs0 = S.favs; S.favs = []; A.render('presets');
-  { const opts = Array.from(d.querySelectorAll('#c-presets option')).map(o => o.textContent);
-    for (const n of ['Museos de España (12)', 'Museos de México (18)', 'Museos del Reino Unido (9)', 'Museos de los Países Bajos (5)', 'Museos de Chile (1)', 'Museos de París (13)']) assert.ok(opts.includes(n), 'falta la colección ' + n + ' en ' + opts.join(' | '));
-    for (const old of ['Impresionismo', 'Retratos', 'Mujeres artistas', 'Surrealismo en museos', 'Museos de un solo artista']) assert.ok(!opts.some(o => o.startsWith(old)), 'se quitaron las colecciones antiguas: ' + old);
-    assert.strictEqual(opts[1], 'Todo el arte'); assert.ok(opts.slice(2).every(o => /^Museos de/.test(o)), 'las demás son «Museos de …»'); }
-  { S.favs = [{ uid: 'f1', artist: 'Salvador Dalí', year: 1931 }, { uid: 'f2', artist: 'Claude Monet', year: 1890 }, { uid: 'f3', artist: 'Anónimo', year: 1500 }]; A.render('presets');
+  const C0 = () => w.ArtCore;
+  { // colecciones rápidas: solo «Todo el arte» y «Mis favoritas»; cada una borra los filtros de abajo
+    const favs0 = S.favs; S.favs = [{ uid: 'f1', title: 'A', imgs: ['https://x/a.jpg'] }, { uid: 'f2', title: 'B', imgs: ['https://x/b.jpg'] }]; A.render('presets');
     const opts = Array.from(d.querySelectorAll('#c-presets option')).map(o => o.textContent);
-    assert.ok(opts.includes('Surrealismo') && opts.includes('Impresionismo'), 'colecciones por estilo de las favoritas: ' + opts.join(' | '));
-    assert.ok(!opts.includes('Renacimiento'), 'una obra sin artista conocido no crea colección');
-    A.onAct('era', 'mod'); S.f.orientation = 'landscape'; S.f.artists = ['Monet']; S.f.exclude = ['portraits']; S.f.soloPD = true; Object.keys(S.f.sources).forEach(k => { S.f.sources[k] = k === 'm:met'; });
-    pick('Surrealismo'); { const on = Object.keys(S.f.sources).filter(k => S.f.sources[k]), off = Object.keys(S.f.sources).filter(k => !S.f.sources[k]);
-      assert.strictEqual(JSON.stringify(S.f.styles), '[\"surrealism\"]'); assert.ok(on.includes('m:open') && on.includes('m:louvre') && on.includes('m:magritte') && on.length > 150, 'Surrealismo: todos los museos'); assert.strictEqual(off.join(), 'm:harvard', 'solo falta el que pide clave: ' + off);
-      assert.ok(S.f.eras.join() === 'mod' && S.f.orientation === 'landscape' && S.f.artists.join() === 'Monet' && S.f.exclude.join() === 'portraits' && S.f.soloPD, 'los demás filtros no cambian'); }
-    pick('Impresionismo'); assert.strictEqual(JSON.stringify(S.f.styles), '[\"impressionism\"]', 'solo cambia el estilo');
-    assert.strictEqual(C0().styleIdsOf({ artist: 'Vincent van Gogh', year: 1888 }).join(), 'postimpressionism'); assert.strictEqual(C0().styleIdsOf({ artist: 'Vermeer', year: 1660 }).join(), 'dutch');
+    assert.deepStrictEqual(opts.slice(1), ['Todo el arte', 'Mis favoritas (2)'], 'solo dos colecciones: ' + opts.join(' | '));
+    const dirty = () => { A.onAct('era', 'mod'); S.f.styles = ['surrealism']; S.f.artists = ['Monet']; S.f.keywords = ['caballos']; S.f.exclude = ['portraits']; S.f.noWords = ['x']; S.f.orientation = 'landscape'; S.f.soloPD = true; Object.keys(S.f.sources).forEach(k => { S.f.sources[k] = k === 'm:met'; }); };
+    const clean = f => !f.eras.length && !f.styles.length && !f.artists.length && !f.keywords.length && !f.exclude.length && !f.noWords.length && f.orientation === 'any' && !f.soloPD && !f.yearFrom && !f.yearTo;
+    dirty(); pick('Todo el arte');
+    assert.ok(clean(S.f) && !S.f.onlyFavs, 'Todo el arte: sin ningún filtro (el artista elegido antes ya no queda)');
+    assert.deepStrictEqual(Object.keys(S.f.sources).filter(k => !S.f.sources[k]), ['m:harvard'], 'Todo el arte: todos los museos salvo los que piden clave y no hay');
+    assert.ok(!d.querySelectorAll('#c-artists .chip.rm').length, 'el menú ya no muestra el artista');
+    dirty(); pick('Mis favoritas');
+    assert.ok(clean(S.f) && S.f.onlyFavs, 'Mis favoritas: solo favoritas, sin otros filtros');
     S.favs = favs0; A.render('presets'); }
-  { A.onAct('era', 'mod'); S.f.orientation = 'landscape'; S.f.soloPD = true; S.f.artists = ['Monet']; pick('Todo el arte');
-    const f = S.f, off = Object.keys(f.sources).filter(k => !f.sources[k]);
-    assert.ok(!f.eras.length && !f.styles.length && !f.artists.length && !f.keywords.length && !f.exclude.length && !f.noWords.length && f.orientation === 'any' && !f.soloPD, 'Todo el arte: sin ningún filtro');
-    assert.deepStrictEqual(off, ['m:harvard'], 'Todo el arte: todos los museos salvo los que piden clave y no hay: ' + off); }
-  for (const [name, n] of [['Museos de México', 18], ['Museos de Bélgica', 28], ['Museos de España', 12], ['Museos de Chile', 1]]) {
-    pick(name);
-    const act = Object.keys(S.f.sources).filter(k => S.f.sources[k]).length;
-    console.log('preset', name, '->', act, 'museos activos', '');
-    if (act !== n) { console.error('FALLO preset', name, act, 'esperaba', n); process.exit(1); }
-  }
-  pick('Museos de París');
+  { const paris = C0().SOURCE_LIST.filter(x => x.museum && x.museum.city === 'París').map(x => x.id); pick('Todo el arte'); Object.keys(S.f.sources).forEach(k => { S.f.sources[k] = paris.includes(k); }); A.renderAll(); A.applyChange(); await wait(800); }
   { const rows = () => Array.from(d.querySelectorAll('#c-msrcs .src')), on = r => r.getAttribute('aria-pressed') === 'true';
     const rank = r => !on(r) ? 2 : (st => st === 'ok' ? 0 : st === 'error' || st === 'nokey' ? 3 : 1)(r.querySelector('.dot').className.replace('dot', '').trim());
     const sorted = () => rows().map(rank).every((x, i, a) => !i || a[i - 1] <= x);
@@ -159,7 +147,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     assert.strictEqual(rank(rows()[0]), 0, 'el primero es verde');
     const ids0 = rows().map(r => r.dataset.id).join(); const freeId = rows().find(r => !on(r)).dataset.id; d.querySelector('#c-msrcs [data-id="' + freeId + '"]').click(); assert.strictEqual(rows().map(r => r.dataset.id).join(), ids0, 'al marcar un museo suelto las filas no se reordenan');
     A.renderAll(); S.srcShown = 999; A.render('srcs'); assert.ok(sorted(), 'al reabrir/renderizar el orden vuelve a seguir los colores'); d.querySelector('#c-msrcs [data-id="' + freeId + '"]').click(); }
-  console.log('preset Museos de París -> fuentes activas:', Object.keys(S.f.sources).filter(k => S.f.sources[k]).join(','), );
+  console.log('museos de París -> fuentes activas:', Object.keys(S.f.sources).filter(k => S.f.sources[k]).join(','), );
   A.closeMenu();
   await wait(1500);
   console.log('tras filtros -> mostradas:', S.shown, '| estados:', JSON.stringify(Object.fromEntries(Object.entries(S.status).map(([k, v]) => [k, v.state + (v.msg ? ':' + v.msg : '')]))));

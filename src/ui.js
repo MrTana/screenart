@@ -460,16 +460,8 @@ function favStyleIds() {
   const ids = []; S.favs.forEach(w => C.styleIdsOf(w).forEach(id => { if (!ids.includes(id)) ids.push(id); }));
   return ids;
 }
-function favStyleCollections() {
-  return favStyleIds().map(id => C.STYLES.find(s => s.id === id)).filter(Boolean).sort((a, b) => a.range[0] - b.range[0]).map(s => {
-    return { key: 'estilo:' + s.id, es: s.es, styleOnly: s.id };
-  });
-}
 function presetList() {
-  const out = [{ key: 'todo', es: 'Todo el arte', all: true, patch: {} }].concat(favStyleCollections(), C.countryCollections().map(c => ({ key: 'pais:' + c.country, es: c.es + ' (' + c.ids.length + ')', only: c.ids, patch: {} })));
-  const paris = C.SOURCE_LIST.filter(s => s.museum && s.museum.city === 'París').map(s => s.id);
-  if (paris.length) out.push({ key: 'ciudad:París', es: 'Museos de París (' + paris.length + ')', only: paris, patch: {} });
-  return out;
+  return [{ key: 'todo', es: 'Todo el arte' }, { key: 'favs', es: 'Mis favoritas (' + S.favs.length + ')', favs: true }];
 }
 const ORIENT = [['any', 'Cualquiera'], ['landscape', 'Horizontal'], ['portrait', 'Vertical'], ['square', 'Cuadrada']];
 const MODES = [['gallery', 'Obra completa'], ['frame', 'Con marco'], ['fill', 'Llenar (recorta)']];
@@ -755,15 +747,10 @@ function onAct(act, id) {
     }
     case 'preset': {
       const p = presetList().find(x => x.key === id || x.es === id); if (!p) break;
-      if (p.styleOnly) {
-        const src = {}; C.SOURCE_LIST.forEach(s => { const nk = s.museum && s.museum.needsKey; src[s.id] = !(nk && !hasKey(nk)); });
-        S.f = Object.assign({}, f, { styles: [p.styleOnly], sources: src }); renderAll(); applyChange(); break;
-      }
-      const keep = p.all ? { sources: {} } : { sources: f.sources, orientation: f.orientation, soloPD: f.soloPD, exclude: f.exclude, noWords: f.noWords };
-      if (p.all || p.allSources) { if (p.allSources) keep.sources = {}; }
-      if (p.all || p.allSources) C.SOURCE_LIST.forEach(s => { const nk = s.museum && s.museum.needsKey; keep.sources[s.id] = !(nk && !hasKey(nk)); }); // todos los museos y fuentes abiertas (salvo los que piden una clave que no hay)
-      if (p.only) { keep.sources = {}; Object.keys(f.sources).forEach(k => { keep.sources[k] = p.only.includes(k); }); }
-      S.f = Object.assign(C.defaultFilters(), keep, JSON.parse(JSON.stringify(p.patch)));
+      const nf = C.defaultFilters(); // todo a cero
+      C.SOURCE_LIST.forEach(s => { const nk = s.museum && s.museum.needsKey; nf.sources[s.id] = !(nk && !hasKey(nk)); }); // todos los museos (salvo los que piden una clave que no hay)
+      if (p.favs) { nf.onlyFavs = true; if (!S.favs.length) toast('Aún no tienes favoritas'); }
+      S.f = nf; S.mfilter = ''; try { $('#museumFilter').value = ''; } catch (e) { /* sin campo */ }
       renderAll(); applyChange(); break;
     }
     case 'src': f.sources[id] = !f.sources[id]; render('srcs'); applyChange(); break;

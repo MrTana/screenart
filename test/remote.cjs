@@ -111,11 +111,12 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     ph.ArtApp.S.tres = [{ uid: 'wiki:Q45585', src: 'wiki', museum: 'MoMA', title: 'La noche estrellada', artist: 'Vincent van Gogh', year: 1889, date: '1889', imgs: ['https://example.org/s.jpg'], thumb: 'https://example.org/t.jpg', url: 'https://www.wikidata.org/wiki/Q45585' }];
     ph.ArtApp.onAct('title-show', '0'); await wait(600);
     assert.strictEqual(tvA.S.current.title, 'La noche estrellada', 'la TV muestra la obra buscada desde el móvil'); assert.strictEqual(tvA.S.current.museum, 'MoMA'); }
-  { // la favorita de la TV crea su colección por estilo también en el mando
-    tvA.S.favs = []; Object.assign(tvA.S.current, { artist: 'Salvador Dalí', year: 1931 });
-    ph.ArtApp.onAct('fav'); await wait(600);
-    const opts = Array.from(p.querySelectorAll('#c-presets option')).map(o => o.textContent);
-    assert.ok(opts.includes('Surrealismo'), 'el mando muestra «Surrealismo» por las favoritas de la TV: ' + opts.join(' | ')); }
+  { // colecciones rápidas en el mando: las mismas dos, y al elegir una la TV queda sin el artista puesto antes
+    tvA.S.favs = []; ph.ArtApp.onAct('fav'); await wait(600);
+    const opts = Array.from(p.querySelectorAll('#c-presets option')).map(o => o.textContent).slice(1);
+    assert.ok(opts.length === 2 && opts[0] === 'Todo el arte' && /^Mis favoritas \(\d+\)$/.test(opts[1]), 'el mando muestra las dos colecciones: ' + opts.join(' | '));
+    ph.ArtApp.S.f.artists = ['Monet']; ph.ArtApp.onAct('preset', 'todo'); await wait(1700);
+    assert.ok(!tvA.S.f.artists.length && !tvA.S.f.onlyFavs, 'Todo el arte desde el mando borra el artista en la TV'); }
 
   { // el menú del mando pinta el estado de cada museo como la TV
     await wait(1500);
