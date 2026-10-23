@@ -80,7 +80,7 @@ const fresh = (w, f) => C.accept(w, f) && !S.seen.has(w.uid) && !S.seenKey.has(w
 
 function setStatus(id, state, msg) {
   S.status[id] = { state, msg: msg || '' };
-  updateSrc(id); scheduleResort(); tvSrcsSoon();
+  updateSrc(id); scheduleResort(); tvSrcsSoon(); sweepInfoSoon();
 }
 
 function ensureRefill() { if (S.pool.length < 8) refill(); }
@@ -376,8 +376,17 @@ async function diagnose(quiet) {
   box.hidden = !!quiet; // desde el mando la TV no tapa la obra: el informe viaja al móvil
   const srcs = C.SOURCE_LIST.filter(s => f.sources[s.id]);
   const lines = {};
+  let health = '';
+  fetch('data/health.json?v=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(h => {
+    if (!h || !h.results) return;
+    const bad = Object.keys(h.results).filter(k => !h.results[k].ok);
+    health = 'Prueba diaria de fuentes (' + h.at + '): ' + h.ok + ' de ' + h.total + ' funcionan' + (bad.length ? ' · fallan: ' + bad.map(k => k + ' (' + (h.results[k].err || 'error') + ')').join(', ') : '') + '\n';
+    draw(lastDone);
+  }).catch(() => { /* sin informe diario */ });
+  let lastDone = false;
   const draw = (done) => {
-    out.textContent = 'Filtros: ' + describeFilters() + '\n' + (done ? 'Listo.' : 'Probando ' + srcs.length + ' museos (Wikidata tarda; puede llevar un par de minutos)…') + '\n\n' +
+    lastDone = done;
+    out.textContent = health + 'Filtros: ' + describeFilters() + '\n' + (done ? 'Listo.' : 'Probando ' + srcs.length + ' museos (Wikidata tarda; puede llevar un par de minutos)…') + '\n\n' +
       srcs.map(s => lines[s.id] || ('… ' + s.name)).join('\n');
   };
   draw(false);
@@ -536,8 +545,37 @@ function scheduleResort() {
     if (Array.from(S.order.keys()).join() !== before) renderSrcs();
   }, 1200);
 }
-function renderSrcs() {
-  $('#c-msrcs').innerHTML = visibleMuseums().map(srcRow).join('') || '<p class="hint">Ningún museo coincide. Puedes añadirlo con su nombre aquí abajo.</p>';
+/* Lista ligera: se pintan 40 museos y el resto bajo demanda (al llegar al final con el dedo o el mando, o con el botón). */
+const SRC_PAGE = 40;
+let srcIO = null;
+function renderSrcs(reset) {
+  if (reset || !S.srcShown) S.srcShown = SRC_PAGE;
+  const l = visibleMuseums(), n = Math.min(l.length, S.srcShown), rest = l.length - n;
+  $('#c-msrcs').innerHTML = (l.slice(0, n).map(srcRow).join('') || '<p class="hint">Ningún museo coincide. Puedes añadirlo con su nombre aquí abajo.</p>') +
+    (rest > 0 ? '<button class="btn out more" data-act="src-more" style="width:100%;margin-top:6px">Mostrar ' + Math.min(SRC_PAGE, rest) + ' museos más (quedan ' + rest + ')</button>' : '');
+  sweepInfo();
+  try {
+    if (srcIO) srcIO.disconnect();
+    const more = $('#c-msrcs .more');
+    if (more && typeof IntersectionObserver === 'function') { srcIO = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) moreSrcs(false); }, { rootMargin: '200px' }); srcIO.observe(more); }
+  } catch (e) { /* sin IntersectionObserver: queda el botón */ }
+}
+function moreSrcs(focus) {
+  const before = S.srcShown || SRC_PAGE; S.srcShown = before + SRC_PAGE; renderSrcs();
+  if (focus) { const r = $('#c-msrcs').querySelectorAll('.src')[before]; if (r) r.focus({ preventScroll: false }); }
+}
+/* Progreso de la búsqueda: cuántos museos seleccionados ya respondieron, cuántos buscan y cuántas obras van. */
+function sweepInfoSoon() { if (!S.siT) S.siT = setTimeout(() => { S.siT = 0; sweepInfo(); }, 400); }
+function sweepInfo() {
+  const el = $('#sweepInfo'); if (!el) return;
+  const sel = C.SOURCE_LIST.filter(s => S.f.sources[s.id]), st = id => S.status[id] && S.status[id].state;
+  if (!sel.length || S.f.onlyFavs) { el.textContent = ''; return; }
+  const done = sel.filter(s => st(s.id) && st(s.id) !== 'loading').length, busy = sel.filter(s => st(s.id) === 'loading').length;
+  const ok = sel.filter(s => st(s.id) === 'ok').length, bad = sel.filter(s => st(s.id) === 'error' || st(s.id) === 'nokey').length;
+  const works = Object.keys(S.counts).reduce((a, k) => a + (S.counts[k] || 0), 0);
+  el.textContent = (done < sel.length ? 'Buscando: ' + done + ' de ' + sel.length + ' museos consultados' + (busy ? ' (' + busy + ' en curso)' : '') : 'Todos los museos consultados (' + sel.length + ')') +
+    ' · ' + ok + ' con obras' + (bad ? ' · ' + bad + ' sin respuesta' : '') + (works ? ' · ' + works + ' obras' : '');
+  if (!$('#loader').hidden && !S.current) $('#loaderSub').textContent = el.textContent;
 }
 /* ───────── buscar por título ───────── */
 const slimWork = w => ({ ft: w.ft, uid: w.uid, src: w.src, museum: w.museum, title: w.title, artist: w.artist, date: w.date, year: w.year, imgs: (w.imgs || []).slice(0, 2), thumb: w.thumb, url: w.url, type: w.type, pd: w.pd, license: w.license });
@@ -652,7 +690,7 @@ function render(name) {
   if (key) { const el = Array.prototype.find.call(d.querySelectorAll('[data-act]'), e => e.dataset.act + '|' + e.dataset.id === key); if (el) el.focus({ preventScroll: true }); }
 }
 function renderAll() {
-  resortMuseums();
+  resortMuseums(); S.srcShown = 0;
   Object.keys(BOX).forEach(k => { $('#' + BOX[k]).innerHTML = R[k](); });
   renderSrcs();
   $('#artistList').innerHTML = C.ARTIST_SUGGESTIONS.map(a => '<option value="' + esc(a) + '">').join('');
@@ -729,6 +767,7 @@ function onAct(act, id) {
       renderAll(); applyChange(); break;
     }
     case 'src': f.sources[id] = !f.sources[id]; render('srcs'); applyChange(); break;
+    case 'src-more': moreSrcs(true); break;
     case 'mus-all': case 'mus-none': visibleMuseums().forEach(x => { f.sources[x.id] = act === 'mus-all'; }); render('srcs'); applyChange(); break;
     case 'add-museum': addMuseumByName(); break;
     case 'title-search': searchTitle(); break;
@@ -828,7 +867,7 @@ document.addEventListener('keydown', e => {
   });
 });
 ['pointerdown', 'touchstart', 'wheel', 'keydown', 'scroll'].forEach(ev => $('#drawer').addEventListener(ev, () => { touchAt = Date.now(); }, { passive: true, capture: true }));
-$('#museumFilter').addEventListener('input', e => { S.mfilter = e.target.value; renderSrcs(); });
+$('#museumFilter').addEventListener('input', e => { S.mfilter = e.target.value; renderSrcs(true); });
 $('#yFrom').addEventListener('change', e => { S.f.yearFrom = e.target.value; S.f.eras = []; render('eras'); applyChange(); });
 $('#yTo').addEventListener('change', e => { S.f.yearTo = e.target.value; S.f.eras = []; render('eras'); applyChange(); });
 ['europeana', 'si', 'harvard'].forEach(k => {
@@ -1265,7 +1304,8 @@ function remoteSrcs(m) { // la TV cuenta cómo va cada museo; aquí se pinta igu
     if (JSON.stringify([S.status[src.id], S.counts[src.id], S.detail[src.id]]) !== before) changed.push(src.id);
   });
   if (!changed.length) return;
-  if (changed.length > 6) render('srcs'); else changed.forEach(updateSrc); // si cambian muchos, un solo repintado es más barato que fila por fila
+  if (changed.length > 6) render('srcs'); else changed.forEach(updateSrc);
+  sweepInfo(); // si cambian muchos, un solo repintado es más barato que fila por fila
   scheduleResort();
 }
 function remoteCmd(c) {

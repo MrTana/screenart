@@ -84,6 +84,9 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   A.onAct('interval', '10'); A.onAct('mode', 'frame'); A.onAct('opt', 'kb'); A.onAct('fav', '');
   console.log('modo:', d.getElementById('stage').className, '| favoritas:', S.favs.length);
   const on = () => Object.keys(S.f.sources).filter(k => k.startsWith('m:') && S.f.sources[k]).length;
+  { const n0 = d.querySelectorAll('#c-msrcs .src').length; assert.ok(n0 <= 40 && d.querySelector('#c-msrcs .more'), 'lista ligera: 40 filas y botón para más (' + n0 + ')');
+    A.onAct('src-more'); assert.strictEqual(d.querySelectorAll('#c-msrcs .src').length, Math.min(80, n0 + 40), 'muestra 40 más'); S.srcShown = 999; A.render('srcs');
+    assert.ok(/museos consultados|Todos los museos/.test(d.getElementById('sweepInfo').textContent), 'progreso visible: ' + d.getElementById('sweepInfo').textContent); }
   d.querySelector('#c-msrcs [data-id="m:louvre"]').click(); console.log('Louvre desmarcado:', !S.f.sources['m:louvre'], '| museos activos:', on());
   d.querySelector('[data-act=mus-none]').click(); console.log('ninguno:', on());
   d.querySelector('[data-act=mus-all]').click(); console.log('todos:', on());
@@ -151,11 +154,11 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     const sorted = () => rows().map(rank).every((x, i, a) => !i || a[i - 1] <= x);
     const sel = Object.keys(S.f.sources).filter(k => S.f.sources[k]);
     sel.forEach((id, k) => { S.status[id] = { state: ['error', 'ok', 'loading', 'empty'][k % 4], msg: '' }; });
-    A.renderAll(); assert.ok(sorted(), 'verdes arriba, luego amarillos, luego sin seleccionar y rojos al final');
+    A.renderAll(); S.srcShown = 999; A.render('srcs'); assert.ok(sorted(), 'verdes arriba, luego amarillos, luego sin seleccionar y rojos al final');
     assert.strictEqual(rank(rows()[rows().length - 1]), 3, 'el último es rojo');
     assert.strictEqual(rank(rows()[0]), 0, 'el primero es verde');
     const ids0 = rows().map(r => r.dataset.id).join(); const freeId = rows().find(r => !on(r)).dataset.id; d.querySelector('#c-msrcs [data-id="' + freeId + '"]').click(); assert.strictEqual(rows().map(r => r.dataset.id).join(), ids0, 'al marcar un museo suelto las filas no se reordenan');
-    A.renderAll(); assert.ok(sorted(), 'al reabrir/renderizar el orden vuelve a seguir los colores'); d.querySelector('#c-msrcs [data-id="' + freeId + '"]').click(); }
+    A.renderAll(); S.srcShown = 999; A.render('srcs'); assert.ok(sorted(), 'al reabrir/renderizar el orden vuelve a seguir los colores'); d.querySelector('#c-msrcs [data-id="' + freeId + '"]').click(); }
   console.log('preset Museos de París -> fuentes activas:', Object.keys(S.f.sources).filter(k => S.f.sources[k]).join(','), );
   A.closeMenu();
   await wait(1500);
