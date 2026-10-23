@@ -111,7 +111,11 @@ globalThis.fetch = async (url, init) => {
   f.eras = ['s19b'];
   const p = C.makePlan(f); assert.ok(p.range[0] >= 1870 && p.range[1] <= 1900, JSON.stringify(p.range));
   const mkw = o => C.mk(Object.assign({ src: 't', museum: 'T', id: Math.random(), title: 'T', imgs: ['https://x/y.jpg'] }, o));
-  assert.ok(C.accept(mkw({ year: 1880, type: 'painting' }), f));
+  assert.ok(C.accept(mkw({ year: 1880, type: 'painting', artist: 'Claude Monet' }), f));
+  assert.ok(!C.accept(mkw({ year: 1880, type: 'painting', artist: 'Pintor desconocido' }), f), 'con estilo, la fecha sola no basta');
+  assert.ok(C.accept(mkw({ year: 1880, type: 'painting', artist: 'Pintor desconocido', sid: 'impressionism' }), f), 'si la fuente comprobó el estilo, sí');
+  { const su = C.defaultFilters(); su.styles = ['surrealism', 'magicreal'];
+    assert.ok(!C.accept(mkw({ year: 1925, artist: 'Dora Hitz' }), su), 'Dora Hitz no entra en surrealismo'); assert.ok(C.accept(mkw({ year: 1937, artist: 'Remedios Varo' }), su)); }
   assert.ok(!C.accept(mkw({ year: 1700 }), f));
   assert.ok(!C.accept(mkw({ year: null }), f));
   const g = C.defaultFilters(); g.artists = ['Van Gogh'];

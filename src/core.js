@@ -257,6 +257,33 @@ const STYLE_EXTRA = {
 ].forEach(([id, es, q, range, wd, artists, cat, wa]) => { if (STYLES.some(s => s.id === id)) return; STYLES.push({ id, es, q, range, wd, artists }); STYLE_EXTRA[id] = { cat, wa: wa || undefined }; });
 STYLES.sort((x, y) => x.range[0] - y.range[0] || x.range[1] - y.range[1]);
 STYLES.forEach(s => Object.assign(s, STYLE_EXTRA[s.id] || {}));
+/* Más artistas por estilo. Sirven para buscar con más variedad y, sobre todo, para comprobar el estilo de una obra cuando la fuente
+   no lo sabe (listas de museos, APIs de museos, Commons): con un estilo elegido, esas obras solo entran si su artista es del estilo. */
+const STYLE_MORE = {
+  renaissance: ['Rafael', 'Tiziano', 'Fra Angelico', 'Piero della Francesca', 'Mantegna', 'Masaccio', 'Filippo Lippi', 'Filippino Lippi', 'Ghirlandaio', 'Perugino', 'Michelangelo', 'Miguel Ángel', 'Correggio', 'Carpaccio', 'Antonello da Messina', 'Lorenzo Lotto', 'Veronese', 'Andrea del Sarto', 'Cranach', 'Paolo Uccello', 'Gozzoli', 'Pinturicchio', 'Signorelli', 'Sebastiano del Piombo', 'Durero', 'Verrocchio', 'Cima da Conegliano', 'Bronzino', 'Altdorfer'],
+  baroque: ['Artemisia Gentileschi', 'Orazio Gentileschi', 'Guido Reni', 'Annibale Carracci', 'Guercino', 'Georges de La Tour', 'Ribera', 'Bernardo Strozzi', 'Luca Giordano', 'Pietro da Cortona', 'Jordaens', 'Frans Snyders', 'Simon Vouet', 'Philippe de Champaigne', 'Domenichino', 'Mattia Preti', 'Valentin de Boulogne', 'Charles Le Brun', 'Salvator Rosa', 'Vermeer', 'Frans Hals', 'Alonso Cano', 'Claudio Coello', 'Le Nain', 'Sassoferrato', 'Carlo Dolci', 'Honthorst', 'ter Brugghen'],
+  dutch: ['Jan van der Heyden', 'Pieter Claesz', 'Heda', 'ter Borch', 'Gabriel Metsu', 'Gerrit Dou', 'Frans van Mieris', 'Nicolaes Maes', 'Fabritius', 'Judith Leyster', 'Avercamp', 'van Ostade', 'de Heem', 'Rachel Ruysch', 'van de Velde', 'Philips Koninck', 'Paulus Potter', 'Salomon van Ruysdael', 'Jacob van Ruisdael', 'Pieter de Hooch', 'Saenredam', 'Emanuel de Witte', 'Bosschaert', 'Jan van Huysum', 'Adriaen Coorte'],
+  spanishgolden: ['Alonso Cano', 'Claudio Coello', 'Sánchez Cotán', 'van der Hamen', 'Antonio de Pereda', 'Carreño de Miranda', 'Herrera el Viejo', 'Maíno', 'Ribalta'],
+  rococo: ['Pater', 'Lancret', 'Nattier', 'Quentin de La Tour', 'Pietro Longhi', 'Rosalba Carriera', 'Liotard', 'Joshua Reynolds', 'Hogarth', 'Bellotto', 'Hubert Robert', 'van Loo', 'Greuze'],
+  neoclassicism: ['Jacques-Louis David', 'Mengs', 'Pompeo Batoni', 'Drouais', 'Girodet', 'François Gérard', 'Guérin', 'Angelica Kauffman', 'Benjamin West', 'Antoine-Jean Gros', "Prud'hon", 'Hackert'],
+  romanticism: ['Caspar David Friedrich', 'Chassériau', 'Fuseli', 'Füssli', 'John Martin', 'Aivazovsky', 'Carl Blechen', 'Johan Christian Dahl', 'Antoine-Jean Gros', 'Bonington', 'Samuel Palmer', 'Runge', 'Bryullov', 'Carl Gustav Carus', 'Ary Scheffer', 'Paul Delaroche', 'Leonardo Alenza', 'Eugenio Lucas', 'Pérez Villaamil', 'Hayez', 'Thomas Cole'],
+  academic: ['Paul Delaroche', 'Thomas Couture', 'Jules Lefebvre', 'Hans Makart', 'Siemiradzki', 'Makovsky', 'Jean-Paul Laurens', 'William Etty', 'Edward Poynter', 'Albert Moore', 'Fortuny', 'Pradilla', 'Gisbert', 'Rosales', 'Carolus-Duran', 'Henner'],
+  realism: ['Jules Breton', 'Rosa Bonheur', 'Menzel', 'Wilhelm Leibl', 'Kramskoi', 'Bastien-Lepage', 'Lhermitte', 'Munkácsy', 'Constantin Meunier', 'Fantin-Latour', 'Alfred Stevens', 'Corot', 'Perov', 'Shishkin', 'Savrasov', 'Levitan', 'Surikov', 'Vasnetsov'],
+  impressionism: ['Bazille', 'Guillaumin', 'Eva Gonzalès', 'Childe Hassam', 'Liebermann', 'Lovis Corinth', 'Slevogt', 'Sorolla', 'Theodore Robinson', 'Twachtman', 'Marie Bracquemond', 'Zandomeneghi', 'De Nittis', 'Wilson Steer', 'Dora Hitz', 'Korovin', 'Valentin Serov', 'Anders Zorn', 'Krøyer', 'Emil Claus', 'Darío de Regoyos', 'Beruete', 'Singer Sargent', 'Frank Weston Benson', 'Edmund Tarbell', 'Cabot Perry', 'Willard Metcalf'],
+  postimpressionism: ['Émile Bernard', 'Sérusier', 'Anquetin', 'Angrand', 'Henri Rousseau', 'Maximilien Luce', 'Henri-Edmond Cross', 'van Rysselberghe', 'Vuillard', 'Maurice Denis', 'Vallotton', 'Suzanne Valadon', 'Armand Seguin', 'Cuno Amiet', "O'Conor"],
+  symbolism: ['Jean Delville', 'Carlos Schwabe', 'Burne-Jones', 'Frederic Watts', 'Franz von Stuck', 'Vrubel', 'Jan Toorop', 'Lévy-Dhurmer', 'Alphonse Osbert', 'Félicien Rops', 'Spilliaert', 'Dora Hitz', 'Edvard Munch', 'Gustav Klimt', 'Hugo Simberg', 'Gallen-Kallela', 'Čiurlionis', 'Max Klinger', 'Alfred Kubin', 'Aman-Jean', 'Romero de Torres'],
+  artnouveau: ['Koloman Moser', 'Eugène Grasset', 'Privat-Livemont', 'Jan Toorop', 'Steinlen', 'Jules Chéret', 'Ramon Casas', 'de Riquer'],
+  fauvism: ['van Dongen', 'Albert Marquet', 'Henri Manguin', 'Charles Camoin', 'Othon Friesz', 'Jean Puy', 'Georges Rouault', 'Louis Valtat'],
+  expressionism: ['Pechstein', 'Erich Heckel', 'Schmidt-Rottluff', 'August Macke', 'Modersohn-Becker', 'Jawlensky', 'Gabriele Münter', 'Werefkin', 'James Ensor', 'Chaim Soutine', 'Otto Mueller', 'Ludwig Meidner', 'Max Beckmann', 'Lyonel Feininger', 'Georges Rouault', 'Constant Permeke', 'Gustave De Smet', 'Richard Gerstl'],
+  cubism: ['Metzinger', 'Albert Gleizes', 'Marcoussis', 'María Blanchard', 'Diego Rivera', 'La Fresnaye', 'Le Fauconnier', 'Popova', 'Sonia Delaunay', 'Auguste Herbin', 'Jacques Villon', 'Alexandra Exter'],
+  abstract: ['Hilma af Klint', 'Kupka', 'Sonia Delaunay', 'Robert Delaunay', 'Ben Nicholson', 'Taeuber-Arp', 'Jean Arp', 'Hans Arp', 'Auguste Herbin', 'Theo van Doesburg', "O'Keeffe", 'Arthur Dove', 'Hans Hofmann', 'Serge Poliakoff', 'Nicolas de Staël'],
+  surrealism: ['Yves Tanguy', 'Leonora Carrington', 'Remedios Varo', 'Dorothea Tanning', 'Kay Sage', 'Leonor Fini', 'Wolfgang Paalen', 'Roberto Matta', 'Wifredo Lam', 'Victor Brauner', 'André Masson', 'Óscar Domínguez', 'Paul Nash', 'Roland Penrose', 'Kurt Seligmann', 'Toyen', 'Štyrský', 'Meret Oppenheim', 'Man Ray', 'Hans Bellmer', 'de Chirico', 'Frida Kahlo', 'Jacqueline Lamba', 'Alice Rahon', 'Onslow Ford', 'Esteban Francés', 'Maruja Mallo', 'Ángeles Santos', 'Eileen Agar', 'Ithell Colquhoun', 'Jean Arp'],
+  magicreal: ['Antonio Donghi', 'Felice Casorati', 'Ivan Albright', 'Pyke Koch', 'Carel Willink', 'Franz Radziwill', 'Christian Schad', 'María Izquierdo', 'Andrew Wyeth', 'Peter Blume', 'Cagnaccio di San Pietro', 'Ubaldo Oppi', 'Alexander Kanoldt', 'Georg Schrimpf', 'Grant Wood'],
+  abstractexp: ['Franz Kline', 'Lee Krasner', 'Joan Mitchell', 'Arshile Gorky', 'Clyfford Still', 'Adolph Gottlieb', 'Hans Hofmann', 'Philip Guston', 'Helen Frankenthaler', 'Sam Francis', 'Elaine de Kooning', 'Grace Hartigan', 'William Baziotes', 'Bradley Walker Tomlin', 'Pousette-Dart'],
+  pop: ['James Rosenquist', 'Tom Wesselmann', 'Claes Oldenburg', 'Richard Hamilton', 'Peter Blake', 'Robert Indiana', 'Ed Ruscha', 'Wayne Thiebaud', 'Marisol', 'Evelyne Axell', 'Mimmo Rotella', 'Pauline Boty', 'Equipo Crónica', 'Martial Raysse']
+};
+Object.keys(STYLE_MORE).forEach(id => { const s = STYLES.find(x => x.id === id); if (s) STYLE_MORE[id].forEach(n => { if (!s.artists.includes(n)) s.artists.push(n); }); });
+const styleArtistMatch = (w, s) => { const a = norm(w.artist || ''); return !!a && (s.artists || []).some(n => { const t = norm(n).split(/\s+/).filter(x => x.length > 1); return t.length && t.every(x => a.includes(x)); }); };
 
 /* Estilos de una obra (para las colecciones rápidas basadas en favoritas): por el artista (los de la lista de cada estilo) y, si hay varios
    estilos posibles, solo los que encajan con el año de la obra. */
@@ -392,6 +419,9 @@ function accept(w, f) {
   }
   const styles = (f.styles || []).map(id => STYLES.find(s => s.id === id)).filter(Boolean);
   if (styles.length && w.year != null && !styles.some(s => w.year >= s.range[0] - 15 && w.year <= s.range[1] + 15)) return false;
+  // Con estilo elegido, la obra entra si la fuente ya comprobó su estilo o si su artista es de ese estilo; la fecha sola no basta
+  // (así no se cuela, por ejemplo, una impresionista de 1925 en «Surrealismo»). Los estilos sin lista de artistas no se filtran así.
+  if (styles.length && !(w.sid && styles.some(s => s.id === w.sid)) && styles.some(s => (s.artists || []).length) && !styles.some(s => styleArtistMatch(w, s))) return false;
   if (f.artists && f.artists.length) {
     const a = norm(w.artist);
     if (!f.artists.some(n => norm(n).split(/\s+/).every(t => a.includes(t)))) return false;
@@ -449,7 +479,8 @@ function mk(p) {
     date: cleanDate(p.date), year: p.year == null ? parseYear(cleanDate(p.date)) : p.year,
     imgs, thumb: p.thumb || imgs[imgs.length - 1] || '',
     url: p.url || '', w: p.w || null, h: p.h || null,
-    type: p.type || null, pd: p.pd === undefined ? null : p.pd, license: p.license || ''
+    type: p.type || null, pd: p.pd === undefined ? null : p.pd, license: p.license || '',
+    sid: p.sid || null // estilo que la fuente ya comprobó (WikiArt por estilo, Wikidata por movimiento)
   };
 }
 
@@ -1005,7 +1036,7 @@ function wdParts(plan, opts) {
     parts.push(style ? 'FILTER(!BOUND(?inc) || (' + yr + ')).' : 'FILTER(BOUND(?inc) && ' + yr + ').');
   }
   if (!opts.anyRights) parts.push('FILTER((BOUND(?inc) && YEAR(?inc) <= 1930) || (BOUND(?death) && YEAR(?death) <= 1955)).');
-  return { parts, typeQ };
+  return { parts, typeQ, sid: style && style.wd ? style.id : null };
 }
 /* La página de obras se elige en una subconsulta y los nombres se ponen después: así Wikidata solo busca nombres para 60 filas.
    Con el servicio de nombres fuera de la subconsulta la consulta de un museo tardaba más de un minuto y se cortaba (comprobado
@@ -1015,7 +1046,7 @@ function wdSelect(parts, off, withClass) {
     parts.join(' ') + ' } LIMIT 60 OFFSET ' + off + ' } SERVICE wikibase:label { bd:serviceParam wikibase:language "es,en,fr". } }';
 }
 const FILEPATH = /commons\.wikimedia\.org\/wiki\/Special:FilePath\//i;
-function wdRows(rows, typeQ, ctx, museumName, anyRights) {
+function wdRows(rows, typeQ, ctx, museumName, anyRights, sid) {
   const seen = new Set();
   const w = PX(ctx);
   return rows.filter(r => {
@@ -1035,26 +1066,26 @@ function wdRows(rows, typeQ, ctx, museumName, anyRights) {
       imgs: commons ? commonsImgs(raw, w) : [raw], thumb: commons ? raw + '?width=500' : raw,
       url: 'https://www.wikidata.org/wiki/' + qid,
       type: typeQ ? WD_NAME[typeQ] : classifyType(r.clsLabel && r.clsLabel.value),
-      pd: anyRights ? null : true, license: commons ? (anyRights ? 'Imagen de Wikimedia Commons' : 'Dominio público (Wikimedia)') : 'Imagen externa, con derechos de autor'
+      sid: sid || null, pd: anyRights ? null : true, license: commons ? (anyRights ? 'Imagen de Wikimedia Commons' : 'Dominio público (Wikimedia)') : 'Imagen externa, con derechos de autor'
     });
   });
 }
 
 async function wikiFetch(plan, f, ctx) {
   const any = !!ctx.anyRights;
-  const { parts, typeQ } = wdParts(plan, { anyRights: any, byType: true });
+  const { parts, typeQ, sid } = wdParts(plan, { anyRights: any, byType: true });
   let rows = await sparql(wdSelect(parts, rand(400), false));
   if (rows.length < 8) rows = await sparql(wdSelect(parts, 0, false));
-  return wdRows(rows, typeQ, ctx, null, any);
+  return wdRows(rows, typeQ, ctx, null, any, sid);
 }
 
 /* Un Wikidata por museo: todas las obras de su colección que tengan imagen. */
 function wdMuseumQuery(m, plan, f, ctx) {
   const any = !!ctx.anyRights;
-  const { parts, typeQ } = wdParts(plan, { museum: m, anyRights: any, byType: !!(f.types && f.types.length) });
+  const { parts, typeQ, sid } = wdParts(plan, { museum: m, anyRights: any, byType: !!(f.types && f.types.length) });
   let body = parts.filter(x => !/^OPTIONAL \{ \?item wdt:P(170|31) \?(creator|cls)\. \}$/.test(x)).join(' ');
   if (any) body = body.replace(' OPTIONAL { ?creator wdt:P570 ?death. }', '');
-  return { parts, typeQ, any, body, countQ: 'SELECT (COUNT(DISTINCT ?item) AS ?n) WHERE { ' + body + ' }' };
+  return { parts, typeQ, sid, any, body, countQ: 'SELECT (COUNT(DISTINCT ?item) AS ?n) WHERE { ' + body + ' }' };
 }
 /* Conteos de Wikidata en lote: en vez de una consulta de conteo por museo, una sola para varios museos (UNION + GROUP BY).
    Cada museo encuentra su total ya calculado (o en camino) en la memoria; si el lote falla, cada uno cuenta por su cuenta. */
@@ -1075,11 +1106,11 @@ async function primeWikidataCounts(sources, f, ctx) {
   return done;
 }
 async function wikidataMuseum(m, plan, f, ctx) {
-  const { parts, typeQ, any, countQ } = wdMuseumQuery(m, plan, f, ctx);
+  const { parts, typeQ, sid, any, countQ } = wdMuseumQuery(m, plan, f, ctx);
   const total = await memo('fm:' + countQ, async () => { const r = await sparql(countQ); return r[0] && r[0].n ? parseInt(r[0].n.value, 10) : 0; });
   if (!total) return [];
   const rows = await sparql(wdSelect(parts, rand(Math.max(1, total - 59)), !typeQ));
-  return wdRows(rows, typeQ, ctx, m.es + ' (' + m.city + ')', any);
+  return wdRows(rows, typeQ, ctx, m.es + ' (' + m.city + ')', any, sid);
 }
 
 async function europeanaFetch(plan, f, ctx, m) {
@@ -1287,7 +1318,7 @@ async function wikiartFetch(plan, f, ctx) {
   return (Array.isArray(j) ? j : (j.Paintings || [])).filter(p => p.image && p.title).map(p => mk({
     src: 'wikiart', museum: 'WikiArt', id: p.id, title: p.title, artist: p.artistName, date: p.year,
     imgs: [p.image.replace(/!\w+\.jpg$/, ''), p.image], thumb: p.image + '!PinterestSmall.jpg',
-    url: 'https://www.wikiart.org' + (p.paintingUrl || ''), w: p.width, h: p.height, type: 'painting',
+    url: 'https://www.wikiart.org' + (p.paintingUrl || ''), w: p.width, h: p.height, type: 'painting', sid: st.id || null,
     pd: null, license: 'WikiArt (obra con o sin derechos de autor)'
   }));
 }
@@ -1650,9 +1681,11 @@ async function shardFetch(key, plan, ctx) {
   if (!parts.length) return [];
   const who = plan.artist ? norm(plan.artist) : null, kw = plan.keyword ? norm(plan.keyword) : null;
   /* sin artista ni palabra: un trozo al azar; con ellos hay que mirar todos los del tipo */
-  const chosen = who || kw ? parts.slice(0, 16) : [pick(parts)];
+  // Con un estilo elegido, las listas no saben de estilos: se buscan las obras de los artistas de ese estilo.
+  const st = !who && plan.style && (plan.style.artists || []).length ? plan.style : null;
+  const chosen = who || kw || st ? shuffle(parts.slice()).slice(0, 16) : [pick(parts)];
   const rows = [].concat(...await Promise.all(chosen.map(p => shardJSON(key, p.f))));
-  let hits = rows.filter(r => (!plan.range || r[3] == null || (r[3] >= plan.range[0] && r[3] <= plan.range[1])) && (!who || nameHas(r[2], who)) && (!kw || norm(r[1]).includes(kw)));
+  let hits = rows.filter(r => (!plan.range || r[3] == null || (r[3] >= plan.range[0] && r[3] <= plan.range[1])) && (!who || nameHas(r[2], who)) && (!kw || norm(r[1]).includes(kw)) && (!st || styleArtistMatch({ artist: r[2] }, st)));
   if (plan.range) hits = hits.filter(r => r[3] != null);
   return sampleN(hits, 40).map(r => mk({
     src: key, museum: S.museum, id: r[0], title: r[1], artist: r[2], date: r[3] == null ? '' : String(r[3]), year: r[3],
