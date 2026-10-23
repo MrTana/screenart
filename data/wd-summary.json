@@ -26,7 +26,7 @@
    "q": "Q2946"
   },
   "orangerie": {
-   "error": "no encuentro el museo en Wikidata"
+   "error": "Wikidata no responde"
   },
   "marmottan": {
    "painting": 148,
@@ -35,7 +35,7 @@
    "q": "Q1327886"
   },
   "petitpalais": {
-   "error": "no encuentro el museo en Wikidata"
+   "error": "Wikidata no responde"
   },
   "lyon": {
    "painting": 341,
@@ -44,10 +44,16 @@
    "q": "Q511"
   },
   "lille": {
-   "error": "no encuentro el museo en Wikidata"
+   "painting": 626,
+   "drawing": 14,
+   "print": 0,
+   "q": "Q2628596"
   },
   "rouen": {
-   "error": "no encuentro el museo en Wikidata"
+   "painting": 208,
+   "drawing": 0,
+   "print": 0,
+   "q": "Q3086934"
   },
   "fabre": {
    "painting": 519,
@@ -62,7 +68,10 @@
    "q": "Q1165526"
   },
   "conde": {
-   "error": "no encuentro el museo en Wikidata"
+   "painting": 685,
+   "drawing": 20,
+   "print": 0,
+   "q": "Q1236032"
   },
   "thyssen": {
    "painting": 612,
@@ -149,7 +158,10 @@
    "q": "Q183334"
   },
   "pushkin": {
-   "error": "no encuentro el museo en Wikidata"
+   "painting": 403,
+   "drawing": 15,
+   "print": 0,
+   "q": "Q4872"
   },
   "nationalgallery": {
    "painting": 3978,
@@ -158,7 +170,7 @@
    "q": "Q180788"
   },
   "npglondon": {
-   "error": "no encuentro el museo en Wikidata"
+   "error": "Wikidata no responde"
   },
   "courtauld": {
    "painting": 383,
@@ -275,7 +287,7 @@
    "q": "Q842858"
   },
   "ateneum": {
-   "error": "no encuentro el museo en Wikidata"
+   "error": "Wikidata no responde"
   },
   "budapest": {
    "painting": 671,
@@ -290,7 +302,7 @@
    "q": "Q153306"
   },
   "mfa": {
-   "error": "no encuentro el museo en Wikidata"
+   "error": "Wikidata no responde"
   },
   "frick": {
    "painting": 142,
@@ -323,7 +335,7 @@
    "q": "Q1976985"
   },
   "neuegalerie": {
-   "error": "no encuentro el museo en Wikidata"
+   "error": "Wikidata no responde"
   },
   "nmwa": {
    "painting": 196,
