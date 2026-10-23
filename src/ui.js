@@ -653,14 +653,14 @@ function photoToB64(file) {
     } catch (e) { resolve(raw()); }
   });
 }
-async function searchByPhoto(file) {
+async function searchByPhoto(file, pre) { // pre: imagen ya preparada { b64, mime } (la del escáner)
   const msg = $('#titleMsg'), keys = idKeys();
-  if (!file) return;
+  if (!file && !pre) return;
   if (!keys.gemini && !keys.anthropic) { msg.textContent = 'Para reconocer fotos pon antes una clave (abajo, «Clave para reconocer fotos»). La de Gemini es gratuita.'; try { document.querySelector('[data-acc=titulo] details.adv').open = true; } catch (e) { /* sin detalles */ } return; }
   const mine = S.titleQ = (S.titleQ || 0) + 1;
   msg.textContent = 'Reconociendo la obra…'; S.tres = []; renderTres();
   try {
-    const { b64, mime } = await photoToB64(file);
+    const { b64, mime } = pre || await photoToB64(file);
     const id = await C.identifyArtwork(b64, mime, keys);
     if (mine !== S.titleQ) return;
     if (!id) { msg.textContent = 'No reconozco la obra. Prueba con otra foto más recta, con buena luz y sin reflejos, o búscala por su nombre.'; return; }
@@ -677,6 +677,73 @@ async function searchByPhoto(file) {
   } catch (e) {
     msg.textContent = e && e.noKey ? 'Falta la clave para reconocer fotos.' : e && (e.status === 400 || e.status === 401 || e.status === 403) ? 'La clave no es válida o no tiene permiso para reconocer imágenes (' + e.status + ').' : e && (e.status === 503 || e.status === 500 || e.status === 502 || e.status === 504 || e.status === 529) ? 'El servicio de reconocimiento está saturado (' + e.status + '). Espera unos segundos y vuelve a intentarlo.' : e && e.status === 429 ? 'Se acabó la cuota de la clave por ahora; prueba más tarde.' : e && e.timeout ? 'No pude reconocer la foto: ' + e.message + '. Prueba de nuevo; si sigue igual, usa la otra clave o una foto más pequeña.' : 'No pude reconocer la foto: ' + errText(e);
   }
+}
+/* ───────── escáner con la cámara ─────────
+   En vez de hacer una foto, la cámara analiza el vídeo: cuando la imagen dentro del marco está quieta y nítida durante un momento,
+   se recorta ese marco y se manda a reconocer. También se puede pulsar «Escanear ya». Sin cámara disponible, se abre la cámara del sistema. */
+const SC = { stream: null, timer: 0, prev: null, still: 0, busy: false };
+const SCAN_NEED = 5; // muestras quietas seguidas (cada 250 ms ≈ 1,2 s)
+async function openScanner() {
+  const md = navigator.mediaDevices;
+  if (!md || typeof md.getUserMedia !== 'function') { scanFallback(); return; }
+  let stream;
+  try { stream = await md.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false }); }
+  catch (e) { toast(e && e.name === 'NotAllowedError' ? 'Sin permiso para la cámara: se abre la cámara del sistema' : 'No pude abrir la cámara: se abre la del sistema'); scanFallback(); return; }
+  SC.stream = stream; SC.prev = null; SC.still = 0; SC.busy = false;
+  const v = $('#scanVideo'); v.srcObject = stream; try { await v.play(); } catch (e) { /* algunos navegadores ya reproducen solos */ }
+  $('#scanner').hidden = false; $('#scanHint').textContent = 'Encuadra la pintura dentro del marco y mantén el móvil quieto';
+  $('#scanFrame').classList.remove('ok'); $('#scanProg').style.width = '0';
+  clearInterval(SC.timer); SC.timer = setInterval(scanTick, 250);
+}
+function scanFallback() { const i = $('#photoIn'); i.setAttribute('capture', 'environment'); i.click(); setTimeout(() => i.removeAttribute('capture'), 1000); }
+function closeScanner() {
+  clearInterval(SC.timer); SC.timer = 0;
+  if (SC.stream) { try { SC.stream.getTracks().forEach(tr => tr.stop()); } catch (e) { /* ya parada */ } }
+  SC.stream = null; const v = $('#scanVideo'); try { v.srcObject = null; } catch (e) { /* nada */ }
+  $('#scanner').hidden = true;
+}
+/* Zona del vídeo que corresponde al marco (el vídeo se muestra recortado para llenar la pantalla). */
+function scanRect() {
+  const v = $('#scanVideo'), fr = $('#scanFrame').getBoundingClientRect(), vr = v.getBoundingClientRect();
+  const vw = v.videoWidth, vh = v.videoHeight; if (!vw || !vh || !vr.width) return null;
+  const k = Math.max(vr.width / vw, vr.height / vh), ox = (vr.width - vw * k) / 2, oy = (vr.height - vh * k) / 2;
+  const x = Math.max(0, (fr.left - vr.left - ox) / k), y = Math.max(0, (fr.top - vr.top - oy) / k);
+  return { x, y, w: Math.min(vw - x, fr.width / k), h: Math.min(vh - y, fr.height / k) };
+}
+function scanTick() {
+  if (SC.busy) return;
+  const v = $('#scanVideo'), r = scanRect(); if (!r) return;
+  try {
+    const c = SC.small || (SC.small = document.createElement('canvas')); c.width = 48; c.height = 36;
+    const g = c.getContext('2d'); g.drawImage(v, r.x, r.y, r.w, r.h, 0, 0, 48, 36);
+    const px = g.getImageData(0, 0, 48, 36).data, lum = new Float32Array(48 * 36);
+    for (let i = 0; i < lum.length; i++) lum[i] = px[i * 4] * 0.3 + px[i * 4 + 1] * 0.59 + px[i * 4 + 2] * 0.11;
+    let diff = 0, edge = 0; const had = !!SC.prev;
+    for (let i = 0; i < lum.length; i++) { if (SC.prev) diff += Math.abs(lum[i] - SC.prev[i]); if (i % 48 < 47) edge += Math.abs(lum[i] - lum[i + 1]); }
+    diff /= lum.length; edge /= lum.length; SC.prev = lum;
+    const quiet = had && diff < 4.5, detail = edge > 1.2; // quieto y con detalle (no una pared lisa ni desenfocado)
+    SC.still = quiet && detail ? SC.still + 1 : 0;
+    $('#scanProg').style.width = Math.min(100, SC.still / SCAN_NEED * 100) + '%';
+    $('#scanFrame').classList.toggle('ok', SC.still > 0);
+    $('#scanHint').textContent = !detail ? 'Acércate a la pintura: no veo bastante detalle' : quiet ? 'Escaneando… no te muevas' : 'Encuadra la pintura dentro del marco y mantén el móvil quieto';
+    if (SC.still >= SCAN_NEED) scanCapture();
+  } catch (e) { /* el vídeo aún no está listo */ }
+}
+function scanCapture() {
+  if (SC.busy) return;
+  const v = $('#scanVideo'), r = scanRect();
+  if (!r) { toast('La cámara aún no está lista'); return; }
+  SC.busy = true;
+  try {
+    const k = Math.min(1, 1024 / Math.max(r.w, r.h)), c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(r.w * k)); c.height = Math.max(1, Math.round(r.h * k));
+    c.getContext('2d').drawImage(v, r.x, r.y, r.w, r.h, 0, 0, c.width, c.height);
+    const d = c.toDataURL('image/jpeg', 0.85);
+    if (!/^data:image\/jpeg;base64,/.test(d)) throw new Error('sin imagen');
+    if (navigator.vibrate) try { navigator.vibrate(60); } catch (e) { /* sin vibración */ }
+    closeScanner();
+    searchByPhoto(null, { b64: d.split(',')[1], mime: 'image/jpeg' });
+  } catch (e) { SC.busy = false; toast('No pude leer la imagen de la cámara'); }
 }
 function rankByArtist(list, artist) {
   const a = C.norm(artist || '').split(/\s+/).filter(x => x.length > 2).pop();
@@ -790,7 +857,10 @@ function onAct(act, id) {
     case 'mus-all': case 'mus-none': visibleMuseums().forEach(x => { f.sources[x.id] = act === 'mus-all'; }); render('srcs'); applyChange(); break;
     case 'add-museum': addMuseumByName(); break;
     case 'title-search': searchTitle(); break;
-    case 'photo': $('#photoIn').click(); break;
+    case 'photo': $('#photoIn').removeAttribute('capture'); $('#photoIn').click(); break;
+    case 'scan': openScanner(); break;
+    case 'scan-close': closeScanner(); break;
+    case 'scan-now': scanCapture(); break;
     case 'title-show': showTitleResult(id); break;
     case 'era': toggleArr(f.eras, id); f.yearFrom = f.yearTo = ''; $('#yFrom').value = $('#yTo').value = ''; render('eras'); applyChange(); break;
     case 'style': toggleArr(f.styles, id); render('styles'); applyChange(); break;
@@ -860,6 +930,7 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('keydown', e => {
   activity();
+  if (!$('#scanner').hidden) { if (e.key === 'Escape' || e.key === 'Backspace' || e.key === 'GoBack') { e.preventDefault(); closeScanner(); } return; }
   const tag = (e.target.tagName || '').toLowerCase(), typing = tag === 'input' || tag === 'textarea';
   if (typing) {
     if (e.key === 'Enter') { if (e.target.id === 'artistIn') { addArtist(e.target.value); e.target.value = ''; } if (e.target.id === 'kwIn') { addKeyword(e.target.value); e.target.value = ''; } if (e.target.id === 'museumIn') addMuseumByName(); if (e.target.id === 'titleIn') searchTitle(); if (e.target.id === 'tvCode') onAct('tv-go'); if (e.target.id === 'exwIn') { addExWord(e.target.value); e.target.value = ''; } }
@@ -1372,6 +1443,6 @@ function init() {
   advance();
   initTV();
 }
-window.ArtApp = { cloudSync, checkUpdate, applyUpdate, S, next, prev, advance, openMenu, closeMenu, refill, onAct, render, renderAll, applyChange, present, pullNext, captionMs, capMode, parseCode, Remote: () => RC };
+window.ArtApp = { openScanner, closeScanner, scanCapture, cloudSync, checkUpdate, applyUpdate, S, next, prev, advance, openMenu, closeMenu, refill, onAct, render, renderAll, applyChange, present, pullNext, captionMs, capMode, parseCode, Remote: () => RC };
 init();
 })();

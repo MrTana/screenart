@@ -192,6 +192,19 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     A.closeMenu(); S.refilling = 1; const b = d.getElementById('busy');
     const toggle = () => { A.openMenu(); const on1 = b.classList.contains('on'); A.closeMenu(); return [on1, b.classList.contains('on')]; };
     const [inMenu, onArt] = toggle(); assert.ok(inMenu && !onArt, 'buscando: visible en el menú (' + inMenu + '), oculto sobre la obra (' + onArt + ')'); S.refilling = 0; }
+  { // buscar por foto: subir o escanear con la cámara
+    const bs = Array.from(d.querySelectorAll('[data-acc=titulo] .btn')).map(b => b.textContent); assert.ok(bs.includes('Escanear con la cámara') && bs.includes('Subir foto'), 'dos opciones: ' + bs);
+    let clicked = null; const inp = d.getElementById('photoIn'); const oc = inp.click; inp.click = () => { clicked = inp.getAttribute('capture'); };
+    Object.defineProperty(w.navigator, 'mediaDevices', { value: undefined, configurable: true });
+    await A.openScanner(); assert.strictEqual(clicked, 'environment', 'sin cámara accesible: se abre la cámara del sistema');
+    clicked = null; A.onAct('photo'); assert.strictEqual(clicked, null, 'subir foto: elegir archivo (sin forzar la cámara)');
+    let stopped = 0; const stream = { getTracks: () => [{ stop: () => { stopped++; } }] };
+    Object.defineProperty(w.navigator, 'mediaDevices', { value: { getUserMedia: async c => { assert.strictEqual(c.video.facingMode.ideal, 'environment'); return stream; } }, configurable: true });
+    w.HTMLMediaElement.prototype.play = async () => {};
+    await A.openScanner(); assert.ok(!d.getElementById('scanner').hidden, 'el escáner se abre a pantalla completa');
+    d.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); assert.ok(d.getElementById('scanner').hidden && stopped === 1, 'Escape lo cierra y apaga la cámara');
+    await A.openScanner(); A.onAct('scan-close'); assert.ok(d.getElementById('scanner').hidden && stopped === 2, 'Cancelar también');
+    inp.click = oc; }
   // Toques como en un libro electrónico (pantalla de 500 px)
   Object.defineProperty(w, 'innerWidth', { value: 500, configurable: true });
   S.st.caption = 'def'; assert.strictEqual(A.capMode(), 'always', 'móvil sin TV: la ficha siempre visible'); S.st.caption = 'auto'; assert.strictEqual(A.capMode(), 'auto'); S.st.caption = 'def';
