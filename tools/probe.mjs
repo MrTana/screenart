@@ -79,6 +79,14 @@ if (!results.Wikipedia.ok) {
     results.Wikipedia.diag = (j.query && j.query.pages || []).map(p => [p.title, p.description, p.original && p.original.width, p.original && p.original.source && p.original.source.slice(-40)]); }
   catch (e) { results.Wikipedia.diag = d; }
 }
+{ // tiempos de la consulta de conteo de un museo tal como la hace la app, con y sin la pista de orden de Wikidata
+  const q = C.wdMuseumQuery(mus('uffizi'), plan(), f, ctx).countQ, d = {};
+  for (const [name, qq] of [['app', q], ['conPista', q.replace('WHERE { ', 'WHERE { hint:Query hint:optimizer "None". ')]]) {
+    const t0 = Date.now(); const r = await diagJSON('https://query.wikidata.org/sparql?format=json&query=' + encodeURIComponent(qq));
+    d[name] = { ms: Date.now() - t0, status: r.status, n: ((/"value" : "(\d+)"/.exec(r.body || '') || [])[1]) || null };
+  }
+  results['Wikidata (museo)'].timing = d; console.log('tiempos Wikidata', JSON.stringify(d));
+}
 if (!results['Wikidata (museo)'].ok) {
   const t0 = Date.now(); const d = await diagJSON('https://query.wikidata.org/sparql?format=json&query=' + encodeURIComponent('SELECT (COUNT(*) AS ?n) WHERE { ?item wdt:P195 wd:Q51252; wdt:P18 ?i. }'));
   results['Wikidata (museo)'].diag = { simpleCountMs: Date.now() - t0, status: d.status, body: (d.body || d.error || '').slice(0, 200) };
