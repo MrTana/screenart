@@ -1,87 +1,87 @@
 {
- "at": "2026-10-23 22:24 UTC",
+ "at": "2026-10-23 22:40 UTC",
  "ok": 20,
  "total": 20,
  "results": {
   "The Met": {
    "ok": true,
-   "n": 22,
-   "sample": "Judging a Horse",
-   "ms": 659
+   "n": 12,
+   "sample": "Evening Glow in a Mountain Village and Calligraphy",
+   "ms": 715
   },
   "Art Institute of Chicago": {
    "ok": true,
-   "n": 12,
+   "n": 24,
    "err": "imagen no comprobable desde GitHub (protección contra robots)",
-   "sample": "Village in Brittany",
-   "ms": 306
+   "sample": "Horsemen of the Apocalypse",
+   "ms": 437
   },
   "Cleveland Museum of Art": {
    "ok": true,
    "n": 24,
-   "sample": "Text, Folio 109 (verso), from a Manuscript of the Perfection",
-   "ms": 1047
+   "sample": "Dr. James Stuart; Mary Campbell Stuart",
+   "ms": 763
   },
   "Rijksmuseum": {
    "ok": true,
    "n": 8,
-   "sample": "Portrait of Maria Petitpas (?-1640)",
-   "ms": 2890
+   "sample": "Portret van Johannes Otto van Setten",
+   "ms": 3388
   },
   "Victoria and Albert": {
    "ok": true,
    "n": 24,
-   "sample": "Kusha and Lava",
-   "ms": 1201
+   "sample": "The Flag of the Quartermasters in the Eight Banners",
+   "ms": 1323
   },
   "SMK": {
    "ok": true,
-   "n": 4,
-   "sample": "Krimskrams",
-   "ms": 2597
+   "n": 16,
+   "sample": "Kampen mellem Tereus og hans svigerinde Filomele (tredje bla",
+   "ms": 1066
   },
   "Minneapolis": {
    "ok": true,
-   "n": 1,
-   "sample": "Woman's long-sleeved kimono (furisode) with design of a fish",
-   "ms": 1708
+   "n": 14,
+   "sample": "Bandolier Bag",
+   "ms": 1360
   },
   "Smithsonian": {
    "ok": true,
    "n": 24,
-   "sample": "Nudes in Landscape",
-   "ms": 1200
+   "sample": "Charles and Lavinia Stratton",
+   "ms": 2543
   },
   "Europeana": {
    "ok": true,
    "n": 24,
-   "sample": "Painting",
-   "ms": 1383
+   "sample": "Målning",
+   "ms": 1430
   },
   "Wikidata (museo)": {
    "ok": true,
    "n": 2,
-   "sample": "Sin título",
-   "ms": 1422,
+   "sample": "Britannicus in toga",
+   "ms": 1458,
    "timing": {
     "app": {
-     "ms": 11,
+     "ms": 27,
      "status": 200,
      "n": "841"
     },
     "conPista": {
-     "ms": 88,
+     "ms": 432,
      "status": 200,
      "n": "841"
     },
     "selApp": {
-     "ms": 65003,
+     "ms": 65010,
      "status": 504,
      "rows": 0,
      "head": "upstream request timeout"
     },
     "selSub": {
-     "ms": 1072,
+     "ms": 1564,
      "status": 200,
      "rows": 3
     }
@@ -89,63 +89,63 @@
   },
   "Wikidata (general)": {
    "ok": true,
-   "n": 54,
-   "sample": "Entrance to the Village of Vétheuil in Winter",
-   "ms": 1457
+   "n": 50,
+   "sample": "Corner of a Studio",
+   "ms": 3022
   },
   "Commons": {
    "ok": true,
-   "n": 34,
-   "sample": "Forging of the Sampo",
-   "ms": 3112
+   "n": 32,
+   "sample": "Mrs Ellinor Guthrie",
+   "ms": 3897
   },
   "Google Art Project": {
    "ok": true,
-   "n": 36,
-   "sample": "I Wait, by Julia Margaret Cameron",
-   "ms": 1020
+   "n": 40,
+   "sample": "The Forge",
+   "ms": 720
   },
   "Wikipedia": {
    "ok": true,
-   "n": 19,
-   "sample": "Snow at Argenteuil",
-   "ms": 466
+   "n": 20,
+   "sample": "En plein air",
+   "ms": 600
   },
   "WikiArt": {
    "ok": true,
    "n": 60,
-   "sample": "The Seine Below Rouen",
-   "ms": 1758
+   "sample": "Le Pont des Arts",
+   "ms": 1601
   },
   "MoMA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Big Grey Robe",
-   "ms": 656
+   "sample": "Kali",
+   "ms": 492
   },
   "NGA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "The Equatorial Jungle",
-   "ms": 566
+   "sample": "View of Bozen with a Painter",
+   "ms": 512
   },
   "Tate (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "The Schoolmistress",
-   "ms": 1008
+   "sample": "Cupid and Psyche",
+   "ms": 1514
   },
   "Louvre (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "L'Hiver",
-   "ms": 234
+   "sample": "La Vierge trônant avec l'enfant Jésus entre saint Jean-Bapti",
+   "ms": 312
   },
   "Prado (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Abril (Tauro)",
-   "ms": 216
+   "sample": "Retrato de niña",
+   "ms": 256
   }
  }
 }
