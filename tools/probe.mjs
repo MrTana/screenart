@@ -85,6 +85,16 @@ if (!results.Wikipedia.ok) {
     const t0 = Date.now(); const r = await diagJSON('https://query.wikidata.org/sparql?format=json&query=' + encodeURIComponent(qq));
     d[name] = { ms: Date.now() - t0, status: r.status, n: ((/"value" : "(\d+)"/.exec(r.body || '') || [])[1]) || null };
   }
+  const parts = C.wdMuseumQuery(mus('uffizi'), plan(), f, ctx).parts, off = 300, L = 'SERVICE wikibase:label { bd:serviceParam wikibase:language "es,en,fr". }';
+  const vars = '?item ?itemLabel ?creatorLabel ?collLabel ?clsLabel ?image ?inc';
+  const sels = {
+    selApp: 'SELECT ' + vars + ' WHERE { ' + parts.join(' ') + ' ' + L + ' } LIMIT 60 OFFSET ' + off,
+    selSub: 'SELECT ' + vars + ' WHERE { { SELECT ?item ?creator ?coll ?cls ?image ?inc WHERE { ' + parts.join(' ') + ' } LIMIT 60 OFFSET ' + off + ' } ' + L + ' }'
+  };
+  for (const [name, qq] of Object.entries(sels)) {
+    const t0 = Date.now(); const r = await diagJSON('https://query.wikidata.org/sparql?format=json&query=' + encodeURIComponent(qq));
+    d[name] = { ms: Date.now() - t0, status: r.status, rows: ((r.body || '').match(/"item"/g) || []).length, head: r.status === 200 ? undefined : (r.body || '').slice(0, 160) };
+  }
   results['Wikidata (museo)'].timing = d; console.log('tiempos Wikidata', JSON.stringify(d));
 }
 if (!results['Wikidata (museo)'].ok) {
