@@ -1,128 +1,127 @@
 {
- "at": "2026-10-23 01:39 UTC",
- "ok": 15,
+ "at": "2026-10-23 02:03 UTC",
+ "ok": 16,
  "total": 20,
  "results": {
   "The Met": {
    "ok": true,
-   "n": 8,
-   "sample": "Granite",
-   "ms": 2272
+   "n": 25,
+   "sample": "The Adoration of the Magi",
+   "ms": 2280
   },
   "Art Institute of Chicago": {
    "ok": false,
    "n": 0,
    "err": "sin obras",
-   "ms": 653
+   "ms": 541
   },
   "Cleveland Museum of Art": {
    "ok": true,
    "n": 24,
-   "sample": "Children at Play",
-   "ms": 1640
+   "sample": "The monkey, serving as the lion’s chamberlain, converses wit",
+   "ms": 1373
   },
   "Rijksmuseum": {
    "ok": true,
    "n": 8,
-   "sample": "Pieter Mijer (1812-81). Gouverneur-generaal van Nederlands O",
-   "ms": 4011
+   "sample": "Eberhard (1445-96), Duke of Würtemberg, as a Pilgrim in the ",
+   "ms": 3634
   },
   "Victoria and Albert": {
    "ok": true,
    "n": 24,
-   "sample": "Drury Lane Design Collection",
-   "ms": 1721
+   "sample": "Drawing",
+   "ms": 1744
   },
   "SMK": {
    "ok": true,
-   "n": 6,
-   "sample": "Den bodfærdige Maria Magdalene",
-   "ms": 2837
+   "n": 5,
+   "sample": "To både på en flod",
+   "ms": 14247
   },
   "Minneapolis": {
-   "ok": false,
-   "n": 7,
-   "err": "HTTP 200 ",
-   "sample": "At the Spring",
-   "ms": 1453
+   "ok": true,
+   "n": 18,
+   "sample": "Ceremonial Gate",
+   "ms": 2653
   },
   "Smithsonian": {
    "ok": true,
    "n": 24,
-   "sample": "Night Moths",
-   "ms": 1554
+   "sample": "Fan",
+   "ms": 1480
   },
   "Europeana": {
    "ok": true,
    "n": 24,
    "sample": "Painting",
-   "ms": 2176
+   "ms": 1672
   },
   "Wikidata (museo)": {
    "ok": false,
    "n": 0,
-   "err": "HTTP 403",
-   "ms": 160
+   "err": "Tiempo de espera agotado",
+   "ms": 40584
   },
   "Wikidata (general)": {
    "ok": false,
    "n": 0,
-   "err": "HTTP 403",
-   "ms": 103
+   "err": "sin obras",
+   "ms": 495
   },
   "Commons": {
    "ok": true,
-   "n": 33,
-   "sample": "Riding to the Hunt",
-   "ms": 8319
+   "n": 34,
+   "sample": "The Artist's Father, Reading \"L'Événement,\" 1866",
+   "ms": 6426
   },
   "Google Art Project": {
    "ok": true,
-   "n": 39,
-   "sample": "Bifolio from a Koran",
-   "ms": 5014
+   "n": 40,
+   "sample": "An Eclogue",
+   "ms": 5364
   },
   "Wikipedia": {
    "ok": false,
    "n": 0,
    "err": "sin obras",
-   "ms": 629
+   "ms": 627
   },
   "WikiArt": {
    "ok": true,
    "n": 60,
-   "sample": "Young Girl Holding a Loose Bouquet",
-   "ms": 2216
+   "sample": "Na Ilha de Capri",
+   "ms": 1980
   },
   "MoMA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Keeper",
-   "ms": 1170
+   "sample": "Three Women at the Spring",
+   "ms": 779
   },
   "NGA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "The Red Cross Knight",
-   "ms": 1350
+   "sample": "Three Piankeshaw Indians",
+   "ms": 1646
   },
   "Tate (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "The Only Blonde in the World",
-   "ms": 1124
+   "sample": "Yellow Landscape",
+   "ms": 1676
   },
   "Louvre (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Saint diacre (Laurent ?)",
-   "ms": 1743
+   "sample": "Presentación en el templo",
+   "ms": 843
   },
   "Prado (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Caballero de la Orden de Santiago",
-   "ms": 511
+   "sample": "La Virgen leyendo",
+   "ms": 1821
   }
  }
 }
