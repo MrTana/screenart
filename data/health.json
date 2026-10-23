@@ -1,87 +1,87 @@
 {
- "at": "2026-10-23 10:05 UTC",
- "ok": 19,
+ "at": "2026-10-23 10:31 UTC",
+ "ok": 18,
  "total": 20,
  "results": {
   "The Met": {
-   "ok": true,
-   "n": 21,
-   "sample": "Summer Flowers",
-   "ms": 13153
+   "ok": false,
+   "n": 0,
+   "err": "sin obras",
+   "ms": 1065
   },
   "Art Institute of Chicago": {
    "ok": true,
-   "n": 12,
+   "n": 9,
    "err": "imagen no comprobable desde GitHub (protección contra robots)",
-   "sample": "The Powerhouse, Falls Village, Connecticut",
-   "ms": 599
+   "sample": "Three Boats in Harbor, San Vigilio",
+   "ms": 552
   },
   "Cleveland Museum of Art": {
    "ok": true,
    "n": 24,
-   "sample": "Seated Manjusri",
-   "ms": 2192
+   "sample": "Dr. James Stuart; Mary Campbell Stuart",
+   "ms": 827
   },
   "Rijksmuseum": {
    "ok": true,
-   "n": 8,
-   "sample": "A Man and a Woman",
-   "ms": 4045
+   "n": 3,
+   "sample": "Portrait of a Man",
+   "ms": 2924
   },
   "Victoria and Albert": {
    "ok": true,
    "n": 24,
-   "sample": "Landscape",
-   "ms": 1826
+   "sample": "Painting",
+   "ms": 1634
   },
   "SMK": {
    "ok": true,
    "n": 5,
-   "sample": "En jagt hvori prinsesserne deltager, tildels i mandlige drag",
-   "ms": 2444
+   "sample": "Ærkeengelen Michael ved Helvedes Port med sværd i hånden",
+   "ms": 2329
   },
   "Minneapolis": {
    "ok": true,
-   "n": 17,
-   "sample": "Allegorical Self-Portrait",
-   "ms": 816
+   "n": 1,
+   "sample": "Saint-Séverin No. 2 (recto); Study for 'The City, ' with the",
+   "ms": 1244
   },
   "Smithsonian": {
    "ok": true,
    "n": 24,
-   "sample": "Lilliputian King",
-   "ms": 1717
+   "sample": "Untitled (landscape, cloudy sky)",
+   "ms": 1589
   },
   "Europeana": {
    "ok": true,
    "n": 24,
-   "sample": "Gemälde",
-   "ms": 2110
+   "sample": "Painting",
+   "ms": 3024
   },
   "Wikidata (museo)": {
    "ok": true,
-   "n": 10,
+   "n": 1,
    "sample": "Sin título",
-   "ms": 825,
+   "ms": 1036,
    "timing": {
     "app": {
-     "ms": 17,
+     "ms": 59,
      "status": 200,
      "n": "841"
     },
     "conPista": {
-     "ms": 127,
+     "ms": 219,
      "status": 200,
      "n": "841"
     },
     "selApp": {
-     "ms": 65146,
+     "ms": 65022,
      "status": 504,
      "rows": 0,
      "head": "upstream request timeout"
     },
     "selSub": {
-     "ms": 632,
+     "ms": 543,
      "status": 200,
      "rows": 3
     }
@@ -89,63 +89,63 @@
   },
   "Wikidata (general)": {
    "ok": true,
-   "n": 40,
-   "sample": "Dr. Leclenché",
-   "ms": 665
+   "n": 53,
+   "sample": "Mujeres en el jardín",
+   "ms": 602
   },
   "Commons": {
    "ok": true,
-   "n": 31,
-   "sample": "Blühende Apfelbäume",
-   "ms": 5234
+   "n": 29,
+   "sample": "Cadmus slays the dragon",
+   "ms": 3457
   },
   "Google Art Project": {
    "ok": true,
-   "n": 39,
-   "sample": "The Wayfarer",
-   "ms": 5353
+   "n": 40,
+   "sample": "An Eclogue",
+   "ms": 1873
   },
   "Wikipedia": {
    "ok": true,
-   "n": 17,
-   "sample": "Women in the Garden",
-   "ms": 559
+   "n": 14,
+   "sample": "Olympia (Manet)",
+   "ms": 485
   },
   "WikiArt": {
    "ok": false,
    "n": 0,
    "err": "Tiempo de espera agotado",
-   "ms": 14696
+   "ms": 14001
   },
   "MoMA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "New Drone",
-   "ms": 813
+   "sample": "Inside Between",
+   "ms": 747
   },
   "NGA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Le Havre",
-   "ms": 1045
+   "sample": "Sweet Tremulous Leaves",
+   "ms": 753
   },
   "Tate (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Untitled",
-   "ms": 1537
+   "sample": "Roads to Eternity",
+   "ms": 1273
   },
   "Louvre (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Le Conseil des dieux",
-   "ms": 428
+   "sample": "Vierge à l'enfant entre saint Jean-Baptiste et saint Antoine",
+   "ms": 361
   },
   "Prado (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Santiago Miranda",
-   "ms": 392
+   "sample": "El infante Antonio Pascual de Borbón",
+   "ms": 321
   }
  }
 }
