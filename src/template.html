@@ -376,11 +376,10 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
   <section class="acc" data-acc="museos">
     <button class="acch" data-act="acc" data-id="museos" aria-expanded="false"><span class="at">Museos</span><span class="as" data-sum="museos"></span><span class="ac">›</span></button>
     <div class="accb">
-      <p class="hint" style="margin-top:0">Cada museo se busca a la vez en su API directa (si la tiene), Wikidata, Wikimedia Commons, Wikipedia y Google Art Project; los museos europeos suman Europeana si hay clave (filtrada por la institución). «Colecciones abiertas» añade WikiArt, Wikipedia (artículos de pinturas con su imagen, de cualquier museo) y Europeana, que no distinguen museos.</p>
+      <div class="row"><button class="btn" data-act="mus-all">Marcar los de la lista</button><button class="btn" data-act="mus-none">Quitar los de la lista</button></div>
       <div class="row"><input type="search" id="museumFilter" placeholder="Filtrar la lista (ej. París, Prado, México)" autocomplete="off"></div>
       <p class="hint" id="sweepInfo" role="status" style="margin:6px 0"></p>
       <div class="srcs" id="c-msrcs"></div>
-      <div class="row"><button class="btn" data-act="mus-all">Marcar los de la lista</button><button class="btn" data-act="mus-none">Quitar los de la lista</button></div>
       <div class="row"><input type="text" id="museumIn" placeholder="Añadir otro museo por su nombre" autocomplete="off"><button class="btn" data-act="add-museum">Añadir</button></div>
       <p class="hint" id="museumMsg"></p>
     </div>
