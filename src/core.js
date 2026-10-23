@@ -1000,8 +1000,12 @@ function wdParts(plan, opts) {
   if (!opts.anyRights) parts.push('FILTER((BOUND(?inc) && YEAR(?inc) <= 1930) || (BOUND(?death) && YEAR(?death) <= 1955)).');
   return { parts, typeQ };
 }
+/* La página de obras se elige en una subconsulta y los nombres se ponen después: así Wikidata solo busca nombres para 60 filas.
+   Con el servicio de nombres fuera de la subconsulta la consulta de un museo tardaba más de un minuto y se cortaba (comprobado
+   con la prueba diaria: 65 s y error 504 frente a 0,6 s). */
 function wdSelect(parts, off, withClass) {
-  return 'SELECT ?item ?itemLabel ?creatorLabel ?collLabel ' + (withClass ? '?clsLabel ' : '') + '?image ?inc WHERE { ' + parts.join(' ') + ' SERVICE wikibase:label { bd:serviceParam wikibase:language "es,en,fr". } } LIMIT 60 OFFSET ' + off;
+  return 'SELECT ?item ?itemLabel ?creatorLabel ?collLabel ' + (withClass ? '?clsLabel ' : '') + '?image ?inc WHERE { { SELECT ?item ?creator ?coll ?cls ?image ?inc WHERE { ' +
+    parts.join(' ') + ' } LIMIT 60 OFFSET ' + off + ' } SERVICE wikibase:label { bd:serviceParam wikibase:language "es,en,fr". } }';
 }
 const FILEPATH = /commons\.wikimedia\.org\/wiki\/Special:FilePath\//i;
 function wdRows(rows, typeQ, ctx, museumName, anyRights) {
