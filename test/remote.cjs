@@ -29,6 +29,14 @@ function FakeWS(url) {
 }
 function DeadWS() { const ws = this; ws.close = () => {}; setTimeout(() => { ws.onerror && ws.onerror(); }, 2); }
 const queue = {};
+// Relé propio simulado (como el Worker): salas por código, temas por WebSocket y estado compartido con la misma lógica real.
+let MG = null; const rooms = {}, ownHub = {}; let ownMsgs = 0;
+function OwnWS(url) {
+  const ws = this, m = /\/api\/relay\/([a-z0-9]+)\/ws\?sub=(.+)$/.exec(url); ws.readyState = 0; ws.close = () => {};
+  const key = m[1] + '|' + decodeURIComponent(m[2]); (ownHub[key] = ownHub[key] || []).push(ws);
+  ws.send = data => { if (data === 'ping') { setTimeout(() => ws.onmessage && ws.onmessage({ data: 'pong' }), 1); return; } const o = JSON.parse(data); ownMsgs++; (ownHub[m[1] + '|' + o.p] || []).filter(x => x !== ws).forEach(x => setTimeout(() => x.onmessage && x.onmessage({ data: o.m }), 2)); };
+  setTimeout(() => { ws.readyState = 1; ws.onopen && ws.onopen(); }, 2);
+}
 function make(url, opt) {
   opt = opt || {};
   const dom = new JSDOM(html, { runScripts: 'outside-only', pretendToBeVisual: true, url });
@@ -36,6 +44,8 @@ function make(url, opt) {
   w.fetch = async (u, init) => {
     u = String(u);
     if (opt.noFetch) throw new TypeError('Failed to fetch');
+    const rm = /\/api\/relay\/([a-z0-9]+)\/sync$/.exec(u);
+    if (rm) { if (opt.noOwn) return { ok: false, status: 503, json: async () => ({}) }; const st = rooms[rm[1]] = rooms[rm[1]] || MG.emptyState(); const b = JSON.parse(init.body); MG.applyOps(st, b.ops); const out = b.v === st.v ? { v: st.v, same: true } : JSON.parse(JSON.stringify(st)); return { ok: true, status: 200, json: async () => out }; }
     const m = /^https:\/\/ntfy\.sh\/([\w-]+)$/.exec(u);
     if (m && init && init.method === 'POST') {
       (queue[m[1]] = queue[m[1]] || []).push({ id: 'n' + Math.random(), event: 'message', message: init.body });
@@ -50,7 +60,7 @@ function make(url, opt) {
     throw new TypeError('Failed to fetch');
   };
   if (opt.ls) Object.keys(opt.ls).forEach(k => w.localStorage.setItem('galeria-arte-v1:' + k, JSON.stringify(opt.ls[k])));
-  w.WebSocket = opt.noMQTT ? DeadWS : FakeWS;
+  w.WebSocket = function (url) { if (/\/api\/relay\//.test(url)) return opt.noOwn ? new DeadWS(url) : new OwnWS(url); return opt.noMQTT ? new DeadWS(url) : new FakeWS(url); };
   if (opt.noSSE) w.EventSource = function () { /* nunca abre: simula un navegador de TV que corta SSE */ }; else w.EventSource = function (u) { const t = String(u).replace(/^https:\/\/ntfy\.sh\//, '').replace(/\/sse$/, ''); (subs[t] = subs[t] || []).push(this); setTimeout(() => this.onopen && this.onopen(), 2); };
   w.Image = function () { const o = { set src(v) { this._s = v; setTimeout(() => { o.naturalWidth = 1600; o.naturalHeight = 1000; o.onload && o.onload(); }, 5); }, get src() { return this._s; } }; return o; };
   w.AbortController = AbortController;
@@ -59,6 +69,7 @@ function make(url, opt) {
 }
 const wait = ms => new Promise(r => setTimeout(r, ms));
 (async () => {
+  MG = await import('../relay/src/merge.mjs');
   const tv = make('https://example.test/');
   await wait(2300);
   const d = tv.document;
@@ -79,7 +90,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   assert.ok(p.getElementById('rcT').textContent.includes('Obra'), 'el móvil ve la obra actual');
   assert.ok(!tv.document.getElementById('pair').hidden, 'el QR sigue hasta que el móvil manda una orden');
   assert.ok(posts <= 3, 'hello y estado caben en pocos mensajes: ' + posts);
-  assert.ok(/Relé 3 de 3 brokers/.test(tv.document.getElementById('pairSt').textContent), 'la TV muestra el estado del relé: ' + tv.document.getElementById('pairSt').textContent);
+  assert.ok(/Relé propio ✓ · Relé 3 de 3 brokers/.test(tv.document.getElementById('pairSt').textContent), 'la TV muestra el estado del relé: ' + tv.document.getElementById('pairSt').textContent);
   assert.strictEqual(ph.localStorage.length, 1, 'el móvil solo guarda el código (no pisa filtros)');
 
   // órdenes
@@ -188,6 +199,28 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     assert.ok(!st.seen.length || !st.seen.includes(tv3.ArtApp.S.current.uid), 'no repite una obra ya vista');
     const stale = Object.assign({}, st, { sig: 'otro' }); const tv4 = make('https://example.test/?tv=0', { ls: { stash: stale }, noFetch: true }); await wait(400);
     assert.ok(!tv4.ArtApp.S.current, 'con otros filtros la cola guardada no se usa');
+  }
+  { // relé propio: sin MQTT ni ntfy, la TV y el móvil se hablan enseguida por la web
+    const tv5 = make('https://example.test/?tv=1', { noSSE: true, noMQTT: true }); await wait(2200);
+    const c5 = tv5.document.getElementById('pairUrl').textContent.split('=')[1];
+    const ph5 = make('https://example.test/?c=' + c5, { noSSE: true, noMQTT: true });
+    for (let i = 0; i < 20 && !/Conectado/.test(ph5.document.getElementById('rcstat').textContent); i++) await wait(150);
+    assert.ok(/Conectado/.test(ph5.document.getElementById('rcstat').textContent), 'conecta por el relé propio en < 3 s: ' + ph5.document.getElementById('rcstat').textContent);
+    const m0 = ownMsgs; ph5.ArtApp.onAct('next'); await wait(300); assert.ok(ownMsgs > m0, 'las órdenes viajan por el relé propio');
+    // favoritas y claves en la nube, ligadas al código: una versión móvil sin mando abierto las recibe
+    tv5.ArtApp.S.paused = true; const cur = tv5.ArtApp.S.current; tv5.ArtApp.onAct('fav'); await wait(1800);
+    const sv = rooms[c5]; assert.ok(sv && sv.favs[cur.uid] && !sv.favs[cur.uid].del, 'la favorita de la TV está en la nube');
+    const mv = make('https://example.test/?tv=0', { ls: { rc: c5 }, noSSE: true, noMQTT: true }); await wait(300); await mv.ArtApp.cloudSync();
+    assert.ok(mv.ArtApp.S.favs.some(f => f.uid === cur.uid), 'la versión móvil recibe la favorita de la TV desde la nube');
+    // baja en el móvil → desaparece en la TV (no vuelve)
+    mv.ArtApp.S.current = mv.ArtApp.S.favs.find(f => f.uid === cur.uid); mv.ArtApp.onAct('fav'); await wait(1800);
+    assert.ok(sv.favs[cur.uid].del, 'la baja queda en la nube'); await tv5.ArtApp.cloudSync();
+    assert.ok(!tv5.ArtApp.S.favs.some(f => f.uid === cur.uid), 'la TV quita la favorita borrada en el móvil');
+    // clave de Harvard puesta en el móvil → la TV la recibe sola
+    const kh = mv.document.getElementById('k-harvard'); kh.value = 'HARV-NUBE'; kh.dispatchEvent(new mv.Event('change')); await wait(1800);
+    await tv5.ArtApp.cloudSync(); assert.strictEqual(tv5.ArtApp.S.keys.harvard, 'HARV-NUBE', 'la clave del móvil llega a la TV por la nube');
+    // sin relé propio configurado (503) todo sigue por los relés públicos
+    const tv6 = make('https://example.test/?tv=1', { noOwn: true }); await wait(2200); assert.ok(!/Relé propio/.test(tv6.document.getElementById('pairSt').textContent), 'sin relé propio no se anuncia');
   }
   // en el móvil nada cierra el menú
   ph.ArtApp.closeMenu(); assert.ok(!p.getElementById('drawer').hidden, 'el menú del móvil no se cierra');
