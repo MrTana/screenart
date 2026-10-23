@@ -1,87 +1,87 @@
 {
- "at": "2026-10-23 02:56 UTC",
+ "at": "2026-10-23 03:01 UTC",
  "ok": 20,
  "total": 20,
  "results": {
   "The Met": {
    "ok": true,
-   "n": 25,
-   "sample": "Luohan",
-   "ms": 991
+   "n": 27,
+   "sample": "View of the Kamo River from Sanbogi at Dawn",
+   "ms": 1792
   },
   "Art Institute of Chicago": {
    "ok": true,
-   "n": 24,
+   "n": 18,
    "err": "imagen no comprobable desde GitHub (protección contra robots)",
-   "sample": "Coney Island",
-   "ms": 730
+   "sample": "Icebound",
+   "ms": 866
   },
   "Cleveland Museum of Art": {
    "ok": true,
    "n": 24,
-   "sample": "General Jean-Baptiste Kléber (Sketch for \"The Battle of the ",
-   "ms": 1458
+   "sample": "Krishna quells the serpent Kaliya (verso), from a Kalighat a",
+   "ms": 1272
   },
   "Rijksmuseum": {
    "ok": true,
    "n": 8,
-   "sample": "Portrait of Hendrik Lijnslager, Sea Captain with the Admiral",
-   "ms": 4083
+   "sample": "Portrait of Sir Peter Courten (1599-1624)",
+   "ms": 4193
   },
   "Victoria and Albert": {
    "ok": true,
    "n": 24,
-   "sample": "Painting",
-   "ms": 1563
+   "sample": "Macbeth",
+   "ms": 1983
   },
   "SMK": {
    "ok": true,
-   "n": 5,
-   "sample": "Flodlandskab med huse og en kirke omkranset af en mur",
-   "ms": 9869
+   "n": 8,
+   "sample": "Scenografisk optegnelse",
+   "ms": 2929
   },
   "Minneapolis": {
    "ok": true,
-   "n": 10,
-   "sample": "Jizō Playing a Flute",
-   "ms": 858
+   "n": 7,
+   "sample": "Winter Landscape",
+   "ms": 969
   },
   "Smithsonian": {
    "ok": true,
    "n": 24,
-   "sample": "Rheinfels from St. Goarshausen",
-   "ms": 1466
+   "sample": "Apples on Table",
+   "ms": 1302
   },
   "Europeana": {
    "ok": true,
    "n": 24,
-   "sample": "Painting",
-   "ms": 2894
+   "sample": "painting, drawing board,",
+   "ms": 2078
   },
   "Wikidata (museo)": {
    "ok": true,
-   "n": 8,
-   "sample": "A Unicorn Attacks a Deer; a Lynx kills a Hare",
-   "ms": 1051,
+   "n": 1,
+   "sample": "Britannicus in toga",
+   "ms": 3935,
    "timing": {
     "app": {
-     "ms": 14,
+     "ms": 58,
      "status": 200,
      "n": "841"
     },
     "conPista": {
-     "ms": 250,
+     "ms": 429,
      "status": 200,
      "n": "841"
     },
     "selApp": {
-     "ms": 65052,
+     "ms": 65063,
      "status": 504,
      "rows": 0,
      "head": "upstream request timeout"
     },
     "selSub": {
-     "ms": 1233,
+     "ms": 502,
      "status": 200,
      "rows": 3
     }
@@ -89,63 +89,63 @@
   },
   "Wikidata (general)": {
    "ok": true,
-   "n": 40,
-   "sample": "Still Life with Pheasant",
-   "ms": 807
+   "n": 47,
+   "sample": "The Windmill on the Onbekende Gracht, Amsterdam",
+   "ms": 619
   },
   "Commons": {
    "ok": true,
-   "n": 28,
-   "sample": "La plage de Trouville",
-   "ms": 9987
+   "n": 34,
+   "sample": "A Winter Scene",
+   "ms": 6622
   },
   "Google Art Project": {
    "ok": true,
-   "n": 38,
-   "sample": "HEADLANDS, PARIA CANYON",
-   "ms": 4061
+   "n": 39,
+   "sample": "The Laboratory",
+   "ms": 3789
   },
   "Wikipedia": {
    "ok": true,
-   "n": 13,
+   "n": 16,
    "sample": "List of most expensive paintings",
-   "ms": 485
+   "ms": 612
   },
   "WikiArt": {
    "ok": true,
    "n": 60,
-   "sample": "The Lunch: decorative panel",
-   "ms": 1901
+   "sample": "Wharf of Louvre, Paris",
+   "ms": 2022
   },
   "MoMA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "The Moon",
-   "ms": 419
+   "sample": "Double Transparency",
+   "ms": 726
   },
   "NGA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Still Life with Apples",
-   "ms": 815
+   "sample": "The Departure",
+   "ms": 1086
   },
   "Tate (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "To the Studios",
-   "ms": 1398
+   "sample": "Frederick and Jessie Etchells Painting",
+   "ms": 1386
   },
   "Louvre (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "La Renaissance des arts en France",
-   "ms": 429
+   "sample": "Salomé avec la tête de Jean-Baptiste",
+   "ms": 1003
   },
   "Prado (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Juan Mariano de Goyeneche y Gamio III conde de Guaqui con un",
-   "ms": 416
+   "sample": "Peñaranda de Duero",
+   "ms": 596
   }
  }
 }
