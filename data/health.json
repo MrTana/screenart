@@ -1,157 +1,151 @@
 {
- "at": "2026-10-23 02:51 UTC",
- "ok": 18,
+ "at": "2026-10-23 02:56 UTC",
+ "ok": 20,
  "total": 20,
  "results": {
   "The Met": {
    "ok": true,
-   "n": 22,
-   "sample": "Scroll of Mudras",
-   "ms": 921
+   "n": 25,
+   "sample": "Luohan",
+   "ms": 991
   },
   "Art Institute of Chicago": {
    "ok": true,
-   "n": 12,
+   "n": 24,
    "err": "imagen no comprobable desde GitHub (protección contra robots)",
-   "sample": "Theocritus",
-   "ms": 233
+   "sample": "Coney Island",
+   "ms": 730
   },
   "Cleveland Museum of Art": {
    "ok": true,
    "n": 24,
-   "sample": "The Mill",
-   "ms": 853
+   "sample": "General Jean-Baptiste Kléber (Sketch for \"The Battle of the ",
+   "ms": 1458
   },
   "Rijksmuseum": {
    "ok": true,
    "n": 8,
-   "sample": "Portrait of Ambrogio Spinola",
-   "ms": 4110
+   "sample": "Portrait of Hendrik Lijnslager, Sea Captain with the Admiral",
+   "ms": 4083
   },
   "Victoria and Albert": {
    "ok": true,
    "n": 24,
-   "sample": "Anvar-i Suhayli",
-   "ms": 1163
+   "sample": "Painting",
+   "ms": 1563
   },
   "SMK": {
    "ok": true,
-   "n": 8,
-   "sample": "Jaurés est mort – vive Jaurés",
-   "ms": 8539
+   "n": 5,
+   "sample": "Flodlandskab med huse og en kirke omkranset af en mur",
+   "ms": 9869
   },
   "Minneapolis": {
-   "ok": false,
-   "n": 22,
-   "err": "HTTP 403 application/xml",
-   "sample": "Man’s informal kimono (yukata) with an alternating clouds an",
-   "ms": 1448
+   "ok": true,
+   "n": 10,
+   "sample": "Jizō Playing a Flute",
+   "ms": 858
   },
   "Smithsonian": {
    "ok": true,
    "n": 24,
-   "sample": "View West from Pavillion, from the album Views of Charlestow",
-   "ms": 1240
+   "sample": "Rheinfels from St. Goarshausen",
+   "ms": 1466
   },
   "Europeana": {
    "ok": true,
    "n": 24,
    "sample": "Painting",
-   "ms": 1730
+   "ms": 2894
   },
   "Wikidata (museo)": {
-   "ok": false,
-   "n": 0,
-   "err": "Tiempo de espera agotado",
-   "ms": 40167,
+   "ok": true,
+   "n": 8,
+   "sample": "A Unicorn Attacks a Deer; a Lynx kills a Hare",
+   "ms": 1051,
    "timing": {
     "app": {
-     "ms": 12,
+     "ms": 14,
      "status": 200,
      "n": "841"
     },
     "conPista": {
-     "ms": 107,
+     "ms": 250,
      "status": 200,
      "n": "841"
     },
     "selApp": {
-     "ms": 65007,
+     "ms": 65052,
      "status": 504,
      "rows": 0,
      "head": "upstream request timeout"
     },
     "selSub": {
-     "ms": 640,
+     "ms": 1233,
      "status": 200,
      "rows": 3
     }
-   },
-   "diag": {
-    "simpleCountMs": 690,
-    "status": 200,
-    "body": "{\n  \"head\" : {\n    \"vars\" : [ \"n\" ]\n  },\n  \"results\" : {\n    \"bindings\" : [ {\n      \"n\" : {\n        \"datatype\" : \"http://www.w3.org/2001/XMLSchema#integer\",\n        \"type\" : \"literal\",\n        \"value\""
    }
   },
   "Wikidata (general)": {
    "ok": true,
    "n": 40,
-   "sample": "Rouen Cathedral, Portal",
-   "ms": 1555
+   "sample": "Still Life with Pheasant",
+   "ms": 807
   },
   "Commons": {
    "ok": true,
-   "n": 33,
-   "sample": "Die Waldschlucht",
-   "ms": 1631
+   "n": 28,
+   "sample": "La plage de Trouville",
+   "ms": 9987
   },
   "Google Art Project": {
    "ok": true,
-   "n": 40,
-   "sample": "A Destroying Deity",
-   "ms": 906
+   "n": 38,
+   "sample": "HEADLANDS, PARIA CANYON",
+   "ms": 4061
   },
   "Wikipedia": {
    "ok": true,
-   "n": 14,
-   "sample": "Dogs Playing Poker",
-   "ms": 388
+   "n": 13,
+   "sample": "List of most expensive paintings",
+   "ms": 485
   },
   "WikiArt": {
    "ok": true,
    "n": 60,
-   "sample": "Coal Dockers",
-   "ms": 1300
+   "sample": "The Lunch: decorative panel",
+   "ms": 1901
   },
   "MoMA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Map of the World",
-   "ms": 463
+   "sample": "The Moon",
+   "ms": 419
   },
   "NGA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "The Reverend John Albert Ryan",
-   "ms": 378
+   "sample": "Still Life with Apples",
+   "ms": 815
   },
   "Tate (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "The Baou de Saint-Jeannet",
-   "ms": 1122
+   "sample": "To the Studios",
+   "ms": 1398
   },
   "Louvre (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Invierno",
-   "ms": 180
+   "sample": "La Renaissance des arts en France",
+   "ms": 429
   },
   "Prado (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "La caída de Luzbel",
-   "ms": 152
+   "sample": "Juan Mariano de Goyeneche y Gamio III conde de Guaqui con un",
+   "ms": 416
   }
  }
 }
