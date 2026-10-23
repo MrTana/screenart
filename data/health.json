@@ -1,145 +1,157 @@
 {
- "at": "2026-10-23 02:48 UTC",
- "ok": 19,
+ "at": "2026-10-23 02:51 UTC",
+ "ok": 18,
  "total": 20,
  "results": {
   "The Met": {
    "ok": true,
-   "n": 23,
-   "sample": "The Apparition of the Virgin of El Pilar to St. James",
-   "ms": 1167
+   "n": 22,
+   "sample": "Scroll of Mudras",
+   "ms": 921
   },
   "Art Institute of Chicago": {
    "ok": true,
-   "n": 24,
+   "n": 12,
    "err": "imagen no comprobable desde GitHub (protección contra robots)",
-   "sample": "Combat",
-   "ms": 638
+   "sample": "Theocritus",
+   "ms": 233
   },
   "Cleveland Museum of Art": {
    "ok": true,
    "n": 24,
-   "sample": "Presentation Sketch for \"The Holy Family with Saints Anne, J",
-   "ms": 1296
+   "sample": "The Mill",
+   "ms": 853
   },
   "Rijksmuseum": {
    "ok": true,
    "n": 8,
-   "sample": "Holy Family with Saint Catherine",
-   "ms": 5196
+   "sample": "Portrait of Ambrogio Spinola",
+   "ms": 4110
   },
   "Victoria and Albert": {
    "ok": true,
    "n": 24,
-   "sample": "Design",
-   "ms": 1695
+   "sample": "Anvar-i Suhayli",
+   "ms": 1163
   },
   "SMK": {
    "ok": true,
-   "n": 4,
-   "sample": "Elskovspar. Udkast til statuette",
-   "ms": 6235
+   "n": 8,
+   "sample": "Jaurés est mort – vive Jaurés",
+   "ms": 8539
   },
   "Minneapolis": {
-   "ok": true,
-   "n": 12,
-   "sample": "Fall [right of a pair of Flowers and Insects of Spring and F",
-   "ms": 989
+   "ok": false,
+   "n": 22,
+   "err": "HTTP 403 application/xml",
+   "sample": "Man’s informal kimono (yukata) with an alternating clouds an",
+   "ms": 1448
   },
   "Smithsonian": {
    "ok": true,
    "n": 24,
-   "sample": "Weaving Feathers",
-   "ms": 1386
+   "sample": "View West from Pavillion, from the album Views of Charlestow",
+   "ms": 1240
   },
   "Europeana": {
    "ok": true,
    "n": 24,
-   "sample": "board, painting,",
-   "ms": 2329
+   "sample": "Painting",
+   "ms": 1730
   },
   "Wikidata (museo)": {
    "ok": false,
    "n": 0,
    "err": "Tiempo de espera agotado",
-   "ms": 40598,
+   "ms": 40167,
    "timing": {
     "app": {
-     "ms": 122,
+     "ms": 12,
      "status": 200,
      "n": "841"
     },
     "conPista": {
-     "ms": 376,
+     "ms": 107,
      "status": 200,
      "n": "841"
+    },
+    "selApp": {
+     "ms": 65007,
+     "status": 504,
+     "rows": 0,
+     "head": "upstream request timeout"
+    },
+    "selSub": {
+     "ms": 640,
+     "status": 200,
+     "rows": 3
     }
    },
    "diag": {
-    "simpleCountMs": 155,
+    "simpleCountMs": 690,
     "status": 200,
     "body": "{\n  \"head\" : {\n    \"vars\" : [ \"n\" ]\n  },\n  \"results\" : {\n    \"bindings\" : [ {\n      \"n\" : {\n        \"datatype\" : \"http://www.w3.org/2001/XMLSchema#integer\",\n        \"type\" : \"literal\",\n        \"value\""
    }
   },
   "Wikidata (general)": {
    "ok": true,
-   "n": 54,
-   "sample": "La urraca",
-   "ms": 1215
+   "n": 40,
+   "sample": "Rouen Cathedral, Portal",
+   "ms": 1555
   },
   "Commons": {
    "ok": true,
-   "n": 35,
-   "sample": "Allegory",
-   "ms": 6687
+   "n": 33,
+   "sample": "Die Waldschlucht",
+   "ms": 1631
   },
   "Google Art Project": {
    "ok": true,
    "n": 40,
-   "sample": "Portrait of Leonor Álvarez de Toledo (1519–1562)",
-   "ms": 5784
+   "sample": "A Destroying Deity",
+   "ms": 906
   },
   "Wikipedia": {
    "ok": true,
-   "n": 21,
-   "sample": "Impression, Sunrise",
-   "ms": 667
+   "n": 14,
+   "sample": "Dogs Playing Poker",
+   "ms": 388
   },
   "WikiArt": {
    "ok": true,
    "n": 60,
-   "sample": "A Path Across the Fields",
-   "ms": 2090
+   "sample": "Coal Dockers",
+   "ms": 1300
   },
   "MoMA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Regulatory Reestablishment",
-   "ms": 1156
+   "sample": "Map of the World",
+   "ms": 463
   },
   "NGA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Simplon Pass",
-   "ms": 1070
+   "sample": "The Reverend John Albert Ryan",
+   "ms": 378
   },
   "Tate (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "The Wooing of Daphnis",
-   "ms": 1334
+   "sample": "The Baou de Saint-Jeannet",
+   "ms": 1122
   },
   "Louvre (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Mercure et Hersé",
-   "ms": 466
+   "sample": "Invierno",
+   "ms": 180
   },
   "Prado (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Bebedores en un mesón",
-   "ms": 392
+   "sample": "La caída de Luzbel",
+   "ms": 152
   }
  }
 }
