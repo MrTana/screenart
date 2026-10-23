@@ -120,6 +120,22 @@ button{cursor:pointer}
 .mode-frame .slide .art{width:auto;height:auto;max-width:100%;max-height:100%;background:var(--md-sc-highest);padding:1.6vmin;border:.9vmin solid var(--md-sc-high);border-radius:var(--r-md);box-shadow:var(--e3)}
 .slide .bg{display:none}
 .mode-fill .slide .frame{inset:0}
+/* «Con cartela»: las obras verticales y cuadradas se cuelgan a un lado, con aire alrededor y una sombra suave, y en el otro lado
+   va su cartela (título, artista, fecha, museo) como en la pared de un museo. Una obra a la izquierda, la siguiente a la derecha.
+   Las horizontales se ven como en «Obra completa». */
+.slide .plate{display:none}
+.mode-plate .slide.tall .frame{gap:5.5vw;padding:7vh 7vw;box-sizing:border-box}
+.mode-plate .slide.tall.alt .frame{flex-direction:row-reverse}
+.mode-plate .slide.tall .art{width:auto;height:auto;max-height:86vh;max-width:52vw;flex:none;box-shadow:0 1.6vmin 5vmin rgba(0,0,0,.42),0 .3vmin 1vmin rgba(0,0,0,.25)}
+.mode-plate .slide.tall.noplate .frame{gap:0}
+.mode-plate .slide.tall:not(.noplate) .plate{display:flex;flex-direction:column;gap:1.1vmin;flex:0 1 30vw;max-width:30vw;min-width:0;color:var(--md-on-surface)}
+.mode-plate .slide.tall.alt .plate{text-align:right;align-items:flex-end}
+.plate::before{content:'';width:3.5vw;min-width:28px;height:2px;margin-bottom:1.4vmin;background:currentColor;opacity:.35}
+.plate .pt{font:500 clamp(20px,2.5vw,46px)/1.18 var(--sans);text-wrap:balance;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
+.plate .pm{font:400 clamp(15px,1.55vw,27px)/1.4 var(--sans);color:var(--md-on-surface-variant)}
+.plate .ps{margin-top:.6vmin;font:500 clamp(12px,1.15vw,20px)/1.4 var(--sans);letter-spacing:.6px;color:var(--md-on-surface-variant);opacity:.85}
+.plate div:empty{display:none}
+body.plate-on #caption{display:none}
 .mode-fill .slide .art{width:100%;height:100%;object-fit:cover}
 .kb .slide.on .art{animation:kb var(--dur) ease-out forwards}
 @keyframes kb{from{transform:scale(1)}to{transform:scale(1.07)}}
@@ -310,8 +326,8 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
 </head>
 <body class="active">
 <div id="stage" class="mode-gallery">
-  <div class="slide" id="slideA"><div class="bg"></div><div class="frame"><img class="art" alt=""></div></div>
-  <div class="slide" id="slideB"><div class="bg"></div><div class="frame"><img class="art" alt=""></div></div>
+  <div class="slide" id="slideA"><div class="bg"></div><div class="frame"><img class="art" alt=""><div class="plate" aria-hidden="true"><div class="pt"></div><div class="pm"></div><div class="ps"></div></div></div></div>
+  <div class="slide" id="slideB"><div class="bg"></div><div class="frame"><img class="art" alt=""><div class="plate" aria-hidden="true"><div class="pt"></div><div class="pm"></div><div class="ps"></div></div></div></div>
 </div>
 
 <figure id="caption" aria-live="polite"><div class="t"></div><div class="m"></div><div class="s"></div></figure>

@@ -227,7 +227,7 @@ async function pullNext(maxMs) {
     const w = ok[0].w, r = ok[0].r;
     S.seen.add(w.uid); S.seenKey.add(wkey(w));
     if (S.seen.size > 3000) { S.seen.clear(); S.seenKey.clear(); }
-    return Object.assign({}, w, { url: r.url, url_page: w.url });
+    return Object.assign({}, w, { url: r.url, url_page: w.url, iw: r.w, ih: r.h });
   }
   return null;
 }
@@ -249,13 +249,31 @@ function setCaption(w) {
   // La ficha dura el 25 % del tiempo de la obra; con 30 min o más, 5 min como máximo.
   if (cm === 'auto') S.capT = setTimeout(() => c.classList.remove('show'), captionMs());
 }
+/* Con cartela: si la obra no es claramente horizontal (menos de 1,25:1) se cuelga a un lado con su cartela al otro, alternando lados. */
+function isTall(item, img) { const w = item.iw || (img && img.naturalWidth), h = item.ih || (img && img.naturalHeight); return !!(w && h && w / h < 1.25); }
+function layoutSlide(s, item) {
+  const img = s.querySelector('img'), plate = s.querySelector('.plate');
+  plate.querySelector('.pt').textContent = item.title || '';
+  plate.querySelector('.pm').textContent = [item.artist, item.date || item.year].filter(Boolean).join(' · ');
+  plate.querySelector('.ps').textContent = item.museum || '';
+  S.side = !S.side;
+  const apply = () => {
+    const tall = S.st.mode === 'plate' && isTall(item, img) && (window.innerWidth || 0) > (window.innerHeight || 0) * 1.1; // en pantallas verticales (móvil) no hay sitio al lado
+    s.classList.toggle('tall', tall); s.classList.toggle('alt', tall && S.side); s.classList.toggle('noplate', capMode() === 'never');
+    if (s === slides[S.layer]) document.body.classList.toggle('plate-on', tall && capMode() !== 'never');
+  };
+  apply();
+  if (!item.iw) img.onload = () => { img.onload = null; apply(); };
+}
 function present(item, fromHist) {
   const nxt = 1 - S.layer, s = slides[nxt];
   s.querySelector('img').src = item.url;
   s.querySelector('img').alt = item.title + (item.artist ? ', ' + item.artist : '');
   s.querySelector('.bg').style.backgroundImage = 'url("' + item.url.replace(/"/g, '%22') + '")';
+  layoutSlide(s, item);
   s.classList.remove('on'); void s.offsetWidth; s.classList.add('on');
   slides[S.layer].classList.remove('on'); S.layer = nxt;
+  document.body.classList.toggle('plate-on', s.classList.contains('tall') && !s.classList.contains('noplate'));
   $('#loader').hidden = true;
   if (!fromHist) { S.hist.push(item); if (S.hist.length > 120) S.hist.shift(); S.hi = S.hist.length - 1; }
   S.current = item; S.shown++; saveStashSoon();
@@ -467,7 +485,7 @@ function presetList() {
   return [{ key: 'todo', es: 'Todo el arte' }, { key: 'favs', es: 'Mis favoritas (' + S.favs.length + ')', favs: true }];
 }
 const ORIENT = [['any', 'Cualquiera'], ['landscape', 'Horizontal'], ['portrait', 'Vertical'], ['square', 'Cuadrada']];
-const MODES = [['gallery', 'Obra completa'], ['frame', 'Con marco'], ['fill', 'Llenar (recorta)']];
+const MODES = [['gallery', 'Obra completa'], ['plate', 'Con cartela (verticales a un lado)'], ['frame', 'Con marco'], ['fill', 'Llenar (recorta)']];
 const INTERVALS = [[10, '10 s'], [15, '15 s'], [30, '30 s'], [60, '1 min'], [300, '5 min'], [900, '15 min'], [3600, '1 h']];
 const SKINS = [['m3-dark', 'Material 3 oscuro'], ['m3-light', 'Material 3 claro'], ['m3e-dark', 'Material 3 Expressive oscuro'], ['m3e-light', 'Material 3 Expressive claro']];
 const SKIN_BAR = { 'm3-dark': '#141218', 'm3-light': '#FEF7FF', 'm3e-dark': '#15101C', 'm3e-light': '#FFF7FF' };
@@ -584,7 +602,7 @@ async function showFound(w) {
   const r = await loadImage(item.imgs); // la ficha trae la página y las imágenes: se muestra la primera imagen que carga, nunca la página
   if (!r) { toast('No se pudo cargar la imagen de «' + item.title + '»'); return; }
   S.seen.add(item.uid);
-  present(Object.assign({}, item, { url: r.url, url_page: item.url })); schedule();
+  present(Object.assign({}, item, { url: r.url, url_page: item.url, iw: r.w, ih: r.h })); schedule();
 }
 function renderTres() {
   $('#c-tres').innerHTML = (S.tres || []).map((w, i) => '<button class="tres" data-act="title-show" data-id="' + i + '"><img alt="" loading="lazy" src="' + esc(w.thumb) + '"><span><b>' + esc(w.title) + '</b>' + esc([w.artist, w.date || w.year, w.museum].filter(Boolean).join(' · ')) + '</span></button>').join('');
@@ -776,10 +794,10 @@ function onAct(act, id) {
     case 'add-exw': addExWord($('#exwIn').value); $('#exwIn').value = ''; break;
     case 'rm-exw': f.noWords = f.noWords.filter(x => x !== id); render('exwords'); applyChange(); break;
     case 'key-test': testKey(id); break;
-    case 'mode': S.st.mode = id; applyLook(); saveAll(); render('mode'); break;
+    case 'mode': S.st.mode = id; applyLook(); saveAll(); render('mode'); if (S.current) { S.side = !S.side; layoutSlide(slides[S.layer], S.current); } break;
     case 'interval': S.st.interval = +id; saveAll(); render('interval'); schedule(); break;
     case 'skin': S.st.skin = SKIN_BAR[id] ? id : 'm3-dark'; applyLook(); saveAll(); render('skin'); updateSums(); break;
-    case 'caption': S.st.caption = id; saveAll(); render('caption'); if (S.current) setCaption(S.current); break;
+    case 'caption': S.st.caption = id; saveAll(); render('caption'); if (S.current) { setCaption(S.current); S.side = !S.side; layoutSlide(slides[S.layer], S.current); } break;
     case 'opt':
       if (id === 'kb') { S.st.kenburns = !S.st.kenburns; applyLook(); saveAll(); render('opts'); }
       else if (id === 'hq') { S.st.quality = S.st.quality === 'high' ? 'normal' : 'high'; saveAll(); render('opts'); toast('Se aplicará a las próximas obras'); }

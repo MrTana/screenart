@@ -157,6 +157,20 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   A.next(); await wait(100); A.prev();
   console.log('historial:', S.hist.length, 'idx', S.hi);
   assert.ok(S.current && S.current.museum, 'la obra trae museo'); assert.strictEqual(w.document.querySelector('#caption .s').textContent, S.current.museum, 'la ficha lleva el museo');
+  { // presentación «Con cartela»: verticales y cuadradas a un lado con su cartela; horizontales como siempre
+    const opts = Array.from(d.querySelectorAll('#c-mode option')).map(o => o.value); assert.ok(opts.includes('plate'), 'opción Con cartela');
+    Object.defineProperty(w, 'innerWidth', { value: 1920, configurable: true }); Object.defineProperty(w, 'innerHeight', { value: 1080, configurable: true });
+    A.onAct('mode', 'plate'); S.paused = true;
+    const v = { uid: 'tv1', title: 'Retrato vertical', artist: 'Pintora', date: '1650', museum: 'Prado (Madrid)', url: 'https://x/v.jpg', imgs: ['https://x/v.jpg'], iw: 900, ih: 1300 };
+    A.present(v, false); const s1 = d.querySelector('.slide.on');
+    assert.ok(s1.classList.contains('tall') && d.body.classList.contains('plate-on'), 'vertical: cuelga a un lado y oculta la ficha flotante');
+    assert.strictEqual(s1.querySelector('.plate .pt').textContent, 'Retrato vertical'); assert.strictEqual(s1.querySelector('.plate .ps').textContent, 'Prado (Madrid)');
+    const alt1 = s1.classList.contains('alt');
+    A.present(Object.assign({}, v, { uid: 'tv2', iw: 1000, ih: 1000 }), false); const s2 = d.querySelector('.slide.on');
+    assert.ok(s2.classList.contains('tall') && s2.classList.contains('alt') !== alt1, 'cuadrada también, y al otro lado');
+    A.present(Object.assign({}, v, { uid: 'tv3', iw: 1600, ih: 1000 }), false); const s3 = d.querySelector('.slide.on');
+    assert.ok(!s3.classList.contains('tall') && !d.body.classList.contains('plate-on'), 'horizontal: como siempre, con su ficha');
+    A.onAct('mode', 'gallery'); S.paused = false; }
   // Toques como en un libro electrónico (pantalla de 500 px)
   Object.defineProperty(w, 'innerWidth', { value: 500, configurable: true });
   S.st.caption = 'def'; assert.strictEqual(A.capMode(), 'always', 'móvil sin TV: la ficha siempre visible'); S.st.caption = 'auto'; assert.strictEqual(A.capMode(), 'auto'); S.st.caption = 'def';
