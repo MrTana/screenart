@@ -1299,7 +1299,8 @@ async function wikipediaFetch(plan, f, ctx, m) {
       return (j.query && j.query.searchinfo && j.query.searchinfo.totalhits) || 0;
     });
     if (!total) continue;
-    const off = rand(Math.max(1, Math.min(total - 30, 900)));
+    // Más allá de los primeros resultados la búsqueda de Wikipedia ya no trae cuadros: se elige al azar entre los primeros ~150.
+    const off = rand(Math.max(1, Math.min(total - 30, 120)));
     const j = await wmJSON(API + '&generator=search&gsrnamespace=0&gsrlimit=30&gsroffset=' + off + '&gsrsearch=' + encodeURIComponent(q) +
       '&prop=pageimages|description&piprop=original|thumbnail&pithumbsize=' + PX(ctx));
     pages = (j.query && j.query.pages) || [];
