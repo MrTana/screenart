@@ -1,183 +1,133 @@
 {
- "at": "2026-10-23 02:38 UTC",
- "ok": 18,
+ "at": "2026-10-23 02:45 UTC",
+ "ok": 19,
  "total": 20,
  "results": {
   "The Met": {
    "ok": true,
-   "n": 27,
-   "sample": "Passage from “A Modern-Day Wen Xuan: Selections of Refined L",
-   "ms": 1099
+   "n": 17,
+   "sample": "Christ Asleep during the Tempest",
+   "ms": 1637
   },
   "Art Institute of Chicago": {
    "ok": true,
-   "n": 20,
+   "n": 12,
    "err": "imagen no comprobable desde GitHub (protección contra robots)",
-   "sample": "Exotic garden",
-   "ms": 570
+   "sample": "Village Street",
+   "ms": 408
   },
   "Cleveland Museum of Art": {
    "ok": true,
    "n": 24,
-   "sample": "Christ and the Woman Taken in Adultery",
-   "ms": 1105
+   "sample": "Text, folio 60 (recto), from a Kalpa-sutra",
+   "ms": 1163
   },
   "Rijksmuseum": {
    "ok": true,
    "n": 8,
-   "sample": "Anthony van Dyck wooing his Model",
-   "ms": 3570
+   "sample": "Portrait of Ottavio Strada",
+   "ms": 11478
   },
   "Victoria and Albert": {
    "ok": true,
    "n": 24,
-   "sample": "Painting",
-   "ms": 1460
+   "sample": "Drawing",
+   "ms": 1132
   },
   "SMK": {
    "ok": true,
-   "n": 34,
-   "sample": "A Cabinet with Objects of Art",
-   "ms": 4547
+   "n": 3,
+   "sample": "Klippen ved flodbreden",
+   "ms": 1998
   },
   "Minneapolis": {
    "ok": true,
-   "n": 2,
-   "sample": "Bamboo and Chinese Poems [left of a pair]",
-   "ms": 838
+   "n": 19,
+   "sample": "Pincushion",
+   "ms": 623
   },
   "Smithsonian": {
    "ok": true,
    "n": 24,
-   "sample": "The Boy Stands on the Burning Deck",
-   "ms": 1556
+   "sample": "Arcadia",
+   "ms": 1757
   },
   "Europeana": {
    "ok": true,
    "n": 24,
-   "sample": "[Painting]",
-   "ms": 1860
+   "sample": "Painting",
+   "ms": 2122
   },
   "Wikidata (museo)": {
    "ok": false,
    "n": 0,
    "err": "Tiempo de espera agotado",
-   "ms": 40188,
+   "ms": 40318,
    "diag": {
-    "simpleCountMs": 138,
+    "simpleCountMs": 80,
     "status": 200,
     "body": "{\n  \"head\" : {\n    \"vars\" : [ \"n\" ]\n  },\n  \"results\" : {\n    \"bindings\" : [ {\n      \"n\" : {\n        \"datatype\" : \"http://www.w3.org/2001/XMLSchema#integer\",\n        \"type\" : \"literal\",\n        \"value\""
    }
   },
   "Wikidata (general)": {
    "ok": true,
-   "n": 50,
-   "sample": "Houses of Parliament, Sunlight Effect (Le Parlement, effet d",
-   "ms": 1151
+   "n": 56,
+   "sample": "Champ de coquelicots",
+   "ms": 714
   },
   "Commons": {
    "ok": true,
-   "n": 35,
-   "sample": "Pariška branjevka",
-   "ms": 8443
+   "n": 30,
+   "sample": "A Woman scraping Parsnips, with a Child standing by her",
+   "ms": 3008
   },
   "Google Art Project": {
    "ok": true,
-   "n": 40,
-   "sample": "The Triumph of the Innocents",
-   "ms": 5942
+   "n": 39,
+   "sample": "Marija Remec 1920s",
+   "ms": 2282
   },
   "Wikipedia": {
-   "ok": false,
-   "n": 0,
-   "err": "sin obras",
-   "ms": 479,
-   "diag": [
-    [
-     "Musée Marmottan Monet",
-     "Art museum in Paris, France",
-     512,
-     "rg&utm_campaign=api&utm_content=original"
-    ],
-    [
-     "Houses of Parliament (Monet series)",
-     "1899–1901 series of paintings by Claude Monet",
-     null,
-     null
-    ],
-    [
-     "Water Lilies (Monet series)",
-     "Series of paintings by Claude Monet",
-     3463,
-     "rg&utm_campaign=api&utm_content=original"
-    ],
-    [
-     "List of paintings by Claude Monet",
-     "",
-     2790,
-     "rg&utm_campaign=api&utm_content=original"
-    ],
-    [
-     "La Grenouillère (Monet)",
-     "Painting by Claude Monet",
-     3679,
-     "rg&utm_campaign=api&utm_content=original"
-    ],
-    [
-     "Woman with a Parasol – Madame Monet and Her Son",
-     "1875 painting by Claude Monet",
-     6001,
-     "rg&utm_campaign=api&utm_content=original"
-    ],
-    [
-     "Weeping Willow (Monet)",
-     "1918 oil painting by Oscar-Claude Monet",
-     1026,
-     "rg&utm_campaign=api&utm_content=original"
-    ],
-    [
-     "Claude Monet Painting in his Studio",
-     "1874 painting by Édouard Manet",
-     5700,
-     "rg&utm_campaign=api&utm_content=original"
-    ]
-   ]
+   "ok": true,
+   "n": 22,
+   "sample": "En plein air",
+   "ms": 452
   },
   "WikiArt": {
    "ok": true,
    "n": 60,
-   "sample": "The Garden",
-   "ms": 1891
+   "sample": "The Lake, Petworth, Sunset; Sample Study",
+   "ms": 1289
   },
   "MoMA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Great American Nude, 2",
-   "ms": 1018
+   "sample": "Harlequin (Self-Portrait)",
+   "ms": 644
   },
   "NGA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Abraham Clark and His Children",
-   "ms": 912
+   "sample": "Felucca off Gibraltar",
+   "ms": 537
   },
   "Tate (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Comedy",
-   "ms": 1415
+   "sample": "Barges, Chelsea Riverside, the ‘Eighties",
+   "ms": 1299
   },
   "Louvre (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Lambert Sigisbert Adam l'Aîné",
-   "ms": 3261
+   "sample": "Prise de Constantinople par les Croisés",
+   "ms": 281
   },
   "Prado (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "La Flagelación o Cristo atado a la Columna",
-   "ms": 345
+   "sample": "El Buen Pastor",
+   "ms": 195
   }
  }
 }
