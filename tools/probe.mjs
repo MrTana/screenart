@@ -6,6 +6,10 @@ import path from 'path';
 import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
 const here = path.dirname(fileURLToPath(import.meta.url));
+// Wikidata y Wikipedia rechazan peticiones sin User-Agent (el navegador siempre lo manda): se añade a todas.
+const UA = 'galeria-de-arte/1.0 (prueba diaria; https://github.com/MrTana/screenart)';
+const rawFetch = globalThis.fetch;
+globalThis.fetch = (u, init) => { const i = Object.assign({}, init || {}); i.headers = Object.assign({ 'User-Agent': UA, 'Api-User-Agent': UA }, i.headers || {}); return rawFetch(u, i); };
 const C = createRequire(import.meta.url)('../src/core.js');
 const A = C.adapters, f = C.defaultFilters();
 const ctx = { hq: false, px: 1280, anyRights: true, keys: { europeana: 'api2demo', si: 'DEMO_KEY', harvard: process.env.HARVARD_KEY || '' }, report() {} };
@@ -38,9 +42,10 @@ if (ctx.keys.harvard) CHECKS.Harvard = () => A.harvardFetch(plan(), f, ctx);
 async function imageOK(url) {
   const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 20000);
   try {
-    const r = await fetch(url, { signal: ctl.signal, headers: { 'User-Agent': 'galeria-de-arte/1.0 (prueba diaria)' } });
+    const r = await fetch(url, { signal: ctl.signal, headers: { 'User-Agent': UA } });
     const ct = r.headers.get('content-type') || ''; try { await r.body.cancel(); } catch (e) { /* nada */ }
-    return r.ok && /^image\//.test(ct) ? 'ok' : 'HTTP ' + r.status + ' ' + ct;
+    // Algunos servidores (Minneapolis) no mandan tipo: vale mientras no sea una página o un JSON de error.
+    return r.ok && (/^image\//.test(ct) || !/(text\/html|json|xml)/.test(ct)) ? 'ok' : 'HTTP ' + r.status + ' ' + (ct || 'sin tipo');
   } catch (e) { return e.name === 'AbortError' ? 'imagen: tiempo agotado' : 'imagen: ' + e.message; } finally { clearTimeout(t); }
 }
 
