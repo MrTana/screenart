@@ -1,128 +1,128 @@
 {
- "at": "2026-10-23 02:16 UTC",
- "ok": 17,
+ "at": "2026-10-23 02:29 UTC",
+ "ok": 18,
  "total": 20,
  "results": {
   "The Met": {
    "ok": true,
-   "n": 29,
-   "sample": "The Temple of Dendur, Showing the Pylon and Terrace",
-   "ms": 1178
+   "n": 18,
+   "sample": "Window onto Bamboo on a Rainy Day",
+   "ms": 1412
   },
   "Art Institute of Chicago": {
-   "ok": false,
+   "ok": true,
    "n": 24,
-   "err": "HTTP 403 text/html; charset=UTF-8",
-   "sample": "Fishing Boats in a Calm",
-   "ms": 620
+   "err": "imagen no comprobable desde GitHub (protección contra robots)",
+   "sample": "Violet and Silver—The Deep Sea",
+   "ms": 656
   },
   "Cleveland Museum of Art": {
    "ok": true,
    "n": 24,
-   "sample": "The Swing",
-   "ms": 923
+   "sample": "Interior of a Church",
+   "ms": 2380
   },
   "Rijksmuseum": {
    "ok": true,
    "n": 8,
-   "sample": "The Martyrdom of the Seven Sons of Saint Felicity",
-   "ms": 4056
+   "sample": "Portrait of Pieter Dircksz, called Long Beard, Council Membe",
+   "ms": 3670
   },
   "Victoria and Albert": {
    "ok": true,
    "n": 24,
    "sample": "Painting",
-   "ms": 1571
+   "ms": 1817
   },
   "SMK": {
    "ok": true,
-   "n": 5,
-   "sample": "Syerske og en smed",
-   "ms": 3962
+   "n": 6,
+   "sample": "Landskab med en vej ved en flod",
+   "ms": 2525
   },
   "Minneapolis": {
    "ok": true,
-   "n": 16,
-   "sample": "Diana the Huntress",
-   "ms": 734
+   "n": 7,
+   "sample": "At the Spring",
+   "ms": 1310
   },
   "Smithsonian": {
    "ok": true,
    "n": 24,
-   "sample": "The Voyage of Life--Childhood",
-   "ms": 1566
+   "sample": "Gas Tanks at End of 23rd Street, New York",
+   "ms": 1420
   },
   "Europeana": {
    "ok": true,
    "n": 24,
-   "sample": "Målning",
-   "ms": 2051
+   "sample": "Måltavla",
+   "ms": 2103
   },
   "Wikidata (museo)": {
    "ok": false,
    "n": 0,
    "err": "Tiempo de espera agotado",
-   "ms": 40192
+   "ms": 40186
   },
   "Wikidata (general)": {
    "ok": true,
-   "n": 44,
-   "sample": "Rue Saint-Denis with Flags",
-   "ms": 668
+   "n": 40,
+   "sample": "Blanche Hoschedé as a Child",
+   "ms": 604
   },
   "Commons": {
    "ok": true,
-   "n": 40,
-   "sample": "The Painter in the Village",
-   "ms": 2428
+   "n": 35,
+   "sample": "Concierto de angeles",
+   "ms": 4612
   },
   "Google Art Project": {
    "ok": true,
-   "n": 37,
-   "sample": "Titania and chut",
-   "ms": 3163
+   "n": 40,
+   "sample": "Annunciation",
+   "ms": 6041
   },
   "Wikipedia": {
    "ok": false,
    "n": 0,
    "err": "sin obras",
-   "ms": 469
+   "ms": 496
   },
   "WikiArt": {
    "ok": true,
    "n": 60,
-   "sample": "The pergola",
-   "ms": 1882
+   "sample": "Langland Bay",
+   "ms": 1978
   },
   "MoMA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Vielles chansons",
-   "ms": 690
+   "sample": "Premise",
+   "ms": 619
   },
   "NGA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Archbishop Diomede Falconio",
-   "ms": 755
+   "sample": "The Races at Longchamp",
+   "ms": 730
   },
   "Tate (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Rough Sea",
-   "ms": 1586
+   "sample": "Landscape Study",
+   "ms": 11621
   },
   "Louvre (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "La Guillotine",
-   "ms": 955
+   "sample": "Corbeille de fleurs",
+   "ms": 1152
   },
   "Prado (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "San Agustín discutiendo con el maniqueo Fortunato",
-   "ms": 314
+   "sample": "Santo Domingo de Guzmán",
+   "ms": 458
   }
  }
 }
