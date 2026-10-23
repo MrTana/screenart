@@ -1,133 +1,145 @@
 {
- "at": "2026-10-23 02:45 UTC",
+ "at": "2026-10-23 02:48 UTC",
  "ok": 19,
  "total": 20,
  "results": {
   "The Met": {
    "ok": true,
-   "n": 17,
-   "sample": "Christ Asleep during the Tempest",
-   "ms": 1637
+   "n": 23,
+   "sample": "The Apparition of the Virgin of El Pilar to St. James",
+   "ms": 1167
   },
   "Art Institute of Chicago": {
    "ok": true,
-   "n": 12,
+   "n": 24,
    "err": "imagen no comprobable desde GitHub (protección contra robots)",
-   "sample": "Village Street",
-   "ms": 408
+   "sample": "Combat",
+   "ms": 638
   },
   "Cleveland Museum of Art": {
    "ok": true,
    "n": 24,
-   "sample": "Text, folio 60 (recto), from a Kalpa-sutra",
-   "ms": 1163
+   "sample": "Presentation Sketch for \"The Holy Family with Saints Anne, J",
+   "ms": 1296
   },
   "Rijksmuseum": {
    "ok": true,
    "n": 8,
-   "sample": "Portrait of Ottavio Strada",
-   "ms": 11478
+   "sample": "Holy Family with Saint Catherine",
+   "ms": 5196
   },
   "Victoria and Albert": {
    "ok": true,
    "n": 24,
-   "sample": "Drawing",
-   "ms": 1132
+   "sample": "Design",
+   "ms": 1695
   },
   "SMK": {
    "ok": true,
-   "n": 3,
-   "sample": "Klippen ved flodbreden",
-   "ms": 1998
+   "n": 4,
+   "sample": "Elskovspar. Udkast til statuette",
+   "ms": 6235
   },
   "Minneapolis": {
    "ok": true,
-   "n": 19,
-   "sample": "Pincushion",
-   "ms": 623
+   "n": 12,
+   "sample": "Fall [right of a pair of Flowers and Insects of Spring and F",
+   "ms": 989
   },
   "Smithsonian": {
    "ok": true,
    "n": 24,
-   "sample": "Arcadia",
-   "ms": 1757
+   "sample": "Weaving Feathers",
+   "ms": 1386
   },
   "Europeana": {
    "ok": true,
    "n": 24,
-   "sample": "Painting",
-   "ms": 2122
+   "sample": "board, painting,",
+   "ms": 2329
   },
   "Wikidata (museo)": {
    "ok": false,
    "n": 0,
    "err": "Tiempo de espera agotado",
-   "ms": 40318,
+   "ms": 40598,
+   "timing": {
+    "app": {
+     "ms": 122,
+     "status": 200,
+     "n": "841"
+    },
+    "conPista": {
+     "ms": 376,
+     "status": 200,
+     "n": "841"
+    }
+   },
    "diag": {
-    "simpleCountMs": 80,
+    "simpleCountMs": 155,
     "status": 200,
     "body": "{\n  \"head\" : {\n    \"vars\" : [ \"n\" ]\n  },\n  \"results\" : {\n    \"bindings\" : [ {\n      \"n\" : {\n        \"datatype\" : \"http://www.w3.org/2001/XMLSchema#integer\",\n        \"type\" : \"literal\",\n        \"value\""
    }
   },
   "Wikidata (general)": {
    "ok": true,
-   "n": 56,
-   "sample": "Champ de coquelicots",
-   "ms": 714
+   "n": 54,
+   "sample": "La urraca",
+   "ms": 1215
   },
   "Commons": {
    "ok": true,
-   "n": 30,
-   "sample": "A Woman scraping Parsnips, with a Child standing by her",
-   "ms": 3008
+   "n": 35,
+   "sample": "Allegory",
+   "ms": 6687
   },
   "Google Art Project": {
    "ok": true,
-   "n": 39,
-   "sample": "Marija Remec 1920s",
-   "ms": 2282
+   "n": 40,
+   "sample": "Portrait of Leonor Álvarez de Toledo (1519–1562)",
+   "ms": 5784
   },
   "Wikipedia": {
    "ok": true,
-   "n": 22,
-   "sample": "En plein air",
-   "ms": 452
+   "n": 21,
+   "sample": "Impression, Sunrise",
+   "ms": 667
   },
   "WikiArt": {
    "ok": true,
    "n": 60,
-   "sample": "The Lake, Petworth, Sunset; Sample Study",
-   "ms": 1289
+   "sample": "A Path Across the Fields",
+   "ms": 2090
   },
   "MoMA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Harlequin (Self-Portrait)",
-   "ms": 644
+   "sample": "Regulatory Reestablishment",
+   "ms": 1156
   },
   "NGA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Felucca off Gibraltar",
-   "ms": 537
+   "sample": "Simplon Pass",
+   "ms": 1070
   },
   "Tate (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Barges, Chelsea Riverside, the ‘Eighties",
-   "ms": 1299
+   "sample": "The Wooing of Daphnis",
+   "ms": 1334
   },
   "Louvre (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Prise de Constantinople par les Croisés",
-   "ms": 281
+   "sample": "Mercure et Hersé",
+   "ms": 466
   },
   "Prado (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "El Buen Pastor",
-   "ms": 195
+   "sample": "Bebedores en un mesón",
+   "ms": 392
   }
  }
 }
