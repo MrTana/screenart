@@ -72,7 +72,8 @@ globalThis.fetch = async (url, init) => {
   }
   if (url.includes('wikiart.org')) return J(fx.wikiart);
   if (url.includes('wikidata')) {
-    const q = decodeURIComponent(url.split('query=')[1]); sparqlLog.push(q);
+    const q = init && init.body ? decodeURIComponent(String(init.body).replace(/^query=/, '')) : decodeURIComponent(url.split('query=')[1]); sparqlLog.push(q);
+    if (/GROUP BY \?k/.test(q)) { if (globalThis.__wdBatchFail) throw new TypeError('Failed to fetch'); const n = (q.match(/BIND\(\d+ AS \?k\)/g) || []).length; return J({ results: { bindings: Array.from({ length: n }, (_, k) => ({ k: { value: String(k) }, n: { value: String(100 + k) } })) } }); }
     sparqlActive++; sparqlMax = Math.max(sparqlMax, sparqlActive); await new Promise(r => setTimeout(r, 15)); sparqlActive--;
     return J(/COUNT\(/.test(q) ? { results: { bindings: [{ n: { value: '4200' } }] } } : { results: { bindings: fx.wdRows } });
   }
@@ -205,6 +206,21 @@ globalThis.fetch = async (url, init) => {
     assert.ok(/Special:FilePath\/.*\?width=1920$/.test(ci[1]) && /\/1280px-/.test(ci[2]), 'respaldo: original y 1280 px');
     assert.strictEqual(C.commonsImgs('https://commons.wikimedia.org/wiki/Special:FilePath/Bad%E0%A4%A.jpg', 1280).length, 2, 'nombre dañado: sin miniatura directa');
     assert.strictEqual(C.PX({ px: 1280 }), 1280); assert.strictEqual(C.PX({ hq: true }), 3840); assert.strictEqual(C.PX({}), 1920);
+  }
+  { // conteos de Wikidata en lote: una consulta POST para varios museos; luego cada museo solo pide sus obras
+    const ms = ['m:louvre', 'm:orsay', 'm:prado', 'm:uffizi', 'm:rijks', 'm:hermitage', 'm:magritte'].map(id => museumSrcs.find(x => x.id === id)).filter(Boolean);
+    const fb = C.defaultFilters(); fb.eras = ['barroco']; sparqlLog.length = 0;
+    const n = await C.primeWikidataCounts(ms, fb, anyCtx);
+    const batches = sparqlLog.filter(q => /GROUP BY \?k/.test(q));
+    assert.strictEqual(n, ms.length, 'todos los museos con conteo en lote'); assert.strictEqual(batches.length, Math.ceil(ms.length / 6), 'lotes de 6: ' + batches.length);
+    sparqlLog.length = 0; await C.adapters.wikidataMuseum(ms[0].museum, C.makePlan(fb), fb, anyCtx);
+    assert.ok(!sparqlLog.some(q => /COUNT\(/.test(q)), 'el museo ya no repite su conteo: ' + sparqlLog.length);
+    assert.strictEqual(await C.primeWikidataCounts(ms, fb, anyCtx), 0, 'lo ya contado no se vuelve a pedir');
+    // si el lote falla, cada museo cuenta por su cuenta
+    const fc = C.defaultFilters(); fc.eras = ['renac']; globalThis.__wdBatchFail = true; sparqlLog.length = 0;
+    await C.primeWikidataCounts(ms.slice(0, 2), fc, anyCtx); globalThis.__wdBatchFail = false;
+    const r1 = await C.adapters.wikidataMuseum(ms[1].museum, C.makePlan(fc), fc, anyCtx);
+    assert.ok(sparqlLog.some(q => /COUNT\(/.test(q) && !/GROUP BY/.test(q)) && Array.isArray(r1), 'lote fallido: conteo individual');
   }
   // Un museo, varias fuentes
   const orsay = museumSrcs.find(x => x.id === 'm:orsay'); const rp = {}; commonsLog.length = 0;

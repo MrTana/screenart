@@ -101,9 +101,15 @@ function memoSave() {
   }, 2000);
 }
 function memoForget(key) { memoMap.delete(key); const d = memoLoad(), h = hashKey(key); if (d[h]) { delete d[h]; memoSave(); } }
+function memoKnown(key) { if (memoMap.has(key)) return true; const hit = memoStore ? memoLoad()[hashKey(key)] : null; return !!(hit && Date.now() - hit[1] < MEMO_TTL); }
+function memoPut(key, p) { // un valor que llega de otra consulta (p. ej. un lote): si falla, se olvida y el museo lo pide solo
+  const h = hashKey(key);
+  const q = p.then(v => { if (typeof v === 'number' && memoStore) { memoLoad()[h] = [v, Date.now()]; memoSave(); } return v; }, e => { memoMap.delete(key); throw e; });
+  q.catch(() => {}); memoMap.set(key, q);
+}
 const memoMap = new Map();
 async function memo(key, fn) {
-  if (memoMap.has(key)) return memoMap.get(key);
+  if (memoMap.has(key)) return memoMap.get(key).catch(e => (memoMap.has(key) ? Promise.reject(e) : memo(key, fn))); // si un lote falló, se cuenta por separado
   const h = hashKey(key), hit = memoStore ? memoLoad()[h] : null;
   if (hit && typeof hit[0] === 'number' && Date.now() - hit[1] < MEMO_TTL) { const v = Promise.resolve(hit[0]); memoMap.set(key, v); return v; }
   const p = fn().then(v => { if (typeof v === 'number' && memoStore) { memoLoad()[h] = [v, Date.now()]; memoSave(); } return v; }, e => { memoMap.delete(key); throw e; });
@@ -925,9 +931,11 @@ let sparqlActive = 0; const sparqlQueue = []; let sparqlPauseUntil = 0;
 const sparqlSlot = async () => { await new Promise(res => { if (sparqlActive < 2) { sparqlActive++; res(); } else sparqlQueue.push(res); }); const w = sparqlPauseUntil - Date.now(); if (w > 0) await new Promise(r => setTimeout(r, w)); };
 const sparqlDone = () => { const n = sparqlQueue.shift(); if (n) n(); else sparqlActive--; };
 const sparqlEsc = s => String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-async function sparql(q) {
-  const url = 'https://query.wikidata.org/sparql?format=json&query=' + encodeURIComponent(q);
-  const go = async () => (await getJSON(url, {}, 40000)).results.bindings;
+async function sparql(q, post) {
+  const url = 'https://query.wikidata.org/sparql?format=json' + (post ? '' : '&query=' + encodeURIComponent(q));
+  // Las consultas largas (varias a la vez) van por POST: por GET la dirección sería demasiado larga.
+  const init = post ? { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'query=' + encodeURIComponent(q) } : {};
+  const go = async () => (await getJSON(url, init, post ? 55000 : 40000)).results.bindings;
   await sparqlSlot();
   try {
     try { return await go(); }
@@ -1007,12 +1015,33 @@ async function wikiFetch(plan, f, ctx) {
 }
 
 /* Un Wikidata por museo: todas las obras de su colección que tengan imagen. */
-async function wikidataMuseum(m, plan, f, ctx) {
+function wdMuseumQuery(m, plan, f, ctx) {
   const any = !!ctx.anyRights;
   const { parts, typeQ } = wdParts(plan, { museum: m, anyRights: any, byType: !!(f.types && f.types.length) });
   let body = parts.filter(x => !/^OPTIONAL \{ \?item wdt:P(170|31) \?(creator|cls)\. \}$/.test(x)).join(' ');
   if (any) body = body.replace(' OPTIONAL { ?creator wdt:P570 ?death. }', '');
-  const countQ = 'SELECT (COUNT(DISTINCT ?item) AS ?n) WHERE { ' + body + ' }';
+  return { parts, typeQ, any, body, countQ: 'SELECT (COUNT(DISTINCT ?item) AS ?n) WHERE { ' + body + ' }' };
+}
+/* Conteos de Wikidata en lote: en vez de una consulta de conteo por museo, una sola para varios museos (UNION + GROUP BY).
+   Cada museo encuentra su total ya calculado (o en camino) en la memoria; si el lote falla, cada uno cuenta por su cuenta. */
+const WD_BATCH = 6;
+async function primeWikidataCounts(sources, f, ctx) {
+  const plan = makePlan(f); if (plan.empty) return 0;
+  const todo = (sources || []).map(s => s && s.museum).filter(m => m && !m.open && (m.ids.length || m.labels.length))
+    .map(m => Object.assign({ m }, wdMuseumQuery(m, plan, f, ctx))).filter(x => !memoKnown('fm:' + x.countQ));
+  const uniq = []; todo.forEach(x => { if (!uniq.some(y => y.countQ === x.countQ)) uniq.push(x); });
+  let done = 0;
+  for (let i = 0; i < uniq.length; i += WD_BATCH) {
+    const batch = uniq.slice(i, i + WD_BATCH);
+    const q = 'SELECT ?k (COUNT(DISTINCT ?item) AS ?n) WHERE { ' + batch.map((x, k) => '{ ' + x.body + ' BIND(' + k + ' AS ?k) }').join(' UNION ') + ' } GROUP BY ?k';
+    const res = sparql(q, true).then(rows => { const o = {}; rows.forEach(r => { o[+r.k.value] = parseInt(r.n.value, 10) || 0; }); return o; });
+    batch.forEach((x, k) => memoPut('fm:' + x.countQ, res.then(o => o[k] || 0)));
+    try { await res; done += batch.length; } catch (e) { /* ese lote falló: sus museos contarán solos */ }
+  }
+  return done;
+}
+async function wikidataMuseum(m, plan, f, ctx) {
+  const { parts, typeQ, any, countQ } = wdMuseumQuery(m, plan, f, ctx);
   const total = await memo('fm:' + countQ, async () => { const r = await sparql(countQ); return r[0] && r[0].n ? parseInt(r[0].n.value, 10) : 0; });
   if (!total) return [];
   const rows = await sparql(wdSelect(parts, rand(Math.max(1, total - 59)), !typeQ));
@@ -1596,7 +1625,7 @@ async function runSource(src, f, ctx) {
 }
 
 const api = {
-  md5, commonsImgs, PX, memoForget, rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
+  md5, commonsImgs, PX, memoForget, primeWikidataCounts, rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
   ERAS, STYLES, TYPES, KEYWORDS, EXCLUDES, excluded, MUSEUMS, DEFAULT_MUSEUMS, MUSEUM_SOURCES, ARTIST_SUGGESTIONS, ARTIST_GROUPS, TUNING, keywordToQuery,
   museumCountry, countryCollections, styleIdsOf, searchPaintings, identifyArtwork, countryCollectionName, defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC, museumIdsByTag,
   adapters: { momaFetch, ngaFetch, tateFetch, shardFetch, commonsSpecial, wikidataMuseum, wikipediaFetch, commonsFetch, wikiartFetch, metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }

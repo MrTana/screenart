@@ -103,7 +103,9 @@ function refill() {
   // La fila que incluye WikiArt (colecciones abiertas) sale siempre la primera.
   const wa = ready.filter(s => s.id === 'm:open'), others = ready.filter(s => s.id !== 'm:open');
   const room = Math.max(0, 4 - S.flight.size);
-  wa.slice(0, room).concat(C.sampleN(others, Math.max(0, room - wa.length))).forEach(s => launch(s, epoch));
+  // Los que aún no se consultaron van en el orden del barrido (el mismo en que se precalcularon sus conteos); luego, al azar.
+  const fresh0 = byOrder(others.filter(s => !S.status[s.id])), tried = C.sampleN(others.filter(s => S.status[s.id]), room);
+  wa.slice(0, room).concat(fresh0.concat(tried).slice(0, Math.max(0, room - wa.length))).forEach(s => launch(s, epoch));
 }
 
 async function launch(s, epoch) {
@@ -145,11 +147,20 @@ async function launch(s, epoch) {
 }
 /* Barrido: aunque ya haya obras de sobra, cada museo seleccionado se consulta al menos una vez (4 a la vez), para que todos
    aporten variedad y su color de estado sea real. Después solo se rellena cuando la cola baja. */
+/* Orden del barrido: se fija al empezar (al azar) y con él se precalculan en lote los conteos de Wikidata, en el mismo
+   orden en que se van a consultar los museos: el primer lote sirve a los primeros museos. */
+function planSweep() {
+  if (REMOTE || S.f.onlyFavs) return;
+  const list = C.shuffle(C.SOURCE_LIST.filter(s => S.f.sources[s.id]));
+  S.sweepOrder = new Map(list.map((s, i) => [s.id, i]));
+  C.primeWikidataCounts(list, S.f, ctx()).catch(() => {});
+}
+function byOrder(l) { const o = S.sweepOrder || new Map(), p = s => (o.has(s.id) ? o.get(s.id) : 1e9); return l.slice().sort((a, b) => p(a) - p(b)); }
 function sweep() {
   if (S.f.onlyFavs) return;
   const room = Math.max(0, 4 - S.flight.size); if (!room) return;
   const todo = C.SOURCE_LIST.filter(s => S.f.sources[s.id] && !S.status[s.id] && !S.flight.has(s.id));
-  C.sampleN(todo, room).forEach(s => launch(s, S.epoch));
+  byOrder(todo).slice(0, room).forEach(s => launch(s, S.epoch));
 }
 
 /* Cuando las fuentes no dan más obras nuevas, se vuelven a mostrar las ya vistas en lugar de quedarse parado. */
@@ -394,7 +405,7 @@ function applyChange() {
   clearTimeout(applyT);
   applyT = setTimeout(() => {
     S.epoch++; S.pool = []; S.nextP = null; S.ready = null; S.flight = new Map(); S.cool = {}; S.streak = {}; S.warned = false; S.adv = false; S.counts = {}; S.status = {};
-    renderSrcs();
+    renderSrcs(); planSweep();
     if (S.f.onlyFavs && !S.favs.length) toast('Aún no tienes favoritas');
     advance();
   }, 700);
@@ -1201,6 +1212,7 @@ function init() {
   document.body.classList.add('active');
   if (touchLayout() && !lsGet('tapHint', false)) { lsSet('tapHint', true); setTimeout(() => toast('Toca el borde derecho: siguiente · el izquierdo: anterior · el centro: menú'), 2500); }
   showLoader('Buscando obras en los museos…', 'Pulsa Intro o toca la pantalla para abrir los filtros.', false);
+  planSweep();
   if (loadStash()) refill(); // con obras guardadas se muestran ya y los museos se consultan igual en segundo plano
   advance();
   initTV();

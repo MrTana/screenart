@@ -414,7 +414,7 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
     <button class="acch" data-act="acc" data-id="skin" aria-expanded="false"><span class="at">Skin</span><span class="as" data-sum="skin"></span><span class="ac">›</span></button>
     <div class="accb"><label class="fld"><span>Aspecto de la interfaz</span><select id="c-skin"></select></label><p class="hint">Material Design 3 y Material 3 Expressive, en claro y oscuro. Solo cambia el menú, el mando y los avisos; la obra y su ficha no cambian.</p></div>
   </section>
-  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 8371bbe50c · 2026-10-23 00:02 UTC</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
+  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 8ef03b93a2 · 2026-10-23 00:24 UTC</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
   <div id="rcfoot" hidden><button class="btn pri" data-act="rc-update">Buscar actualización</button><p id="rcver"></p></div>
 <div id="tvConnect"><button class="btn pri" data-act="tv-connect">Conectar a la TV</button><div class="row" id="tvRow" hidden><input type="text" id="tvCode" placeholder="Código de la TV (ej. abcd-efgh-jkmn)" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn pri" data-act="tv-go">Abrir mando</button></div><p class="hint" id="tvMsg">El código sale bajo el QR en la pantalla de la TV.</p></div>
 </aside>
@@ -526,9 +526,15 @@ function memoSave() {
   }, 2000);
 }
 function memoForget(key) { memoMap.delete(key); const d = memoLoad(), h = hashKey(key); if (d[h]) { delete d[h]; memoSave(); } }
+function memoKnown(key) { if (memoMap.has(key)) return true; const hit = memoStore ? memoLoad()[hashKey(key)] : null; return !!(hit && Date.now() - hit[1] < MEMO_TTL); }
+function memoPut(key, p) { // un valor que llega de otra consulta (p. ej. un lote): si falla, se olvida y el museo lo pide solo
+  const h = hashKey(key);
+  const q = p.then(v => { if (typeof v === 'number' && memoStore) { memoLoad()[h] = [v, Date.now()]; memoSave(); } return v; }, e => { memoMap.delete(key); throw e; });
+  q.catch(() => {}); memoMap.set(key, q);
+}
 const memoMap = new Map();
 async function memo(key, fn) {
-  if (memoMap.has(key)) return memoMap.get(key);
+  if (memoMap.has(key)) return memoMap.get(key).catch(e => (memoMap.has(key) ? Promise.reject(e) : memo(key, fn))); // si un lote falló, se cuenta por separado
   const h = hashKey(key), hit = memoStore ? memoLoad()[h] : null;
   if (hit && typeof hit[0] === 'number' && Date.now() - hit[1] < MEMO_TTL) { const v = Promise.resolve(hit[0]); memoMap.set(key, v); return v; }
   const p = fn().then(v => { if (typeof v === 'number' && memoStore) { memoLoad()[h] = [v, Date.now()]; memoSave(); } return v; }, e => { memoMap.delete(key); throw e; });
@@ -1350,9 +1356,11 @@ let sparqlActive = 0; const sparqlQueue = []; let sparqlPauseUntil = 0;
 const sparqlSlot = async () => { await new Promise(res => { if (sparqlActive < 2) { sparqlActive++; res(); } else sparqlQueue.push(res); }); const w = sparqlPauseUntil - Date.now(); if (w > 0) await new Promise(r => setTimeout(r, w)); };
 const sparqlDone = () => { const n = sparqlQueue.shift(); if (n) n(); else sparqlActive--; };
 const sparqlEsc = s => String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-async function sparql(q) {
-  const url = 'https://query.wikidata.org/sparql?format=json&query=' + encodeURIComponent(q);
-  const go = async () => (await getJSON(url, {}, 40000)).results.bindings;
+async function sparql(q, post) {
+  const url = 'https://query.wikidata.org/sparql?format=json' + (post ? '' : '&query=' + encodeURIComponent(q));
+  // Las consultas largas (varias a la vez) van por POST: por GET la dirección sería demasiado larga.
+  const init = post ? { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'query=' + encodeURIComponent(q) } : {};
+  const go = async () => (await getJSON(url, init, post ? 55000 : 40000)).results.bindings;
   await sparqlSlot();
   try {
     try { return await go(); }
@@ -1432,12 +1440,33 @@ async function wikiFetch(plan, f, ctx) {
 }
 
 /* Un Wikidata por museo: todas las obras de su colección que tengan imagen. */
-async function wikidataMuseum(m, plan, f, ctx) {
+function wdMuseumQuery(m, plan, f, ctx) {
   const any = !!ctx.anyRights;
   const { parts, typeQ } = wdParts(plan, { museum: m, anyRights: any, byType: !!(f.types && f.types.length) });
   let body = parts.filter(x => !/^OPTIONAL \{ \?item wdt:P(170|31) \?(creator|cls)\. \}$/.test(x)).join(' ');
   if (any) body = body.replace(' OPTIONAL { ?creator wdt:P570 ?death. }', '');
-  const countQ = 'SELECT (COUNT(DISTINCT ?item) AS ?n) WHERE { ' + body + ' }';
+  return { parts, typeQ, any, body, countQ: 'SELECT (COUNT(DISTINCT ?item) AS ?n) WHERE { ' + body + ' }' };
+}
+/* Conteos de Wikidata en lote: en vez de una consulta de conteo por museo, una sola para varios museos (UNION + GROUP BY).
+   Cada museo encuentra su total ya calculado (o en camino) en la memoria; si el lote falla, cada uno cuenta por su cuenta. */
+const WD_BATCH = 6;
+async function primeWikidataCounts(sources, f, ctx) {
+  const plan = makePlan(f); if (plan.empty) return 0;
+  const todo = (sources || []).map(s => s && s.museum).filter(m => m && !m.open && (m.ids.length || m.labels.length))
+    .map(m => Object.assign({ m }, wdMuseumQuery(m, plan, f, ctx))).filter(x => !memoKnown('fm:' + x.countQ));
+  const uniq = []; todo.forEach(x => { if (!uniq.some(y => y.countQ === x.countQ)) uniq.push(x); });
+  let done = 0;
+  for (let i = 0; i < uniq.length; i += WD_BATCH) {
+    const batch = uniq.slice(i, i + WD_BATCH);
+    const q = 'SELECT ?k (COUNT(DISTINCT ?item) AS ?n) WHERE { ' + batch.map((x, k) => '{ ' + x.body + ' BIND(' + k + ' AS ?k) }').join(' UNION ') + ' } GROUP BY ?k';
+    const res = sparql(q, true).then(rows => { const o = {}; rows.forEach(r => { o[+r.k.value] = parseInt(r.n.value, 10) || 0; }); return o; });
+    batch.forEach((x, k) => memoPut('fm:' + x.countQ, res.then(o => o[k] || 0)));
+    try { await res; done += batch.length; } catch (e) { /* ese lote falló: sus museos contarán solos */ }
+  }
+  return done;
+}
+async function wikidataMuseum(m, plan, f, ctx) {
+  const { parts, typeQ, any, countQ } = wdMuseumQuery(m, plan, f, ctx);
   const total = await memo('fm:' + countQ, async () => { const r = await sparql(countQ); return r[0] && r[0].n ? parseInt(r[0].n.value, 10) : 0; });
   if (!total) return [];
   const rows = await sparql(wdSelect(parts, rand(Math.max(1, total - 59)), !typeQ));
@@ -2021,7 +2050,7 @@ async function runSource(src, f, ctx) {
 }
 
 const api = {
-  md5, commonsImgs, PX, memoForget, rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
+  md5, commonsImgs, PX, memoForget, primeWikidataCounts, rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
   ERAS, STYLES, TYPES, KEYWORDS, EXCLUDES, excluded, MUSEUMS, DEFAULT_MUSEUMS, MUSEUM_SOURCES, ARTIST_SUGGESTIONS, ARTIST_GROUPS, TUNING, keywordToQuery,
   museumCountry, countryCollections, styleIdsOf, searchPaintings, identifyArtwork, countryCollectionName, defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC, museumIdsByTag,
   adapters: { momaFetch, ngaFetch, tateFetch, shardFetch, commonsSpecial, wikidataMuseum, wikipediaFetch, commonsFetch, wikiartFetch, metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }
@@ -2136,7 +2165,9 @@ function refill() {
   // La fila que incluye WikiArt (colecciones abiertas) sale siempre la primera.
   const wa = ready.filter(s => s.id === 'm:open'), others = ready.filter(s => s.id !== 'm:open');
   const room = Math.max(0, 4 - S.flight.size);
-  wa.slice(0, room).concat(C.sampleN(others, Math.max(0, room - wa.length))).forEach(s => launch(s, epoch));
+  // Los que aún no se consultaron van en el orden del barrido (el mismo en que se precalcularon sus conteos); luego, al azar.
+  const fresh0 = byOrder(others.filter(s => !S.status[s.id])), tried = C.sampleN(others.filter(s => S.status[s.id]), room);
+  wa.slice(0, room).concat(fresh0.concat(tried).slice(0, Math.max(0, room - wa.length))).forEach(s => launch(s, epoch));
 }
 
 async function launch(s, epoch) {
@@ -2178,11 +2209,20 @@ async function launch(s, epoch) {
 }
 /* Barrido: aunque ya haya obras de sobra, cada museo seleccionado se consulta al menos una vez (4 a la vez), para que todos
    aporten variedad y su color de estado sea real. Después solo se rellena cuando la cola baja. */
+/* Orden del barrido: se fija al empezar (al azar) y con él se precalculan en lote los conteos de Wikidata, en el mismo
+   orden en que se van a consultar los museos: el primer lote sirve a los primeros museos. */
+function planSweep() {
+  if (REMOTE || S.f.onlyFavs) return;
+  const list = C.shuffle(C.SOURCE_LIST.filter(s => S.f.sources[s.id]));
+  S.sweepOrder = new Map(list.map((s, i) => [s.id, i]));
+  C.primeWikidataCounts(list, S.f, ctx()).catch(() => {});
+}
+function byOrder(l) { const o = S.sweepOrder || new Map(), p = s => (o.has(s.id) ? o.get(s.id) : 1e9); return l.slice().sort((a, b) => p(a) - p(b)); }
 function sweep() {
   if (S.f.onlyFavs) return;
   const room = Math.max(0, 4 - S.flight.size); if (!room) return;
   const todo = C.SOURCE_LIST.filter(s => S.f.sources[s.id] && !S.status[s.id] && !S.flight.has(s.id));
-  C.sampleN(todo, room).forEach(s => launch(s, S.epoch));
+  byOrder(todo).slice(0, room).forEach(s => launch(s, S.epoch));
 }
 
 /* Cuando las fuentes no dan más obras nuevas, se vuelven a mostrar las ya vistas en lugar de quedarse parado. */
@@ -2427,7 +2467,7 @@ function applyChange() {
   clearTimeout(applyT);
   applyT = setTimeout(() => {
     S.epoch++; S.pool = []; S.nextP = null; S.ready = null; S.flight = new Map(); S.cool = {}; S.streak = {}; S.warned = false; S.adv = false; S.counts = {}; S.status = {};
-    renderSrcs();
+    renderSrcs(); planSweep();
     if (S.f.onlyFavs && !S.favs.length) toast('Aún no tienes favoritas');
     advance();
   }, 700);
@@ -3234,6 +3274,7 @@ function init() {
   document.body.classList.add('active');
   if (touchLayout() && !lsGet('tapHint', false)) { lsSet('tapHint', true); setTimeout(() => toast('Toca el borde derecho: siguiente · el izquierdo: anterior · el centro: menú'), 2500); }
   showLoader('Buscando obras en los museos…', 'Pulsa Intro o toca la pantalla para abrir los filtros.', false);
+  planSweep();
   if (loadStash()) refill(); // con obras guardadas se muestran ya y los museos se consultan igual en segundo plano
   advance();
   initTV();
