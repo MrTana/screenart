@@ -1,87 +1,87 @@
 {
- "at": "2026-10-23 14:00 UTC",
+ "at": "2026-10-23 22:24 UTC",
  "ok": 20,
  "total": 20,
  "results": {
   "The Met": {
    "ok": true,
-   "n": 19,
-   "sample": "Stationery box with decoration of grapes and squirrels",
-   "ms": 2079
+   "n": 22,
+   "sample": "Judging a Horse",
+   "ms": 659
   },
   "Art Institute of Chicago": {
    "ok": true,
-   "n": 24,
+   "n": 12,
    "err": "imagen no comprobable desde GitHub (protección contra robots)",
-   "sample": "View of Cotopaxi",
-   "ms": 612
+   "sample": "Village in Brittany",
+   "ms": 306
   },
   "Cleveland Museum of Art": {
    "ok": true,
    "n": 24,
-   "sample": "Plants and Insects",
-   "ms": 1431
+   "sample": "Text, Folio 109 (verso), from a Manuscript of the Perfection",
+   "ms": 1047
   },
   "Rijksmuseum": {
    "ok": true,
    "n": 8,
-   "sample": "Memory",
-   "ms": 3343
+   "sample": "Portrait of Maria Petitpas (?-1640)",
+   "ms": 2890
   },
   "Victoria and Albert": {
    "ok": true,
    "n": 24,
-   "sample": "Landscape with River: Moonlight",
-   "ms": 1628
+   "sample": "Kusha and Lava",
+   "ms": 1201
   },
   "SMK": {
    "ok": true,
-   "n": 21,
-   "sample": "Stomach, lap and leg of a small boy",
-   "ms": 1418
+   "n": 4,
+   "sample": "Krimskrams",
+   "ms": 2597
   },
   "Minneapolis": {
    "ok": true,
-   "n": 16,
-   "sample": "Spring Tree Grove Before Rain",
-   "ms": 1494
+   "n": 1,
+   "sample": "Woman's long-sleeved kimono (furisode) with design of a fish",
+   "ms": 1708
   },
   "Smithsonian": {
    "ok": true,
-   "n": 23,
-   "sample": "Forest Scene",
-   "ms": 1605
+   "n": 24,
+   "sample": "Nudes in Landscape",
+   "ms": 1200
   },
   "Europeana": {
    "ok": true,
    "n": 24,
-   "sample": "Gerhard Richter - Painting",
-   "ms": 2135
+   "sample": "Painting",
+   "ms": 1383
   },
   "Wikidata (museo)": {
    "ok": true,
-   "n": 1,
-   "sample": "Venus and Amore",
-   "ms": 605,
+   "n": 2,
+   "sample": "Sin título",
+   "ms": 1422,
    "timing": {
     "app": {
-     "ms": 46,
+     "ms": 11,
      "status": 200,
      "n": "841"
     },
     "conPista": {
-     "ms": 136,
+     "ms": 88,
      "status": 200,
      "n": "841"
     },
     "selApp": {
-     "ms": 65016,
+     "ms": 65003,
      "status": 504,
      "rows": 0,
      "head": "upstream request timeout"
     },
     "selSub": {
-     "ms": 383,
+     "ms": 1072,
      "status": 200,
      "rows": 3
     }
@@ -89,63 +89,63 @@
   },
   "Wikidata (general)": {
    "ok": true,
-   "n": 42,
-   "sample": "On the Boat",
-   "ms": 429
+   "n": 54,
+   "sample": "Entrance to the Village of Vétheuil in Winter",
+   "ms": 1457
   },
   "Commons": {
    "ok": true,
    "n": 34,
-   "sample": "Portrait of a Standing Woman . Alternative title(s): A Dutch",
-   "ms": 7017
+   "sample": "Forging of the Sampo",
+   "ms": 3112
   },
   "Google Art Project": {
    "ok": true,
-   "n": 40,
-   "sample": "Self portrait in Smock Félix Nadar",
-   "ms": 2733
+   "n": 36,
+   "sample": "I Wait, by Julia Margaret Cameron",
+   "ms": 1020
   },
   "Wikipedia": {
    "ok": true,
-   "n": 20,
-   "sample": "Impression, Sunrise",
-   "ms": 492
+   "n": 19,
+   "sample": "Snow at Argenteuil",
+   "ms": 466
   },
   "WikiArt": {
    "ok": true,
    "n": 60,
-   "sample": "Seascape at Berck, Fishing Boats and Fishermen",
-   "ms": 1409
+   "sample": "The Seine Below Rouen",
+   "ms": 1758
   },
   "MoMA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Card Trick",
-   "ms": 921
+   "sample": "Big Grey Robe",
+   "ms": 656
   },
   "NGA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Self-Portrait",
-   "ms": 970
+   "sample": "The Equatorial Jungle",
+   "ms": 566
   },
   "Tate (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "You Can’t Please All",
-   "ms": 1896
+   "sample": "The Schoolmistress",
+   "ms": 1008
   },
   "Louvre (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "La récolte de la manne",
-   "ms": 2371
+   "sample": "L'Hiver",
+   "ms": 234
   },
   "Prado (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "El poeta Manuel José Quintana",
-   "ms": 382
+   "sample": "Abril (Tauro)",
+   "ms": 216
   }
  }
 }
