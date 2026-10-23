@@ -42,7 +42,8 @@ async function resolve(m) {
   const cands = new Set();
   for (const [l, lang] of m.labels) for (const v of new Set([l, l.replace(/'/g, '\u2019')])) (await search(v, lang)).forEach(id => cands.add(id));
   if (!cands.size) return [];
-  const rows = await sparql('SELECT ?c (COUNT(DISTINCT ?item) AS ?n) WHERE { VALUES ?c { ' + [...cands].map(q => 'wd:' + q).join(' ') + ' } ?item wdt:P195/wdt:P361* ?c; wdt:P18 ?img. } GROUP BY ?c ORDER BY DESC(?n) LIMIT 1');
+  // Conteo directo (sin departamentos): rápido; con la ruta P361* a veces se agotaba el tiempo.
+  const rows = await sparql('SELECT ?c (COUNT(DISTINCT ?item) AS ?n) WHERE { VALUES ?c { ' + [...cands].slice(0, 12).map(q => 'wd:' + q).join(' ') + ' } ?item wdt:P195 ?c; wdt:P18 ?img. } GROUP BY ?c ORDER BY DESC(?n) LIMIT 1');
   const top = rows[0];
   if (!top || +top.n.value < MIN) return [];
   return [top.c.value.split('/').pop()];
@@ -101,8 +102,12 @@ function write(key, { qids, by }) {
   fs.writeFileSync(path.join(out, 'index.json'), JSON.stringify(index));
 }
 
-const keys = process.argv.slice(2).length ? process.argv.slice(2) : C.WD_SHARDS;
-const summary = {}, failed = [];
+// Sin argumentos se rehacen solo los museos que fallaron o tienen más de 6 días (el lunes, todos); FORCE=1 los rehace todos.
+const prev = (() => { try { return JSON.parse(fs.readFileSync(path.join(OUT, 'wd-summary.json'), 'utf8')); } catch (e) { return { museums: {} }; } })();
+const fresh = k => { const p = prev.museums[k]; const at = p && (p.at || prev.at); return p && !p.error && at && Date.now() - Date.parse(at) < 6 * 864e5 && fs.existsSync(path.join(OUT, k, 'index.json')); };
+const keys = process.argv.slice(2).length ? process.argv.slice(2) : C.WD_SHARDS.filter(k => process.env.FORCE === '1' || !fresh(k));
+console.log('Museos a generar:', keys.length, keys.join(' '));
+const summary = Object.assign({}, prev.museums), failed = [];
 for (const k of keys) {
   const m = C.MUSEUMS.find(x => x.id === k);
   try {
@@ -110,10 +115,10 @@ for (const k of keys) {
     const total = Object.values(res.by).reduce((s, r) => s + r.length, 0);
     if (total < MIN) throw new Error('muy pocas obras (' + total + '): no se sobrescribe');
     write(k, res);
-    summary[k] = Object.fromEntries(Object.entries(res.by).map(([t, r]) => [t, r.length]).concat([['q', res.qids.join(',')]]));
+    summary[k] = Object.fromEntries(Object.entries(res.by).map(([t, r]) => [t, r.length]).concat([['q', res.qids.join(',')], ['at', new Date().toISOString().slice(0, 10)]]));
     console.log(k, JSON.stringify(summary[k]));
-  } catch (e) { failed.push(k); summary[k] = { error: e.message }; console.error('ERROR', k, e.message); } // se conservan los datos anteriores
+  } catch (e) { failed.push(k); summary[k] = Object.assign({}, prev.museums[k] && !prev.museums[k].error ? prev.museums[k] : {}, { error: e.message }); console.error('ERROR', k, e.message); } // se conservan los datos anteriores
   await sleep(1500);
 }
 fs.writeFileSync(path.join(OUT, 'wd-summary.json'), JSON.stringify({ at: new Date().toISOString().slice(0, 10), museums: summary }, null, 1));
-if (failed.length === keys.length) process.exit(1);
+if (keys.length && failed.length === keys.length) process.exit(1);

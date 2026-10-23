@@ -20,6 +20,8 @@ jobs:
           node-version: 22
       - name: Descargar obras de Wikidata (museos sin API propia)
         run: node tools/wd-shards.mjs
+        env:
+          FORCE: ${{ github.event_name == 'schedule' && '1' || '0' }}
       - name: Guardar si cambió algo
         run: |
           git config user.name "colecciones-bot"
