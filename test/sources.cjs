@@ -4,11 +4,15 @@ const C = require('../src/core.js');
 const J = o => ({ ok: true, status: 200, json: async () => o });
 const log = [];
 const idx = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/moma/index.json'), 'utf8'));
+const WDFX = { 'index.json': { painting: [{ f: 'painting-0.json', n: 3, y0: 1503, y1: 1950 }] },
+  'painting-0.json': [[12418, 'La Gioconda', 'Leonardo da Vinci', 1503, 'Mona_Lisa,_by_Leonardo_da_Vinci,_from_C2RMF_retouched.jpg'], [1, 'Otra', 'Pintor', 1870, 'Otra_obra.jpg'], [2, 'Moderna', 'Pintor moderno', 1950, 'Moderna.png']] };
 (async () => {
   // token: reconstruir y decodificar
   const rows0 = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/moma', idx.painting[0].f), 'utf8'));
   globalThis.fetch = async u => {
     u = String(u); log.push(u);
+    const wm = u.match(/data\/(louvre|orsay|prado)\/(.+)$/);
+    if (wm) { if (!u.startsWith('http')) throw new Error('relativa'); if (wm[1] === 'prado') return { ok: false, status: 404, json: async () => ({}) }; const fx = WDFX[wm[2]]; return fx ? J(fx) : { ok: false, status: 404, json: async () => ({}) }; }
     const dm = u.match(/data\/(moma|nga|tate)\/(.+)$/); if (dm) { if (!u.startsWith('http')) throw new Error('relativa'); return J(JSON.parse(fs.readFileSync(path.join(__dirname, '../data', dm[1], dm[2]), 'utf8'))); }
     if (false) return J({ meta: { pages: { total_pages: 3 } }, data: [
       { id: 'abc-123', attributes: { title_display: { attributes: { value: 'Flowers' } }, creator_display: 'x' }, links: { iiif: 'https://iiif-cloud.princeton.edu/iiif/2/ab%2Fcd%2Fef%2Fabcdef/full/!200,200/0/default.jpg' } },
@@ -53,6 +57,19 @@ const idx = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/moma/index.
   const pg = Object.assign({}, plan, { artist: 'Vincent van Gogh' });
   const vg = (await C.adapters.ngaFetch(pg, C.defaultFilters(), ctx)).concat(await C.adapters.momaFetch(pg, C.defaultFilters(), ctx));
   assert.ok(vg.length > 3 && vg.every(x => /gogh/i.test(x.artist)), 'Van Gogh en NGA/MoMA: ' + vg.length);
+  { // colecciones precargadas desde Wikidata (Louvre, Orsay, Prado)
+    const louvre = C.SOURCE_LIST.find(s => s.id === 'm:louvre'), prado = C.SOURCE_LIST.find(s => s.id === 'm:prado');
+    assert.ok(/^Directa/.test(louvre.note), 'el Louvre tiene lista directa: ' + louvre.note);
+    const rep = {};
+    const out = await C.runSource(louvre, C.defaultFilters(), Object.assign({}, ctx, { report: (n, c, e) => { rep[n] = e ? 'x' : c; } }));
+    assert.strictEqual(rep.Directa, 3, 'la lista del Louvre aporta sus obras (aunque se pida otro tipo): ' + JSON.stringify(rep));
+    const gi = out.find(x => x.src === 'louvre' && x.title === 'La Gioconda');
+    assert.ok(gi && gi.museum === 'Louvre (París)' && gi.url === 'https://www.wikidata.org/wiki/Q12418' && gi.pd === true, 'ficha: ' + JSON.stringify(gi));
+    assert.strictEqual(gi.imgs[0], 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa,_by_Leonardo_da_Vinci,_from_C2RMF_retouched.jpg/1920px-Mona_Lisa,_by_Leonardo_da_Vinci,_from_C2RMF_retouched.jpg');
+    assert.ok(out.find(x => x.title === 'Moderna').pd === null, 'obra moderna: sin marcar como dominio público');
+    const rp = {}; await C.runSource(prado, C.defaultFilters(), Object.assign({}, ctx, { report: (n, c, e) => { rp[n] = e ? 'x' : c; } }));
+    assert.strictEqual(rp.Directa, 0, 'sin lista todavía: no es un error, el museo sigue con sus otras fuentes');
+  }
   // catálogo de artistas y estilos
   const names = [].concat(...C.ARTIST_GROUPS.map(g => g.names));
   assert.ok(new Set(names).size >= 200 && names.includes('Remedios Varo'), 'al menos 200 artistas');

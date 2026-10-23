@@ -712,15 +712,15 @@ const MUSEUMS = [
   { id: 'si', es: 'Smithsonian (SAAM, Freer, Hirshhorn, NPG)', city: 'Washington', ids: [], direct: 'si', labels: [['Smithsonian American Art Museum', 'en'], ['Freer Gallery of Art', 'en'], ['Hirshhorn Museum and Sculpture Garden', 'en']], q: 'Smithsonian American Art Museum', needsKey: 'si' },
   { id: 'harvard', es: 'Harvard Art Museums', city: 'Cambridge (EE. UU.)', ids: [], direct: 'harvard', labels: [['Harvard Art Museums', 'en']], needsKey: 'harvard' },
   { id: 'open', es: 'Colecciones abiertas', city: 'WikiArt, Google Art Project, Commons, Wikipedia, Wikidata y Europeana', ids: [], open: true, labels: [], q: '', note: 'No distinguen museos: se mezclan con cualquier museo' },
-  { id: 'louvre', es: 'Louvre', city: 'París', ids: ['Q19675'], labels: [['Louvre', 'en'], ['Musée du Louvre', 'fr'], ['Louvre Museum', 'en']] },
-  { id: 'orsay', es: 'Orsay', city: 'París', ids: ['Q23402'], labels: [["Musée d'Orsay", 'fr'], ["Musée d'Orsay", 'en'], ['Orsay Museum', 'en']] },
+  { id: 'louvre', es: 'Louvre', city: 'París', ids: ['Q19675'], direct: 'louvre', labels: [['Louvre', 'en'], ['Musée du Louvre', 'fr'], ['Louvre Museum', 'en']] },
+  { id: 'orsay', es: 'Orsay', city: 'París', ids: ['Q23402'], direct: 'orsay', labels: [["Musée d'Orsay", 'fr'], ["Musée d'Orsay", 'en'], ['Orsay Museum', 'en']] },
   { id: 'versailles', es: 'Versalles', city: 'Versalles', ids: ['Q2946'], labels: [['Palace of Versailles', 'en'], ['Château de Versailles', 'fr'], ['Musée national des châteaux de Versailles et de Trianon', 'fr']] },
   { id: 'orangerie', es: 'Orangerie', city: 'París', ids: [], labels: [["Musée de l'Orangerie", 'fr'], ["Musée de l'Orangerie", 'en'], ['Orangerie Museum', 'en']] },
   { id: 'marmottan', es: 'Marmottan Monet', city: 'París', ids: [], labels: [['Musée Marmottan Monet', 'fr'], ['Musée Marmottan Monet', 'en']] },
   { id: 'petitpalais', es: 'Petit Palais', city: 'París', ids: [], labels: [['Petit Palais', 'fr'], ['Petit Palais', 'en']] },
   { id: 'carnavalet', es: 'Carnavalet', city: 'París', ids: [], labels: [['Musée Carnavalet', 'fr'], ['Musée Carnavalet', 'en'], ['Carnavalet Museum', 'en']] },
   { id: 'lyon', es: 'Bellas Artes de Lyon', city: 'Lyon', ids: [], labels: [['Musée des Beaux-Arts de Lyon', 'fr'], ['Museum of Fine Arts of Lyon', 'en']] },
-  { id: 'prado', es: 'Prado', city: 'Madrid', ids: ['Q160112'], labels: [['Museo del Prado', 'es'], ['Prado Museum', 'en'], ['Museo Nacional del Prado', 'es']] },
+  { id: 'prado', es: 'Prado', city: 'Madrid', ids: ['Q160112'], direct: 'prado', labels: [['Museo del Prado', 'es'], ['Prado Museum', 'en'], ['Museo Nacional del Prado', 'es']] },
   { id: 'thyssen', es: 'Thyssen-Bornemisza', city: 'Madrid', ids: [], labels: [['Museo Thyssen-Bornemisza', 'es'], ['Thyssen-Bornemisza Museum', 'en']] },
   { id: 'uffizi', es: 'Uffizi', city: 'Florencia', ids: ['Q51252'], labels: [['Uffizi Gallery', 'en'], ['Galleria degli Uffizi', 'it'], ['Uffizi', 'en']] },
   { id: 'brera', es: 'Pinacoteca de Brera', city: 'Milán', ids: [], labels: [['Pinacoteca di Brera', 'it'], ['Brera Art Gallery', 'en']] },
@@ -1573,6 +1573,15 @@ const SHARDS = {
     url: r => 'https://www.tate.org.uk/art/artworks/' + r[5]
   }
 };
+/* Colecciones precargadas desde Wikidata (tools/wd-shards.py, cada semana): museos sin API propia. Fila: [QID, título, artista, año, archivo de Commons]. */
+const WD_SHARDS = ['louvre', 'orsay', 'prado'];
+WD_SHARDS.forEach(k => {
+  const m = MUSEUMS.find(x => x.id === k);
+  SHARDS[k] = {
+    wd: true, museum: m ? m.es + ' (' + m.city + ')' : k, license: 'Imagen de Wikimedia Commons',
+    img: (r, px) => commonsImgs('https://commons.wikimedia.org/wiki/Special:FilePath/' + encodeURIComponent(r[4]), px), url: r => 'https://www.wikidata.org/wiki/Q' + r[0]
+  };
+});
 const SHARD_RAW = 'https://raw.githubusercontent.com/Mrtana/screenart/main/data/';
 async function shardJSON(key, name) {
   return memo('shard:' + key + '/' + name, async () => {
@@ -1583,8 +1592,11 @@ async function shardJSON(key, name) {
 const nameHas = (hay, who) => { const h = norm(hay); return who.split(/\s+/).every(t => h.includes(t)); };
 async function shardFetch(key, plan, ctx) {
   const S = SHARDS[key];
-  const type = plan.type || 'painting';
-  const index = await shardJSON(key, 'index.json');
+  let index;
+  try { index = await shardJSON(key, 'index.json'); }
+  catch (e) { if (S.wd && e.status === 404) return []; throw e; } // la lista semanal aún no existe: el museo sigue con sus otras fuentes
+  // En las listas de Wikidata solo hay pintura, dibujo y estampa: cualquier otro tipo pedido usa pintura.
+  const type = S.wd && !index[plan.type] ? 'painting' : (plan.type || 'painting');
   let parts = index[type] || [];
   if (plan.range) parts = parts.filter(p => p.y1 == null || (p.y1 >= plan.range[0] && p.y0 <= plan.range[1]));
   if (!parts.length) return [];
@@ -1596,7 +1608,7 @@ async function shardFetch(key, plan, ctx) {
   if (plan.range) hits = hits.filter(r => r[3] != null);
   return sampleN(hits, 40).map(r => mk({
     src: key, museum: S.museum, id: r[0], title: r[1], artist: r[2], date: r[3] == null ? '' : String(r[3]), year: r[3],
-    imgs: S.img(r, PX(ctx)), url: S.url(r), type, pd: null, license: S.license
+    imgs: S.img(r, PX(ctx)), url: S.url(r), type, pd: S.wd && r[3] != null && r[3] <= 1900 ? true : null, license: S.license
   }));
 }
 const momaFetch = (plan, f, ctx) => shardFetch('moma', plan, ctx);
@@ -1605,6 +1617,7 @@ const tateFetch = (plan, f, ctx) => shardFetch('tate', plan, ctx);
 
 const GENERIC = ['landscape', 'portrait', 'flowers', 'sea', 'garden', 'still life', 'river', 'mountains', 'figure', 'city', 'harbor', 'winter', 'horse', 'woman', 'sky', 'forest', 'village', 'ship', 'night', 'mother'];
 
+WD_SHARDS.forEach(k => { DIRECT[k] = (plan, f, ctx) => shardFetch(k, plan, ctx); });
 DIRECT.moma = momaFetch; DIRECT.nga = ngaFetch; DIRECT.tate = tateFetch; DIRECT.met = metFetch; DIRECT.aic = aicFetch; DIRECT.cma = cmaFetch; DIRECT.rijks = rijksFetch; DIRECT.vam = vamFetch; DIRECT.smk = smkFetch; DIRECT.mia = miaFetch; DIRECT.si = siFetch; DIRECT.harvard = harvardFetch;
 const MUSEUM_SOURCES = [];
 MUSEUMS.forEach(m => { const src = museumSource(m); SOURCE_LIST.push(src); MUSEUM_SOURCES.push(src); });
