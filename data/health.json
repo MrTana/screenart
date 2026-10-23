@@ -1,151 +1,156 @@
 {
- "at": "2026-10-23 03:01 UTC",
- "ok": 20,
+ "at": "2026-10-23 03:05 UTC",
+ "ok": 19,
  "total": 20,
  "results": {
   "The Met": {
    "ok": true,
-   "n": 27,
-   "sample": "View of the Kamo River from Sanbogi at Dawn",
-   "ms": 1792
+   "n": 15,
+   "sample": "Owl on a Pine Branch",
+   "ms": 1340
   },
   "Art Institute of Chicago": {
    "ok": true,
-   "n": 18,
+   "n": 24,
    "err": "imagen no comprobable desde GitHub (protección contra robots)",
-   "sample": "Icebound",
-   "ms": 866
+   "sample": "Winged Figure",
+   "ms": 569
   },
   "Cleveland Museum of Art": {
    "ok": true,
    "n": 24,
-   "sample": "Krishna quells the serpent Kaliya (verso), from a Kalighat a",
-   "ms": 1272
+   "sample": "Two Putti",
+   "ms": 2652
   },
   "Rijksmuseum": {
    "ok": true,
    "n": 8,
-   "sample": "Portrait of Sir Peter Courten (1599-1624)",
-   "ms": 4193
+   "sample": "The Fish Market in Antwerp",
+   "ms": 3697
   },
   "Victoria and Albert": {
    "ok": true,
    "n": 24,
-   "sample": "Macbeth",
-   "ms": 1983
+   "sample": "Painting",
+   "ms": 1691
   },
   "SMK": {
    "ok": true,
-   "n": 8,
-   "sample": "Scenografisk optegnelse",
-   "ms": 2929
+   "n": 4,
+   "sample": "St Peter, two heads of bearded old men, and two sketches of ",
+   "ms": 2438
   },
   "Minneapolis": {
    "ok": true,
-   "n": 7,
-   "sample": "Winter Landscape",
-   "ms": 969
+   "n": 10,
+   "sample": "Pure Sound of the Rivers and Mountains",
+   "ms": 899
   },
   "Smithsonian": {
    "ok": true,
    "n": 24,
-   "sample": "Apples on Table",
-   "ms": 1302
+   "sample": "Florida Village",
+   "ms": 2111
   },
   "Europeana": {
    "ok": true,
    "n": 24,
-   "sample": "painting, drawing board,",
-   "ms": 2078
+   "sample": "Gerhard Richter - Painting",
+   "ms": 2206
   },
   "Wikidata (museo)": {
-   "ok": true,
-   "n": 1,
-   "sample": "Britannicus in toga",
-   "ms": 3935,
+   "ok": false,
+   "n": 0,
+   "err": "Tiempo de espera agotado",
+   "ms": 40003,
    "timing": {
     "app": {
-     "ms": 58,
+     "ms": 55,
      "status": 200,
      "n": "841"
     },
     "conPista": {
-     "ms": 429,
+     "ms": 433,
      "status": 200,
      "n": "841"
     },
     "selApp": {
-     "ms": 65063,
+     "ms": 65024,
      "status": 504,
      "rows": 0,
      "head": "upstream request timeout"
     },
     "selSub": {
-     "ms": 502,
+     "ms": 290,
      "status": 200,
      "rows": 3
     }
+   },
+   "diag": {
+    "simpleCountMs": 392,
+    "status": 200,
+    "body": "{\n  \"head\" : {\n    \"vars\" : [ \"n\" ]\n  },\n  \"results\" : {\n    \"bindings\" : [ {\n      \"n\" : {\n        \"datatype\" : \"http://www.w3.org/2001/XMLSchema#integer\",\n        \"type\" : \"literal\",\n        \"value\""
    }
   },
   "Wikidata (general)": {
    "ok": true,
-   "n": 47,
-   "sample": "The Windmill on the Onbekende Gracht, Amsterdam",
-   "ms": 619
+   "n": 35,
+   "sample": "Garden at Bordighera, Impression of Morning",
+   "ms": 1124
   },
   "Commons": {
    "ok": true,
-   "n": 34,
-   "sample": "A Winter Scene",
-   "ms": 6622
+   "n": 36,
+   "sample": "Madame Moitessier",
+   "ms": 3065
   },
   "Google Art Project": {
    "ok": true,
    "n": 39,
-   "sample": "The Laboratory",
-   "ms": 3789
+   "sample": "Fishermen at Sea",
+   "ms": 5036
   },
   "Wikipedia": {
    "ok": true,
-   "n": 16,
-   "sample": "List of most expensive paintings",
-   "ms": 612
+   "n": 22,
+   "sample": "En plein air",
+   "ms": 450
   },
   "WikiArt": {
    "ok": true,
    "n": 60,
-   "sample": "Wharf of Louvre, Paris",
-   "ms": 2022
+   "sample": "The Garden",
+   "ms": 1679
   },
   "MoMA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Double Transparency",
-   "ms": 726
+   "sample": "I",
+   "ms": 628
   },
   "NGA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "The Departure",
-   "ms": 1086
+   "sample": "Rue Terre Neuve, Meudon",
+   "ms": 581
   },
   "Tate (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Frederick and Jessie Etchells Painting",
-   "ms": 1386
+   "sample": "White Collage",
+   "ms": 823
   },
   "Louvre (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Salomé avec la tête de Jean-Baptiste",
-   "ms": 1003
+   "sample": "Saint Antoine abbé",
+   "ms": 475
   },
   "Prado (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Peñaranda de Duero",
-   "ms": 596
+   "sample": "La cena de San Benito",
+   "ms": 294
   }
  }
 }
