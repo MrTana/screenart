@@ -54,6 +54,8 @@
   --i-fs:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z'/%3E%3C/svg%3E");
   --i-cast:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M21 3H3c-1.1 0-2 .9-2 2v3h2V5h18v14h-7v2h7c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM1 18v3h3c0-1.66-1.34-3-3-3zm0-4v2c2.76 0 5 2.24 5 5h2c0-3.87-3.13-7-7-7zm0-4v2c4.97 0 9 4.03 9 9h2c0-6.08-4.93-11-11-11z'/%3E%3C/svg%3E");
   --i-refresh:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z'/%3E%3C/svg%3E");
+  --i-doneall:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M18 7l-1.41-1.41-6.34 6.34 1.41 1.41L18 7zm4.24-1.41L11.66 16.17 7.48 12l-1.41 1.41L11.66 19l12-12-1.42-1.41zM.41 13.41L6 19l1.41-1.41L1.83 12 .41 13.41z'/%3E%3C/svg%3E");
+  --i-removedone:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M1.79 12l5.58 5.59L5.96 19 .37 13.41 1.79 12zm.45-7.78L12.9 14.89l-1.28 1.28L7.44 12l-1.41 1.41L11.62 19l2.69-2.69 4.89 4.89 1.41-1.41L3.65 2.81 2.24 4.22zm14.9 9.27L23.62 7 22.2 5.59l-6.48 6.48 1.42 1.42zM17.96 7l-1.41-1.41-3.65 3.66 1.41 1.41L17.96 7z'/%3E%3C/svg%3E");
   --dur:30s; color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -286,6 +288,9 @@ section.sec .hint{margin:8px 0 0;font:400 14px/20px var(--sans);color:var(--md-o
 .dot.ok{background:var(--ok)}.dot.loading{background:var(--warn);animation:pulse 1s infinite}.dot.error{background:var(--bad)}.dot.empty{background:var(--warn)}
 @keyframes pulse{50%{opacity:.3}}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.musrow{flex-wrap:nowrap}.musrow input{flex:1;min-width:0}
+.ibtn.tonal{background:var(--md-secondary-container);color:var(--md-on-secondary-container)}
+.ibtn.tonal::before{--ic:inherit}
 details.adv{margin-top:24px;border-top:1px solid var(--md-outline-variant);padding-top:16px}
 details.adv summary{cursor:pointer;color:var(--md-on-surface-variant);font:500 14px/20px var(--sans);min-height:40px}
 details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans);color:var(--md-on-surface-variant)}
@@ -376,8 +381,7 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
   <section class="acc" data-acc="museos">
     <button class="acch" data-act="acc" data-id="museos" aria-expanded="false"><span class="at">Museos</span><span class="as" data-sum="museos"></span><span class="ac">›</span></button>
     <div class="accb">
-      <div class="row"><button class="btn" data-act="mus-all">Marcar los de la lista</button><button class="btn" data-act="mus-none">Quitar los de la lista</button></div>
-      <div class="row"><input type="search" id="museumFilter" placeholder="Filtrar la lista (ej. París, Prado, México)" autocomplete="off"></div>
+      <div class="row musrow"><input type="search" id="museumFilter" placeholder="Filtrar la lista (ej. París, Prado, México)" autocomplete="off"><button class="ibtn tonal" data-act="mus-all" aria-label="Marcar todos los de la lista" title="Marcar todos los de la lista" style="--ic:var(--i-doneall)"></button><button class="ibtn tonal" data-act="mus-none" aria-label="Quitar todos los de la lista" title="Quitar todos los de la lista" style="--ic:var(--i-removedone)"></button></div>
       <p class="hint" id="sweepInfo" role="status" style="margin:6px 0"></p>
       <div class="srcs" id="c-msrcs"></div>
       <div class="row"><input type="text" id="museumIn" placeholder="Añadir otro museo por su nombre" autocomplete="off"><button class="btn" data-act="add-museum">Añadir</button></div>
