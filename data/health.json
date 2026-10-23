@@ -1,0 +1,128 @@
+{
+ "at": "2026-10-23 01:39 UTC",
+ "ok": 15,
+ "total": 20,
+ "results": {
+  "The Met": {
+   "ok": true,
+   "n": 8,
+   "sample": "Granite",
+   "ms": 2272
+  },
+  "Art Institute of Chicago": {
+   "ok": false,
+   "n": 0,
+   "err": "sin obras",
+   "ms": 653
+  },
+  "Cleveland Museum of Art": {
+   "ok": true,
+   "n": 24,
+   "sample": "Children at Play",
+   "ms": 1640
+  },
+  "Rijksmuseum": {
+   "ok": true,
+   "n": 8,
+   "sample": "Pieter Mijer (1812-81). Gouverneur-generaal van Nederlands O",
+   "ms": 4011
+  },
+  "Victoria and Albert": {
+   "ok": true,
+   "n": 24,
+   "sample": "Drury Lane Design Collection",
+   "ms": 1721
+  },
+  "SMK": {
+   "ok": true,
+   "n": 6,
+   "sample": "Den bodfærdige Maria Magdalene",
+   "ms": 2837
+  },
+  "Minneapolis": {
+   "ok": false,
+   "n": 7,
+   "err": "HTTP 200 ",
+   "sample": "At the Spring",
+   "ms": 1453
+  },
+  "Smithsonian": {
+   "ok": true,
+   "n": 24,
+   "sample": "Night Moths",
+   "ms": 1554
+  },
+  "Europeana": {
+   "ok": true,
+   "n": 24,
+   "sample": "Painting",
+   "ms": 2176
+  },
+  "Wikidata (museo)": {
+   "ok": false,
+   "n": 0,
+   "err": "HTTP 403",
+   "ms": 160
+  },
+  "Wikidata (general)": {
+   "ok": false,
+   "n": 0,
+   "err": "HTTP 403",
+   "ms": 103
+  },
+  "Commons": {
+   "ok": true,
+   "n": 33,
+   "sample": "Riding to the Hunt",
+   "ms": 8319
+  },
+  "Google Art Project": {
+   "ok": true,
+   "n": 39,
+   "sample": "Bifolio from a Koran",
+   "ms": 5014
+  },
+  "Wikipedia": {
+   "ok": false,
+   "n": 0,
+   "err": "sin obras",
+   "ms": 629
+  },
+  "WikiArt": {
+   "ok": true,
+   "n": 60,
+   "sample": "Young Girl Holding a Loose Bouquet",
+   "ms": 2216
+  },
+  "MoMA (lista)": {
+   "ok": true,
+   "n": 40,
+   "sample": "Keeper",
+   "ms": 1170
+  },
+  "NGA (lista)": {
+   "ok": true,
+   "n": 40,
+   "sample": "The Red Cross Knight",
+   "ms": 1350
+  },
+  "Tate (lista)": {
+   "ok": true,
+   "n": 40,
+   "sample": "The Only Blonde in the World",
+   "ms": 1124
+  },
+  "Louvre (lista precargada)": {
+   "ok": true,
+   "n": 40,
+   "sample": "Saint diacre (Laurent ?)",
+   "ms": 1743
+  },
+  "Prado (lista precargada)": {
+   "ok": true,
+   "n": 40,
+   "sample": "Caballero de la Orden de Santiago",
+   "ms": 511
+  }
+ }
+}
