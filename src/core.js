@@ -883,7 +883,27 @@ const MORE_MUSEUMS = [
   ['mmfa', 'Museo de Bellas Artes de Montreal', 'Montreal', 'Canadá', 'surreal', ['Montreal Museum of Fine Arts@en', 'Musée des beaux-arts de Montréal@fr']],
   ['malba', 'MALBA', 'Buenos Aires', 'Argentina', 'surreal', ['Museo de Arte Latinoamericano de Buenos Aires@es', 'MALBA@es']],
   ['momat', 'Museo Nacional de Arte Moderno de Tokio', 'Tokio', 'Japón', 'surreal', ['National Museum of Modern Art, Tokyo@en', 'MOMAT@en']],
-  ['lam', 'Museo Nacional de Bellas Artes de Cuba', 'La Habana', 'Cuba', 'surreal', ['Museo Nacional de Bellas Artes de Cuba@es', 'National Museum of Fine Arts of Cuba@en']]
+  ['lam', 'Museo Nacional de Bellas Artes de Cuba', 'La Habana', 'Cuba', 'surreal', ['Museo Nacional de Bellas Artes de Cuba@es', 'National Museum of Fine Arts of Cuba@en']],
+  // Grandes pinacotecas que faltaban (entre los museos de arte más importantes del mundo)
+  ['gemaelde', 'Gemäldegalerie', 'Berlín', 'Alemania', '', ['Gemäldegalerie@de', 'Gemäldegalerie, Berlin@en', 'Gemäldegalerie Berlin@en']],
+  ['altenational', 'Alte Nationalgalerie', 'Berlín', 'Alemania', '', ['Alte Nationalgalerie@de', 'Alte Nationalgalerie@en']],
+  ['wallraf', 'Wallraf-Richartz', 'Colonia', 'Alemania', '', ['Wallraf-Richartz-Museum@de', 'Wallraf–Richartz Museum@en', 'Wallraf-Richartz Museum@en']],
+  ['vaticanos', 'Museos Vaticanos', 'Ciudad del Vaticano', 'Vaticano', '', ['Vatican Museums@en', 'Musei Vaticani@it', 'Pinacoteca Vaticana@it', 'Vatican Pinacotheca@en']],
+  ['capodimonte', 'Museo de Capodimonte', 'Nápoles', 'Italia', '', ['Museo di Capodimonte@it', 'Museo e Real Bosco di Capodimonte@it', 'Museo Nazionale di Capodimonte@it', 'Museo di Capodimonte@en']],
+  ['pitti', 'Palacio Pitti (Galería Palatina)', 'Florencia', 'Italia', '', ['Galleria Palatina@it', 'Palatine Gallery@en', 'Palazzo Pitti@it', 'Palazzo Pitti@en']],
+  ['barberini', 'Galería Nacional de Arte Antiguo (Barberini y Corsini)', 'Roma', 'Italia', '', ["Galleria Nazionale d'Arte Antica@it", "Galleria Nazionale d'Arte Antica@en", 'Palazzo Barberini@it', 'Galleria Corsini@it']],
+  ['carrara', 'Accademia Carrara', 'Bérgamo', 'Italia', '', ['Accademia Carrara@it', 'Accademia Carrara@en']],
+  ['conde', 'Museo Condé (Chantilly)', 'Chantilly', 'Francia', '', ['Musée Condé@fr', 'Musée Condé@en']],
+  ['budapest', 'Museo de Bellas Artes de Budapest', 'Budapest', 'Hungría', '', ['Szépművészeti Múzeum@hu', 'Museum of Fine Arts, Budapest@en', 'Museum of Fine Arts (Budapest)@en']],
+  ['varsovia', 'Museo Nacional de Varsovia', 'Varsovia', 'Polonia', '', ['Muzeum Narodowe w Warszawie@pl', 'National Museum in Warsaw@en']],
+  ['rusomuseum', 'Museo Ruso', 'San Petersburgo', 'Rusia', '', ['Russian Museum@en', 'State Russian Museum@en', 'Государственный Русский музей@ru', 'Русский музей@ru']],
+  ['npglondon', 'National Portrait Gallery (Londres)', 'Londres', 'Reino Unido', '', ['National Portrait Gallery, London@en', 'National Portrait Gallery (London)@en']],
+  ['barnes', 'Fundación Barnes', 'Filadelfia', 'Estados Unidos', '', ['Barnes Foundation@en', 'The Barnes Foundation@en']],
+  ['phillips', 'Phillips Collection', 'Washington', 'Estados Unidos', '', ['The Phillips Collection@en', 'Phillips Collection@en']],
+  ['gardner', 'Isabella Stewart Gardner Museum', 'Boston', 'Estados Unidos', '', ['Isabella Stewart Gardner Museum@en']],
+  ['nelson', 'Nelson-Atkins Museum of Art', 'Kansas City', 'Estados Unidos', '', ['Nelson-Atkins Museum of Art@en', 'The Nelson-Atkins Museum of Art@en']],
+  ['neuegalerie', 'Neue Galerie (Nueva York)', 'Nueva York', 'Estados Unidos', '', ['Neue Galerie New York@en', 'Neue Galerie@en']],
+  ['nmwa', 'Museo Nacional de Arte Occidental', 'Tokio', 'Japón', '', ['National Museum of Western Art@en', '国立西洋美術館@ja']]
 ];
 const TAG_NAMES = { mx: 'México', be: 'Bélgica', surreal: 'surrealismo', artist: 'museos de un solo artista' };
 MORE_MUSEUMS.forEach(r => MUSEUMS.push({ id: r[0], es: r[1], city: r[2], country: r[3], tags: r[4].split(' ').filter(Boolean), ids: [], labels: r[5].map(x => { const k = x.lastIndexOf('@'); return [x.slice(0, k), x.slice(k + 1)]; }) }));
@@ -916,7 +936,7 @@ function museumCountry(m) {
   return (m && CITY_COUNTRY[m.city]) || null;
 }
 /* «Museos de México», «Museos del Reino Unido», «Museos de los Países Bajos» */
-const COUNTRY_ART = { 'Reino Unido': 'del ', 'Países Bajos': 'de los ' };
+const COUNTRY_ART = { 'Reino Unido': 'del ', 'Países Bajos': 'de los ', 'Vaticano': 'del ' };
 const countryCollectionName = c => 'Museos ' + (COUNTRY_ART[c] || 'de ') + c;
 function countryCollections() {
   const by = {};
@@ -1574,7 +1594,13 @@ const SHARDS = {
   }
 };
 /* Colecciones precargadas desde Wikidata (tools/wd-shards.py, cada semana): museos sin API propia. Fila: [QID, título, artista, año, archivo de Commons]. */
-const WD_SHARDS = ['louvre', 'orsay', 'prado'];
+const WD_SHARDS = ['louvre', 'orsay', 'prado', 'versailles', 'orangerie', 'marmottan', 'petitpalais', 'lyon', 'lille', 'rouen', 'fabre', 'jacquemart', 'conde',
+  'thyssen', 'bilbao', 'uffizi', 'pitti', 'brera', 'borghese', 'accademia', 'capodimonte', 'barberini', 'carrara', 'vaticanos',
+  'hermitage', 'rusomuseum', 'tretyakov', 'pushkin', 'nationalgallery', 'npglondon', 'courtauld', 'wallace', 'scotland', 'irelandng',
+  'vangogh', 'mauritshuis', 'kroller', 'kmskb', 'kunsthistorisches', 'belvedere', 'altepinakothek', 'dresden', 'gemaelde', 'altenational', 'wallraf', 'staedel',
+  'zurich', 'basel', 'nationalmuseum', 'ateneum', 'budapest', 'varsovia', 'mfa', 'frick', 'barnes', 'phillips', 'gardner', 'nelson', 'neuegalerie', 'nmwa'];
+// Estos museos usan su lista precargada como fuente directa (la crea cada semana tools/wd-shards.mjs)
+WD_SHARDS.forEach(k => { const m = MUSEUMS.find(x => x.id === k); if (m && !m.direct) m.direct = k; });
 WD_SHARDS.forEach(k => {
   const m = MUSEUMS.find(x => x.id === k);
   SHARDS[k] = {
@@ -1638,7 +1664,7 @@ async function runSource(src, f, ctx) {
 }
 
 const api = {
-  md5, commonsImgs, PX, memoForget, primeWikidataCounts, rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
+  WD_SHARDS, md5, commonsImgs, PX, memoForget, primeWikidataCounts, rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
   ERAS, STYLES, TYPES, KEYWORDS, EXCLUDES, excluded, MUSEUMS, DEFAULT_MUSEUMS, MUSEUM_SOURCES, ARTIST_SUGGESTIONS, ARTIST_GROUPS, TUNING, keywordToQuery,
   museumCountry, countryCollections, styleIdsOf, searchPaintings, identifyArtwork, countryCollectionName, defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC, museumIdsByTag,
   adapters: { momaFetch, ngaFetch, tateFetch, shardFetch, commonsSpecial, wikidataMuseum, wikipediaFetch, commonsFetch, wikiartFetch, metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }

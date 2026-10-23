@@ -121,7 +121,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     w.fetch = f0; }
   const C0 = () => w.ArtCore; const favs0 = S.favs; S.favs = []; A.render('presets');
   { const opts = Array.from(d.querySelectorAll('#c-presets option')).map(o => o.textContent);
-    for (const n of ['Museos de España (12)', 'Museos de México (18)', 'Museos del Reino Unido (8)', 'Museos de los Países Bajos (5)', 'Museos de Chile (1)', 'Museos de París (13)']) assert.ok(opts.includes(n), 'falta la colección ' + n + ' en ' + opts.join(' | '));
+    for (const n of ['Museos de España (12)', 'Museos de México (18)', 'Museos del Reino Unido (9)', 'Museos de los Países Bajos (5)', 'Museos de Chile (1)', 'Museos de París (13)']) assert.ok(opts.includes(n), 'falta la colección ' + n + ' en ' + opts.join(' | '));
     for (const old of ['Impresionismo', 'Retratos', 'Mujeres artistas', 'Surrealismo en museos', 'Museos de un solo artista']) assert.ok(!opts.some(o => o.startsWith(old)), 'se quitaron las colecciones antiguas: ' + old);
     assert.strictEqual(opts[1], 'Todo el arte'); assert.ok(opts.slice(2).every(o => /^Museos de/.test(o)), 'las demás son «Museos de …»'); }
   { S.favs = [{ uid: 'f1', artist: 'Salvador Dalí', year: 1931 }, { uid: 'f2', artist: 'Claude Monet', year: 1890 }, { uid: 'f3', artist: 'Anónimo', year: 1500 }]; A.render('presets');

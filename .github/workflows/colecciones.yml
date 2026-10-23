@@ -5,18 +5,21 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['tools/wd-shards.py', '.github/workflows/colecciones.yml']
+    paths: ['tools/wd-shards.mjs', '.github/workflows/colecciones.yml']
 permissions:
   contents: write
 concurrency: colecciones
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@v4
-      - name: Descargar obras de Wikidata (Louvre, Orsay, Prado)
-        run: python3 tools/wd-shards.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Descargar obras de Wikidata (museos sin API propia)
+        run: node tools/wd-shards.mjs
       - name: Guardar si cambió algo
         run: |
           git config user.name "colecciones-bot"
