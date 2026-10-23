@@ -45,6 +45,8 @@ globalThis.fetch = async (url, init) => {
   url = String(url); calls.push(url);
   if (url.includes('metmuseum.org') && url.includes('/search')) return J(fx.metSearch);
   if (url.includes('metmuseum.org') && url.includes('/objects/')) return J(fx.metObj(+url.split('/').pop()));
+  if (url.startsWith('/api/p?u=')) { const tgt = decodeURIComponent(url.slice(9)); aicBodies.push('PROXY ' + tgt); if (/api\.artic\.edu\/api\/v1\/artworks\/search\?/.test(tgt) && /[?&]fields=[^&]*image_id/.test(tgt)) return J(fx.aicData); throw new Error('proxy: URL no simulada ' + tgt); }
+  // AIC real: la búsqueda simple no trae image_id; con «fields» el navegador no recibe CORS (aquí: TypeError) y se va al intermediario.
   if (url.includes('api.artic.edu')) { aicBodies.push(url); if (init && init.method === 'POST') throw new TypeError('Failed to fetch'); if (/[?&](fields|page)=/.test(url)) throw new TypeError('Failed to fetch'); return J(fx.aicData); }
   if (url.includes('clevelandart')) return J(fx.cma);
   if (url.includes('smk.dk')) return J(fx.smk);
@@ -141,8 +143,10 @@ globalThis.fetch = async (url, init) => {
   assert.ok(!pdOnly.some(w => w.title === 'Obra protegida'), 'Met: la protegida no debe entrar');
   const prot = allMet.find(w => w.title === 'Obra protegida'); assert.ok(prot && prot.pd === false && /derechos/.test(prot.license), 'Met: debe entrar con anyRights');
   // AIC: solo q + limit (con fields, page o POST la API no devuelve cabeceras CORS); lo protegido se filtra en el cliente
+  globalThis.location = { protocol: 'https:' }; // como en la web: hay intermediario /api/p
   aicBodies = []; const aicPD = await C.adapters.aicFetch(plan, C.defaultFilters(), ctx); const aicAll = await C.adapters.aicFetch(plan, C.defaultFilters(), anyCtx);
-  assert.ok(aicBodies.length >= 1 && aicBodies.every(u => /\/artworks\/search\?/.test(u) && !/[?&](fields|page)=/.test(u) && /limit=100/.test(u)), 'AIC: solo consulta simple: ' + aicBodies[0]);
+  delete globalThis.location;
+  assert.ok(aicBodies.some(u => /^PROXY https:\/\/api\.artic\.edu\/api\/v1\/artworks\/search\?.*fields=.*image_id/.test(u) && /limit=100/.test(u)), 'AIC: pide image_id y pasa por el intermediario: ' + aicBodies.join(' | '));
   assert.ok(aicPD.length >= 1 && aicAll.length >= aicPD.length, 'AIC devuelve obras');
   assert.ok(calls.filter(u => u.includes('metmuseum.org') && u.includes('/search')).every(u => u.includes('/v1.1/search') && /limit=/.test(u) && /offset=/.test(u)), 'Met: búsqueda v1.1 con límite y desplazamiento');
   const urlsBefore = calls.length;

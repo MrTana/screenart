@@ -497,7 +497,9 @@ async function aicFetch(plan, f, ctx) {
   const text = [plan.style && plan.style.q, plan.artist || plan.hintArtist, plan.keyword].filter(Boolean).join(' ');
   /* En navegador, la API de AIC solo responde con CORS a la consulta simple q + limit (con fields, page o POST falla).
      Se pide el máximo (100 resultados) y se filtra aquí. */
-  const gp = new URLSearchParams({ limit: '100' });
+  // Sin «fields» la búsqueda no trae image_id (y no habría imágenes). Con «fields» el navegador no recibe CORS: getJSONvia
+  // repite la petición por el intermediario /api/p, que sí la acepta.
+  const gp = new URLSearchParams({ limit: '100', fields: 'id,title,image_id,artist_title,date_display,date_start,date_end,is_public_domain,artwork_type_title,thumbnail' });
   if (text) gp.set('q', text);
   else gp.set('q', pick(GENERIC));
   let j;
