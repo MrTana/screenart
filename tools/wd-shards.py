@@ -5,6 +5,7 @@ Lo ejecuta cada semana la acción de GitHub «Colecciones precargadas». Uso: py
 import json, os, re, sys, time, urllib.parse, urllib.request
 
 MUSEUMS = {'louvre': 'Q19675', 'orsay': 'Q23402', 'prado': 'Q160112'}
+# Colección: el museo o cualquiera de sus departamentos (el Louvre registra casi todo por departamento: P195 → P361).
 # tipo de la app → clases de Wikidata
 TYPES = {
     'painting': ['Q3305213'],                                   # pintura
@@ -30,7 +31,7 @@ def sparql(q, tries=4):
 def query(coll, classes, offset):
     return ('SELECT ?item ?itemLabel ?creatorLabel ?inc ?image WHERE { '
             'VALUES ?cls { ' + ' '.join('wd:' + c for c in classes) + ' } '
-            '?item wdt:P195 wd:' + coll + '; wdt:P31 ?cls; wdt:P18 ?image. '
+            '?item wdt:P195/wdt:P361* wd:' + coll + '; wdt:P31 ?cls; wdt:P18 ?image. '
             'OPTIONAL { ?item wdt:P170 ?creator. } OPTIONAL { ?item wdt:P571 ?inc. } '
             'SERVICE wikibase:label { bd:serviceParam wikibase:language "es,fr,en". } '
             '} ORDER BY ?item LIMIT ' + str(PAGE) + ' OFFSET ' + str(offset))
