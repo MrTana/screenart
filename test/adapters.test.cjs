@@ -167,7 +167,7 @@ globalThis.fetch = async (url, init) => {
   let ws = await C.runSource(louvre, f1, anyCtx);
   const sel = sparqlLog.filter(q => !/COUNT\(/.test(q)).pop();
   assert.ok(/wd:Q19675/.test(sel) && /"Musée du Louvre"@fr/.test(sel), 'Louvre: código y nombre');
-  assert.ok(/wdt:P18\|wdt:P6500 ?image/.test(sel), 'incluye imágenes de obras con derechos (ruta alternativa, sin UNION)');
+  assert.ok(/wdt:P18\|wdt:P6500 \?image/.test(sel), 'incluye imágenes de obras con derechos (ruta alternativa, sin UNION)');
   assert.ok(!/wdt:P31 wd:/.test(sel) && /OPTIONAL \{ \?item wdt:P31 \?cls/.test(sel), 'sin restringir el tipo de obra');
   assert.ok(!/YEAR\(\?inc\) <= 1930/.test(sel), 'sin filtro de dominio público');
   const wsAll = ws; ws = ws.filter(w => w.src === 'wiki');
