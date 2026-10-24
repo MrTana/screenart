@@ -9,7 +9,7 @@ const Q = (() => { try { return new URLSearchParams(location.search); } catch (e
 // Con «?c=código» la página es el mando del móvil: no muestra obras, controla la TV.
 const REMOTE = /^[a-z0-9]{6,24}$/i.test(Q.get('c') || '') ? Q.get('c').toLowerCase() : '';
 function lsGet(k, def) { try { const v = localStorage.getItem(KEY + ':' + k); return v ? JSON.parse(v) : def; } catch (e) { return def; } }
-function lsSet(k, v) { if (REMOTE && !['rskin', 'upd', 'rc', 'tvcode', 'idkeys', 'keys', 'keysent', 'favs', 'favdel', 'keyt', 'cloudv', 'cloudsent'].includes(k)) return; // el mando solo guarda su código y lo que comparte con la versión móvil (claves y favoritas)
+function lsSet(k, v) { if (REMOTE && !['rskin', 'upd', 'rc', 'tvcode', 'idkeys', 'keys', 'keysent', 'favs', 'favdel', 'keyt', 'cloudv', 'cloudsent', 'viewed'].includes(k)) return; // el mando solo guarda su código y lo que comparte con la versión móvil (claves, favoritas y pinturas vistas)
    try { localStorage.setItem(KEY + ':' + k, JSON.stringify(v)); } catch (e) { /* sin almacenamiento */ } }
 
 /* ───────── estado ───────── */
@@ -27,7 +27,7 @@ const S = {
   f: loadFilters(),
   st: Object.assign({ interval: 30, mode: 'gallery', quality: 'normal', kenburns: false, caption: 'def', skin: 'm3-dark' }, lsGet('st', {})),
   keys: Object.assign({ europeana: 'api2demo', si: 'DEMO_KEY', harvard: '' }, lsGet('keys', {})),
-  favs: lsGet('favs', []),
+  favs: lsGet('favs', []), viewed: lsGet('viewed', []),
   pool: [], seen: new Set(), seenKey: new Set(), hist: [], hi: -1,
   paused: false, menu: false, epoch: 0, refilling: 0, adv: false, advAt: 0, flight: new Map(), cool: {}, streak: {}, warned: false, recycleAfter: 6000, artGroup: 'impressionism', mfilter: '', detail: {}, acc: null,
   status: {}, counts: {}, layer: 0, nextP: null, nextEpoch: -1,
@@ -281,7 +281,7 @@ function present(item, fromHist) {
   document.body.classList.toggle('plate-on', s.classList.contains('tall') && !s.classList.contains('noplate'));
   $('#loader').hidden = true;
   if (!fromHist) { S.hist.push(item); if (S.hist.length > 120) S.hist.shift(); S.hi = S.hist.length - 1; }
-  S.current = item; S.shown++; saveStashSoon();
+  S.current = item; S.shown++; saveStashSoon(); addViewed(item);
   setCaption(item); updateFavBtn();
   tvNowSoon();
 }
@@ -826,14 +826,15 @@ const HOME = !REMOTE && (() => {
   } catch (e) { return false; }
 })();
 const homeOpen = () => !$('#home').hidden;
-function navPush(k) { if (HOME) try { history.pushState({ ga: k }, ''); } catch (e) { /* sin historial */ } }
+const navDepth = () => { const st = history.state; return st ? st.d || (st.ga ? 1 : 0) : 0; }; // cuántos pasos hay desde el inicio
+function navPush(k) { if (HOME) try { history.pushState({ ga: k, d: navDepth() + 1 }, ''); } catch (e) { /* sin historial */ } }
 function openRemote(c) { lsSet('tvcode', c); toast('Abriendo el mando…'); location.href = location.pathname + '?c=' + c; }
 function homeTvInfo() { // la tarjeta dice a qué TV se conectará
   const c = lsGet('tvcode', '');
   $('#homeTvSub').textContent = c ? 'Abre el mando de tu TV (código ' + c.replace(/(.{4})(?=.)/g, '$1-') + ')' : 'Maneja la galería de la TV desde el móvil';
   $('#homeTvChange').hidden = !c || !$('#homeTv').hidden;
 }
-function showHome() { if (!HOME) return; if (S.menu) closeMenu(); if (scanOpen()) closeScanner(); $('#home').hidden = false; homeTvInfo(); }
+function showHome() { if (!HOME) return; if (S.menu) closeMenu(); if (scanOpen()) closeScanner(); $('#colls').hidden = true; $('#home').hidden = false; homeTvInfo(); }
 function leaveHome() {
   if (!homeOpen()) return;
   $('#home').hidden = true; navPush('gallery');
@@ -842,11 +843,7 @@ function leaveHome() {
 function homeAct(act) {
   if (act === 'home-scan') { navPush('scan'); openScanner(); return; }
   if (act === 'home-gallery') { leaveHome(); return; }
-  if (act === 'home-collections') { // de momento abre el menú en «Colección rápida»
-    leaveHome(); openMenu();
-    const sel = $('#c-presets'); try { sel.scrollIntoView({ block: 'center' }); sel.focus({ preventScroll: true }); if (sel.showPicker) sel.showPicker(); } catch (e) { /* el navegador no abre la lista solo */ }
-    return;
-  }
+  if (act === 'home-collections') { navPush('colls'); openColls(); return; }
   if (act === 'home-tv') { // con una TV ya usada, directo al mando; si no, se pide el código
     const c = lsGet('tvcode', '');
     if (c && $('#homeTv').hidden) { openRemote(c); return; }
@@ -859,14 +856,82 @@ function homeAct(act) {
     if (!c) { $('#homeTvMsg').textContent = 'El código no es válido: son 12 letras y números y salen bajo el QR de la TV.'; return; }
     openRemote(c); return;
   }
-  if (act === 'home') { showHome(); if (history.state && history.state.ga) try { history.back(); } catch (e) { /* sin historial */ } }
+  if (act === 'home') { const d = navDepth(); showHome(); if (d) try { history.go(-d); } catch (e) { /* sin historial */ } }
 }
 window.addEventListener('popstate', e => {
   if (!HOME) return;
   const k = e.state && e.state.ga;
   if (k !== 'scan' && scanOpen()) closeScanner();
+  if (k === 'colls') { if (S.menu) closeMenu(); $('#home').hidden = true; openColls(); } else $('#colls').hidden = true;
   if (!k) showHome();
 });
+
+/* ───────── colecciones (pantalla del móvil) ─────────
+   Arriba, círculos para elegir la colección (Favoritas y Pinturas vistas); debajo, sus obras en una cuadrícula tipo masonry
+   (cada obra va a la columna más corta) que se alarga sola al bajar. Tocar una obra la muestra en la galería; Atrás vuelve aquí. */
+const VIEWED_MAX = 500, COLL_PAGE = 30;
+function addViewed(w) { // «Pinturas vistas»: la más reciente primero, sin repetir
+  if (!w || !w.uid || !(w.thumb || w.url)) return;
+  const imgs = [w.url].concat(w.imgs || []).filter((u, i, a) => u && typeof u === 'string' && a.indexOf(u) === i).slice(0, 2);
+  if (!imgs.length) return;
+  S.viewed = S.viewed.filter(x => x.uid !== w.uid);
+  S.viewed.unshift({ vt: Date.now(), uid: w.uid, src: w.src, museum: w.museum, title: w.title, artist: w.artist, date: w.date, year: w.year, imgs, thumb: w.thumb, url: w.url_page || w.url, pd: w.pd, license: w.license, w: w.iw || w.w, h: w.ih || w.h });
+  if (S.viewed.length > VIEWED_MAX) S.viewed.length = VIEWED_MAX;
+  clearTimeout(S.viewedT); S.viewedT = setTimeout(() => lsSet('viewed', S.viewed), 1500);
+}
+const COLLS = [
+  { key: 'favs', es: 'Favoritas', ic: 'var(--i-fav)', list: () => S.favs, empty: 'Aún no tienes favoritas. En la galería, abre el menú y pulsa «Guardar favorita».' },
+  { key: 'viewed', es: 'Pinturas vistas', ic: 'var(--i-eye)', list: () => S.viewed, empty: 'Aquí aparecerán las pinturas que vayas viendo en la galería.' }
+];
+const CL = { key: lsGet('coll', 'favs'), list: [], n: 0, hs: [] };
+const collsOpen = () => !$('#colls').hidden;
+const tileSrc = w => w.thumb || (w.imgs || [])[0] || '';
+function openColls() { $('#home').hidden = true; $('#colls').hidden = false; renderColls(); }
+function renderColls() {
+  if (!COLLS.some(c => c.key === CL.key)) CL.key = 'favs';
+  $('#collRow').innerHTML = COLLS.map(c => {
+    const l = c.list(), first = l.find(tileSrc);
+    return '<button class="cring" data-act="coll" data-id="' + c.key + '" aria-pressed="' + (c.key === CL.key) + '"><span class="rg"><span class="ph">' +
+      (first ? '<img alt="" src="' + esc(tileSrc(first)) + '">' : '<i style="--ic:' + c.ic + '"></i>') + '</span></span><b>' + esc(c.es) + '</b><small>' + l.length + '</small></button>';
+  }).join('');
+  const c = COLLS.find(x => x.key === CL.key);
+  CL.list = c.list().filter(w => tileSrc(w) && Array.isArray(w.imgs) && w.imgs.length).slice(); CL.n = 0;
+  const cols = (window.innerWidth || 360) >= 1000 ? 4 : (window.innerWidth || 360) >= 640 ? 3 : 2;
+  CL.hs = new Array(cols).fill(0);
+  $('#collGrid').innerHTML = CL.hs.map(() => '<div class="ccol"></div>').join('');
+  $('#collEmpty').hidden = !!CL.list.length; $('#collEmpty').textContent = c.empty;
+  collMore();
+}
+function collMore() { // la siguiente página de obras, cada una en la columna más corta (por su proporción, si se conoce)
+  if (CL.n >= CL.list.length) return;
+  const colsEl = $('#collGrid').children, end = Math.min(CL.list.length, CL.n + COLL_PAGE);
+  for (; CL.n < end; CL.n++) {
+    const w = CL.list[CL.n], ar = w.w && w.h ? Math.min(2.5, Math.max(0.4, w.h / w.w)) : 1.25;
+    const ci = CL.hs.indexOf(Math.min.apply(null, CL.hs)); CL.hs[ci] += ar;
+    const b = document.createElement('button');
+    b.className = 'ctile'; b.dataset.act = 'coll-show'; b.dataset.id = String(CL.n); b.setAttribute('aria-label', w.title + (w.artist ? ', ' + C.cleanName(w.artist) : ''));
+    if (w.w && w.h) b.style.setProperty('--ar', w.w + '/' + w.h);
+    const im = document.createElement('img'); im.alt = ''; im.loading = 'lazy'; im.decoding = 'async'; im.src = tileSrc(w);
+    b.appendChild(im); colsEl[ci].appendChild(b);
+  }
+}
+function collNear() { const el = $('#colls'); return el.scrollTop + el.clientHeight > el.scrollHeight - 900; }
+$('#colls').addEventListener('scroll', () => { if (collNear()) collMore(); }, { passive: true });
+$('#collGrid').addEventListener('load', e => { // con la proporción real la columna queda bien; si aún no llena la pantalla, otra página
+  const im = e.target; if (im.tagName !== 'IMG') return;
+  const b = im.parentNode; if (!b.style.getPropertyValue('--ar') && im.naturalWidth) b.style.setProperty('--ar', im.naturalWidth + '/' + im.naturalHeight);
+  if (collsOpen() && collNear()) collMore();
+}, true);
+$('#collGrid').addEventListener('error', e => { // miniatura rota: se prueba la imagen grande y, si tampoco, se quita
+  const im = e.target; if (im.tagName !== 'IMG') return;
+  const w = CL.list[+im.parentNode.dataset.id], alt = w && (w.imgs || []).find(u => u !== im.getAttribute('src'));
+  if (alt && !im.dataset.retry) { im.dataset.retry = '1'; im.src = alt; } else im.parentNode.hidden = true;
+}, true);
+function collShow(i) {
+  const w = CL.list[+i]; if (!w) return;
+  navPush('gallery'); $('#colls').hidden = true; $('#home').hidden = true;
+  showFound(w);
+}
 /* Ordena lo encontrado según lo que reconoció la foto: primero las del mismo artista y con más palabras del título.
    Si alguna es del artista reconocido, se quitan las de otros artistas (antes salían obras con títulos parecidos de cualquiera). */
 function rankFound(list, id) {
@@ -888,7 +953,7 @@ function showTitleResult(i) {
   if (REMOTE) { if (!RC.gotState) { toast('Todavía no hay conexión con la TV'); return; } relaySend({ t: 'cmd', c: 'show', w: slimWork(w) }); toast('Enviada a la TV: ' + w.title); if (scanOpen()) closeScanner(); return; }
   if (scanOpen()) { // desde la cámara: se cierra y se ve la obra en la galería
     const fromHome = homeOpen();
-    if (fromHome && HOME && history.state && history.state.ga === 'scan') { try { history.replaceState({ ga: 'gallery' }, ''); } catch (e) { /* sin historial */ } }
+    if (fromHome && HOME && history.state && history.state.ga === 'scan') { try { history.replaceState({ ga: 'gallery', d: navDepth() }, ''); } catch (e) { /* sin historial */ } }
     closeScanner(); if (fromHome) { $('#home').hidden = true; }
   }
   closeMenu(); showFound(w);
@@ -1005,6 +1070,9 @@ function onAct(act, id) {
     case 'scan-zoom': setZoom(+id); break;
     case 'sheet-close': sheetClose(); break;
     case 'home-scan': case 'home-gallery': case 'home-collections': case 'home-tv': case 'home-tv-go': case 'home-tv-change': case 'home': homeAct(act); break;
+    case 'coll': CL.key = id; lsSet('coll', id); renderColls(); $('#colls').scrollTop = 0; break;
+    case 'coll-show': collShow(id); break;
+    case 'colls-back': if (navDepth()) try { history.back(); } catch (e) { showHome(); } else showHome(); break;
     case 'title-show': showTitleResult(id); break;
     case 'era': toggleArr(f.eras, id); f.yearFrom = f.yearTo = ''; $('#yFrom').value = $('#yTo').value = ''; render('eras'); applyChange(); break;
     case 'style': toggleArr(f.styles, id); render('styles'); applyChange(); break;
@@ -1044,7 +1112,7 @@ function touchLayout() {
 }
 // Deslizar el dedo también cambia de obra.
 let swipe = null;
-document.addEventListener('touchstart', e => { const t = e.touches[0]; swipe = e.touches.length === 1 && !S.menu && !scanOpen() && !homeOpen() ? { x: t.clientX, y: t.clientY } : null; }, { passive: true });
+document.addEventListener('touchstart', e => { const t = e.touches[0]; swipe = e.touches.length === 1 && !S.menu && !scanOpen() && !homeOpen() && !collsOpen() ? { x: t.clientX, y: t.clientY } : null; }, { passive: true });
 document.addEventListener('touchend', e => {
   if (!swipe || S.menu) return;
   const t = e.changedTouches[0], dx = t.clientX - swipe.x, dy = t.clientY - swipe.y; swipe = null;
@@ -1056,7 +1124,7 @@ document.addEventListener('click', e => {
   if (e.target.id === 'loaderMenu') { openMenu(); return; }
   if (e.target.id === 'loaderDiag') { diagnose(); return; }
   if (e.target.closest('#pair')) { hidePair(); return; }
-  if (e.target.closest('#scanner') || e.target.closest('#home')) return;
+  if (e.target.closest('#scanner') || e.target.closest('#home') || e.target.closest('#colls')) return;
   if (REMOTE) return;
   if (e.target.closest('#drawer') || e.target.closest('#diag')) return;
   if (S.menu) { closeMenu(); return; }
@@ -1085,6 +1153,7 @@ document.addEventListener('keydown', e => {
     if (e.key === 'Escape' || e.key === 'GoBack' || (e.key === 'Backspace' && !inField)) { e.preventDefault(); if (!$('#scanSheet').hidden) sheetClose(); else closeScanner(); }
     return;
   }
+  if (collsOpen()) { if (e.key === 'Escape' || e.key === 'GoBack' || e.key === 'Backspace') { e.preventDefault(); onAct('colls-back'); } return; }
   if (homeOpen()) { if (e.key === 'Enter' && e.target.id === 'homeTvCode') { e.preventDefault(); onAct('home-tv-go'); } return; }
   const tag = (e.target.tagName || '').toLowerCase(), typing = tag === 'input' || tag === 'textarea';
   if (typing) {
@@ -1487,6 +1556,7 @@ function remoteNow(n) {
   if (!n) return;
   remoteFavStyles(n.favStyles);
   S.current = { uid: n.uid }; S.nowFav = !!n.fav; S.paused = !!n.paused;
+  if (n.uid && n.thumb && /^https:\/\//i.test(n.thumb)) addViewed({ uid: n.uid, title: n.title, artist: n.artist, date: n.date, museum: n.museum, thumb: n.thumb, imgs: [n.thumb] }); // lo que se ve en la TV también cuenta como visto en este móvil
   $('#rcnow').hidden = false; $('#rcT').textContent = n.title || ''; $('#rcA').textContent = [C.cleanName(n.artist), n.date].filter(Boolean).join(' · ');
   const im = $('#rcImg'); if (n.thumb && im.dataset.u !== n.thumb) { im.dataset.u = n.thumb; im.src = n.thumb; }
   $('#playBtn').textContent = S.paused ? 'Reanudar' : 'Pausar'; updateFavBtn();
@@ -1599,6 +1669,6 @@ function init() {
   advance();
   initTV();
 }
-window.ArtApp = { openScanner, closeScanner, scanCapture, setZoom, showHome, HOME, cloudSync, checkUpdate, applyUpdate, S, next, prev, advance, openMenu, closeMenu, refill, onAct, render, renderAll, applyChange, present, pullNext, captionMs, capMode, parseCode, Remote: () => RC };
+window.ArtApp = { openColls, openScanner, closeScanner, scanCapture, setZoom, showHome, HOME, cloudSync, checkUpdate, applyUpdate, S, next, prev, advance, openMenu, closeMenu, refill, onAct, render, renderAll, applyChange, present, pullNext, captionMs, capMode, parseCode, Remote: () => RC };
 init();
 })();

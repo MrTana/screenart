@@ -52,8 +52,12 @@ publicada en **https://screenart.pages.dev** (Cloudflare Pages, se despliega sol
   **imágenes al tamaño de la pantalla** (miniaturas directas de Commons), **barrido** de todos los museos seleccionados (4 a la vez).
 - **Presentación «Con cartela»**: verticales y cuadradas a un lado con su cartela al otro, alternando lados.
 - **Pantalla de inicio del móvil** (`#home`, solo en el móvil: no en la TV ni en el mando; `?home=1`/`?home=0` la fuerzan): Escaneo de obra,
-  Galería de arte y Colecciones (de momento abre el menú en «Colección rápida»; el usuario definirá Galería y Colecciones). El botón Atrás
+  Galería de arte y Colecciones (ver abajo). El botón Atrás
   del móvil y «Inicio» del menú vuelven a ella (`history.pushState`). «Conectar a la TV» abre el mando con el último código usado (`tvcode`, que guarda el mando al abrirse) o lo pide.
+- **Colecciones** (`#colls`, desde «Colecciones» del inicio del móvil): círculos arriba (Favoritas y Pinturas vistas, lista `COLLS` en ui.js) y
+  cuadrícula masonry (cada obra a la columna más corta, 30 por página al bajar). Tocar una obra la muestra en la galería; Atrás vuelve.
+  «Pinturas vistas» (`S.viewed`, clave `viewed`, 500 como máximo) se apunta en `present()` y, en el mando, con cada obra que manda la TV.
+  El historial lleva la profundidad (`history.state.d`) para que «Inicio» vuelva al inicio en un solo salto.
 - **Escáner tipo cámara** (`#scanner`, el mismo desde el inicio y desde el menú): zoom (1× 2× 3× y pellizco; zoom de la cámara si lo tiene,
   si no ampliación), círculo = escanear (manual; el marco se pone verde cuando está quieto), cuadrado izquierdo = buscar por nombre,
   derecho = buscar por foto de la galería. Resultados en una hoja desde abajo (`#scanSheet`, que también pide la clave si falta).

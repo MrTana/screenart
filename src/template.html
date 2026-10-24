@@ -61,6 +61,8 @@
   --i-slides:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M10 8v8l5-4-5-4zm9-5H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z'/%3E%3C/svg%3E");
   --i-library:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z'/%3E%3C/svg%3E");
   --i-title:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E");
+  --i-back:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z'/%3E%3C/svg%3E");
+  --i-eye:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z'/%3E%3C/svg%3E");
   --i-home:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z'/%3E%3C/svg%3E");
   --dur:30s; color-scheme:dark;
 }
@@ -356,6 +358,33 @@ section.sec .hint{margin:8px 0 0;font:400 14px/20px var(--sans);color:var(--md-o
 .htv{padding:4px 4px 8px}.htv .row{flex-wrap:nowrap}.htv input{flex:1;min-width:0}.htv .hint{margin:8px 0 0;font:400 12px/16px var(--sans);color:var(--md-on-surface-variant)}
 .htvchg{align-self:center}
 .hfoot{margin-top:auto;padding:24px 4px 0;font:400 12px/16px var(--sans);letter-spacing:.4px;color:var(--md-on-surface-variant)}
+/* Colecciones (solo en el móvil): círculos arriba para elegir la colección y sus obras en una cuadrícula tipo masonry */
+#colls{position:fixed;inset:0;z-index:12;overflow-y:auto;overscroll-behavior:contain;background:var(--md-surface);color:var(--md-on-surface);padding:0 0 max(16px,env(safe-area-inset-bottom,0px))}
+#colls[hidden]{display:none}
+.chead{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:4px;min-height:64px;padding:max(8px,env(safe-area-inset-top,0px)) 8px 0;background:var(--md-surface)}
+.chead h1{margin:0;font:400 24px/32px var(--serif);letter-spacing:0}
+.chead .ibtn{color:var(--md-on-surface)}.chead .ibtn::before{--ic:var(--i-back)}
+.crow{display:flex;gap:8px;overflow-x:auto;padding:8px 16px 12px;scrollbar-width:none}.crow::-webkit-scrollbar{display:none}
+.cring{flex:none;display:flex;flex-direction:column;align-items:center;gap:6px;width:96px;padding:0;border:0;background:none;color:var(--md-on-surface);-webkit-tap-highlight-color:transparent}
+.cring .rg{display:grid;place-items:center;width:76px;height:76px;border-radius:50%;padding:3px;background:var(--md-outline-variant);transition:background .2s var(--ease)}
+.cring[aria-pressed=true] .rg{background:linear-gradient(45deg,var(--md-tertiary),var(--md-primary))}
+.cring .ph{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;overflow:hidden;border:3px solid var(--md-surface);background:var(--md-secondary-container);color:var(--md-on-secondary-container)}
+.cring .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.cring .ph i{width:30px;height:30px;background:currentColor;-webkit-mask:var(--ic) center/contain no-repeat;mask:var(--ic) center/contain no-repeat}
+.cring b{max-width:100%;font:500 12px/16px var(--sans);letter-spacing:.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cring small{margin-top:-6px;font:400 11px/16px var(--sans);color:var(--md-on-surface-variant)}
+.cring[aria-pressed=true] b{color:var(--md-primary)}
+.cgrid{display:flex;gap:4px;padding:0 4px}
+.ccol{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.ctile{display:block;width:100%;padding:0;border:0;border-radius:var(--r-xs);overflow:hidden;background:var(--md-sc-high);aspect-ratio:var(--ar,4/5);-webkit-tap-highlight-color:transparent}
+.ctile[hidden]{display:none}
+.ctile img{display:block;width:100%;height:100%;object-fit:cover}
+.ctile:active{opacity:.8}
+.cempty{margin:48px 32px;text-align:center;font:400 14px/20px var(--sans);color:var(--md-on-surface-variant)}
+#collMore{height:1px}
+[data-skin^=m3e] .chead h1{font-weight:700}
+[data-skin^=m3e] .ctile{border-radius:var(--r-sm)}
+[data-skin^=m3e] .cring b{font-weight:700}
 .musrow{flex-wrap:nowrap}.musrow input{flex:1;min-width:0}
 .ibtn.tonal{background:var(--md-secondary-container);color:var(--md-on-secondary-container)}
 .ibtn.tonal::before{--ic:inherit}
@@ -436,7 +465,7 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
   <nav class="hgrid">
     <button class="hcard main" data-act="home-scan" style="--ic:var(--i-camera)"><i></i><div><b>Escaneo de obra</b><span>Apunta la cámara a una pintura y descubre cuál es</span></div></button>
     <button class="hcard" data-act="home-gallery" style="--ic:var(--i-slides)"><i></i><div><b>Galería de arte</b><span>Obras de museos que cambian solas</span></div></button>
-    <button class="hcard" data-act="home-collections" style="--ic:var(--i-library)"><i></i><div><b>Colecciones</b><span>Movimientos, artistas y regiones</span></div></button>
+    <button class="hcard" data-act="home-collections" style="--ic:var(--i-library)"><i></i><div><b>Colecciones</b><span>Tus favoritas y las pinturas que has visto</span></div></button>
     <button class="hcard" data-act="home-tv" style="--ic:var(--i-cast)"><i></i><div><b>Conectar a la TV</b><span id="homeTvSub">Maneja la galería de la TV desde el móvil</span></div></button>
     <div class="htv" id="homeTv" hidden>
       <div class="row"><input type="text" id="homeTvCode" placeholder="Código de la TV (ej. abcd-efgh-jkmn)" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn pri" data-act="home-tv-go">Conectar</button></div>
@@ -445,6 +474,13 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
     <button class="btn out htvchg" data-act="home-tv-change" id="homeTvChange" hidden>Conectar a otra TV</button>
   </nav>
   <p class="hfoot">Toca una opción para empezar. Desde la galería vuelves aquí con «Inicio» en el menú o con el botón Atrás del móvil.</p>
+</div>
+<div id="colls" hidden aria-label="Colecciones">
+  <header class="chead"><button class="ibtn" data-act="colls-back" aria-label="Volver al inicio"></button><h1>Colecciones</h1></header>
+  <nav class="crow" id="collRow" aria-label="Elegir colección"></nav>
+  <div class="cgrid" id="collGrid"></div>
+  <p class="cempty" id="collEmpty" hidden></p>
+  <div id="collMore"></div>
 </div>
 <div id="pair" hidden><div class="pq" id="pairQR"></div><div class="pt"><b>Mándala desde el móvil</b><span>Apunta la cámara del móvil a este código y manejarás los filtros sin el mando.</span><strong id="pairCode"></strong><code id="pairUrl"></code><small id="pairSt"></small></div></div>
 

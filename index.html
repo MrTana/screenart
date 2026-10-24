@@ -61,6 +61,8 @@
   --i-slides:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M10 8v8l5-4-5-4zm9-5H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z'/%3E%3C/svg%3E");
   --i-library:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z'/%3E%3C/svg%3E");
   --i-title:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E");
+  --i-back:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z'/%3E%3C/svg%3E");
+  --i-eye:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z'/%3E%3C/svg%3E");
   --i-home:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z'/%3E%3C/svg%3E");
   --dur:30s; color-scheme:dark;
 }
@@ -356,6 +358,33 @@ section.sec .hint{margin:8px 0 0;font:400 14px/20px var(--sans);color:var(--md-o
 .htv{padding:4px 4px 8px}.htv .row{flex-wrap:nowrap}.htv input{flex:1;min-width:0}.htv .hint{margin:8px 0 0;font:400 12px/16px var(--sans);color:var(--md-on-surface-variant)}
 .htvchg{align-self:center}
 .hfoot{margin-top:auto;padding:24px 4px 0;font:400 12px/16px var(--sans);letter-spacing:.4px;color:var(--md-on-surface-variant)}
+/* Colecciones (solo en el móvil): círculos arriba para elegir la colección y sus obras en una cuadrícula tipo masonry */
+#colls{position:fixed;inset:0;z-index:12;overflow-y:auto;overscroll-behavior:contain;background:var(--md-surface);color:var(--md-on-surface);padding:0 0 max(16px,env(safe-area-inset-bottom,0px))}
+#colls[hidden]{display:none}
+.chead{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:4px;min-height:64px;padding:max(8px,env(safe-area-inset-top,0px)) 8px 0;background:var(--md-surface)}
+.chead h1{margin:0;font:400 24px/32px var(--serif);letter-spacing:0}
+.chead .ibtn{color:var(--md-on-surface)}.chead .ibtn::before{--ic:var(--i-back)}
+.crow{display:flex;gap:8px;overflow-x:auto;padding:8px 16px 12px;scrollbar-width:none}.crow::-webkit-scrollbar{display:none}
+.cring{flex:none;display:flex;flex-direction:column;align-items:center;gap:6px;width:96px;padding:0;border:0;background:none;color:var(--md-on-surface);-webkit-tap-highlight-color:transparent}
+.cring .rg{display:grid;place-items:center;width:76px;height:76px;border-radius:50%;padding:3px;background:var(--md-outline-variant);transition:background .2s var(--ease)}
+.cring[aria-pressed=true] .rg{background:linear-gradient(45deg,var(--md-tertiary),var(--md-primary))}
+.cring .ph{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;overflow:hidden;border:3px solid var(--md-surface);background:var(--md-secondary-container);color:var(--md-on-secondary-container)}
+.cring .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.cring .ph i{width:30px;height:30px;background:currentColor;-webkit-mask:var(--ic) center/contain no-repeat;mask:var(--ic) center/contain no-repeat}
+.cring b{max-width:100%;font:500 12px/16px var(--sans);letter-spacing:.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cring small{margin-top:-6px;font:400 11px/16px var(--sans);color:var(--md-on-surface-variant)}
+.cring[aria-pressed=true] b{color:var(--md-primary)}
+.cgrid{display:flex;gap:4px;padding:0 4px}
+.ccol{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.ctile{display:block;width:100%;padding:0;border:0;border-radius:var(--r-xs);overflow:hidden;background:var(--md-sc-high);aspect-ratio:var(--ar,4/5);-webkit-tap-highlight-color:transparent}
+.ctile[hidden]{display:none}
+.ctile img{display:block;width:100%;height:100%;object-fit:cover}
+.ctile:active{opacity:.8}
+.cempty{margin:48px 32px;text-align:center;font:400 14px/20px var(--sans);color:var(--md-on-surface-variant)}
+#collMore{height:1px}
+[data-skin^=m3e] .chead h1{font-weight:700}
+[data-skin^=m3e] .ctile{border-radius:var(--r-sm)}
+[data-skin^=m3e] .cring b{font-weight:700}
 .musrow{flex-wrap:nowrap}.musrow input{flex:1;min-width:0}
 .ibtn.tonal{background:var(--md-secondary-container);color:var(--md-on-secondary-container)}
 .ibtn.tonal::before{--ic:inherit}
@@ -436,7 +465,7 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
   <nav class="hgrid">
     <button class="hcard main" data-act="home-scan" style="--ic:var(--i-camera)"><i></i><div><b>Escaneo de obra</b><span>Apunta la cámara a una pintura y descubre cuál es</span></div></button>
     <button class="hcard" data-act="home-gallery" style="--ic:var(--i-slides)"><i></i><div><b>Galería de arte</b><span>Obras de museos que cambian solas</span></div></button>
-    <button class="hcard" data-act="home-collections" style="--ic:var(--i-library)"><i></i><div><b>Colecciones</b><span>Movimientos, artistas y regiones</span></div></button>
+    <button class="hcard" data-act="home-collections" style="--ic:var(--i-library)"><i></i><div><b>Colecciones</b><span>Tus favoritas y las pinturas que has visto</span></div></button>
     <button class="hcard" data-act="home-tv" style="--ic:var(--i-cast)"><i></i><div><b>Conectar a la TV</b><span id="homeTvSub">Maneja la galería de la TV desde el móvil</span></div></button>
     <div class="htv" id="homeTv" hidden>
       <div class="row"><input type="text" id="homeTvCode" placeholder="Código de la TV (ej. abcd-efgh-jkmn)" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn pri" data-act="home-tv-go">Conectar</button></div>
@@ -445,6 +474,13 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
     <button class="btn out htvchg" data-act="home-tv-change" id="homeTvChange" hidden>Conectar a otra TV</button>
   </nav>
   <p class="hfoot">Toca una opción para empezar. Desde la galería vuelves aquí con «Inicio» en el menú o con el botón Atrás del móvil.</p>
+</div>
+<div id="colls" hidden aria-label="Colecciones">
+  <header class="chead"><button class="ibtn" data-act="colls-back" aria-label="Volver al inicio"></button><h1>Colecciones</h1></header>
+  <nav class="crow" id="collRow" aria-label="Elegir colección"></nav>
+  <div class="cgrid" id="collGrid"></div>
+  <p class="cempty" id="collEmpty" hidden></p>
+  <div id="collMore"></div>
 </div>
 <div id="pair" hidden><div class="pq" id="pairQR"></div><div class="pt"><b>Mándala desde el móvil</b><span>Apunta la cámara del móvil a este código y manejarás los filtros sin el mando.</span><strong id="pairCode"></strong><code id="pairUrl"></code><small id="pairSt"></small></div></div>
 
@@ -540,7 +576,7 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
     <button class="acch" data-act="acc" data-id="skin" aria-expanded="false"><span class="at">Skin</span><span class="as" data-sum="skin"></span><span class="ac">›</span></button>
     <div class="accb"><label class="fld"><span>Aspecto de la interfaz</span><select id="c-skin"></select></label><p class="hint">Material Design 3 y Material 3 Expressive, en claro y oscuro. Solo cambia el menú, el mando y los avisos; la obra y su ficha no cambian.</p></div>
   </section>
-  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 0f34848220 · 2026-10-25 01:32 CEST</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
+  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 4577eee726 · 2026-10-25 01:48 CEST</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
   <div id="rcfoot" hidden><button class="btn pri" data-act="rc-update">Buscar actualización</button><p id="rcver"></p></div>
 <div id="tvConnect"><button class="btn pri" data-act="tv-connect">Conectar a la TV</button><div class="row" id="tvRow" hidden><input type="text" id="tvCode" placeholder="Código de la TV (ej. abcd-efgh-jkmn)" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn pri" data-act="tv-go">Abrir mando</button></div><p class="hint" id="tvMsg">El código sale bajo el QR en la pantalla de la TV.</p></div>
 </aside>
@@ -2460,7 +2496,7 @@ const Q = (() => { try { return new URLSearchParams(location.search); } catch (e
 // Con «?c=código» la página es el mando del móvil: no muestra obras, controla la TV.
 const REMOTE = /^[a-z0-9]{6,24}$/i.test(Q.get('c') || '') ? Q.get('c').toLowerCase() : '';
 function lsGet(k, def) { try { const v = localStorage.getItem(KEY + ':' + k); return v ? JSON.parse(v) : def; } catch (e) { return def; } }
-function lsSet(k, v) { if (REMOTE && !['rskin', 'upd', 'rc', 'tvcode', 'idkeys', 'keys', 'keysent', 'favs', 'favdel', 'keyt', 'cloudv', 'cloudsent'].includes(k)) return; // el mando solo guarda su código y lo que comparte con la versión móvil (claves y favoritas)
+function lsSet(k, v) { if (REMOTE && !['rskin', 'upd', 'rc', 'tvcode', 'idkeys', 'keys', 'keysent', 'favs', 'favdel', 'keyt', 'cloudv', 'cloudsent', 'viewed'].includes(k)) return; // el mando solo guarda su código y lo que comparte con la versión móvil (claves, favoritas y pinturas vistas)
    try { localStorage.setItem(KEY + ':' + k, JSON.stringify(v)); } catch (e) { /* sin almacenamiento */ } }
 
 /* ───────── estado ───────── */
@@ -2478,7 +2514,7 @@ const S = {
   f: loadFilters(),
   st: Object.assign({ interval: 30, mode: 'gallery', quality: 'normal', kenburns: false, caption: 'def', skin: 'm3-dark' }, lsGet('st', {})),
   keys: Object.assign({ europeana: 'api2demo', si: 'DEMO_KEY', harvard: '' }, lsGet('keys', {})),
-  favs: lsGet('favs', []),
+  favs: lsGet('favs', []), viewed: lsGet('viewed', []),
   pool: [], seen: new Set(), seenKey: new Set(), hist: [], hi: -1,
   paused: false, menu: false, epoch: 0, refilling: 0, adv: false, advAt: 0, flight: new Map(), cool: {}, streak: {}, warned: false, recycleAfter: 6000, artGroup: 'impressionism', mfilter: '', detail: {}, acc: null,
   status: {}, counts: {}, layer: 0, nextP: null, nextEpoch: -1,
@@ -2732,7 +2768,7 @@ function present(item, fromHist) {
   document.body.classList.toggle('plate-on', s.classList.contains('tall') && !s.classList.contains('noplate'));
   $('#loader').hidden = true;
   if (!fromHist) { S.hist.push(item); if (S.hist.length > 120) S.hist.shift(); S.hi = S.hist.length - 1; }
-  S.current = item; S.shown++; saveStashSoon();
+  S.current = item; S.shown++; saveStashSoon(); addViewed(item);
   setCaption(item); updateFavBtn();
   tvNowSoon();
 }
@@ -3277,14 +3313,15 @@ const HOME = !REMOTE && (() => {
   } catch (e) { return false; }
 })();
 const homeOpen = () => !$('#home').hidden;
-function navPush(k) { if (HOME) try { history.pushState({ ga: k }, ''); } catch (e) { /* sin historial */ } }
+const navDepth = () => { const st = history.state; return st ? st.d || (st.ga ? 1 : 0) : 0; }; // cuántos pasos hay desde el inicio
+function navPush(k) { if (HOME) try { history.pushState({ ga: k, d: navDepth() + 1 }, ''); } catch (e) { /* sin historial */ } }
 function openRemote(c) { lsSet('tvcode', c); toast('Abriendo el mando…'); location.href = location.pathname + '?c=' + c; }
 function homeTvInfo() { // la tarjeta dice a qué TV se conectará
   const c = lsGet('tvcode', '');
   $('#homeTvSub').textContent = c ? 'Abre el mando de tu TV (código ' + c.replace(/(.{4})(?=.)/g, '$1-') + ')' : 'Maneja la galería de la TV desde el móvil';
   $('#homeTvChange').hidden = !c || !$('#homeTv').hidden;
 }
-function showHome() { if (!HOME) return; if (S.menu) closeMenu(); if (scanOpen()) closeScanner(); $('#home').hidden = false; homeTvInfo(); }
+function showHome() { if (!HOME) return; if (S.menu) closeMenu(); if (scanOpen()) closeScanner(); $('#colls').hidden = true; $('#home').hidden = false; homeTvInfo(); }
 function leaveHome() {
   if (!homeOpen()) return;
   $('#home').hidden = true; navPush('gallery');
@@ -3293,11 +3330,7 @@ function leaveHome() {
 function homeAct(act) {
   if (act === 'home-scan') { navPush('scan'); openScanner(); return; }
   if (act === 'home-gallery') { leaveHome(); return; }
-  if (act === 'home-collections') { // de momento abre el menú en «Colección rápida»
-    leaveHome(); openMenu();
-    const sel = $('#c-presets'); try { sel.scrollIntoView({ block: 'center' }); sel.focus({ preventScroll: true }); if (sel.showPicker) sel.showPicker(); } catch (e) { /* el navegador no abre la lista solo */ }
-    return;
-  }
+  if (act === 'home-collections') { navPush('colls'); openColls(); return; }
   if (act === 'home-tv') { // con una TV ya usada, directo al mando; si no, se pide el código
     const c = lsGet('tvcode', '');
     if (c && $('#homeTv').hidden) { openRemote(c); return; }
@@ -3310,14 +3343,82 @@ function homeAct(act) {
     if (!c) { $('#homeTvMsg').textContent = 'El código no es válido: son 12 letras y números y salen bajo el QR de la TV.'; return; }
     openRemote(c); return;
   }
-  if (act === 'home') { showHome(); if (history.state && history.state.ga) try { history.back(); } catch (e) { /* sin historial */ } }
+  if (act === 'home') { const d = navDepth(); showHome(); if (d) try { history.go(-d); } catch (e) { /* sin historial */ } }
 }
 window.addEventListener('popstate', e => {
   if (!HOME) return;
   const k = e.state && e.state.ga;
   if (k !== 'scan' && scanOpen()) closeScanner();
+  if (k === 'colls') { if (S.menu) closeMenu(); $('#home').hidden = true; openColls(); } else $('#colls').hidden = true;
   if (!k) showHome();
 });
+
+/* ───────── colecciones (pantalla del móvil) ─────────
+   Arriba, círculos para elegir la colección (Favoritas y Pinturas vistas); debajo, sus obras en una cuadrícula tipo masonry
+   (cada obra va a la columna más corta) que se alarga sola al bajar. Tocar una obra la muestra en la galería; Atrás vuelve aquí. */
+const VIEWED_MAX = 500, COLL_PAGE = 30;
+function addViewed(w) { // «Pinturas vistas»: la más reciente primero, sin repetir
+  if (!w || !w.uid || !(w.thumb || w.url)) return;
+  const imgs = [w.url].concat(w.imgs || []).filter((u, i, a) => u && typeof u === 'string' && a.indexOf(u) === i).slice(0, 2);
+  if (!imgs.length) return;
+  S.viewed = S.viewed.filter(x => x.uid !== w.uid);
+  S.viewed.unshift({ vt: Date.now(), uid: w.uid, src: w.src, museum: w.museum, title: w.title, artist: w.artist, date: w.date, year: w.year, imgs, thumb: w.thumb, url: w.url_page || w.url, pd: w.pd, license: w.license, w: w.iw || w.w, h: w.ih || w.h });
+  if (S.viewed.length > VIEWED_MAX) S.viewed.length = VIEWED_MAX;
+  clearTimeout(S.viewedT); S.viewedT = setTimeout(() => lsSet('viewed', S.viewed), 1500);
+}
+const COLLS = [
+  { key: 'favs', es: 'Favoritas', ic: 'var(--i-fav)', list: () => S.favs, empty: 'Aún no tienes favoritas. En la galería, abre el menú y pulsa «Guardar favorita».' },
+  { key: 'viewed', es: 'Pinturas vistas', ic: 'var(--i-eye)', list: () => S.viewed, empty: 'Aquí aparecerán las pinturas que vayas viendo en la galería.' }
+];
+const CL = { key: lsGet('coll', 'favs'), list: [], n: 0, hs: [] };
+const collsOpen = () => !$('#colls').hidden;
+const tileSrc = w => w.thumb || (w.imgs || [])[0] || '';
+function openColls() { $('#home').hidden = true; $('#colls').hidden = false; renderColls(); }
+function renderColls() {
+  if (!COLLS.some(c => c.key === CL.key)) CL.key = 'favs';
+  $('#collRow').innerHTML = COLLS.map(c => {
+    const l = c.list(), first = l.find(tileSrc);
+    return '<button class="cring" data-act="coll" data-id="' + c.key + '" aria-pressed="' + (c.key === CL.key) + '"><span class="rg"><span class="ph">' +
+      (first ? '<img alt="" src="' + esc(tileSrc(first)) + '">' : '<i style="--ic:' + c.ic + '"></i>') + '</span></span><b>' + esc(c.es) + '</b><small>' + l.length + '</small></button>';
+  }).join('');
+  const c = COLLS.find(x => x.key === CL.key);
+  CL.list = c.list().filter(w => tileSrc(w) && Array.isArray(w.imgs) && w.imgs.length).slice(); CL.n = 0;
+  const cols = (window.innerWidth || 360) >= 1000 ? 4 : (window.innerWidth || 360) >= 640 ? 3 : 2;
+  CL.hs = new Array(cols).fill(0);
+  $('#collGrid').innerHTML = CL.hs.map(() => '<div class="ccol"></div>').join('');
+  $('#collEmpty').hidden = !!CL.list.length; $('#collEmpty').textContent = c.empty;
+  collMore();
+}
+function collMore() { // la siguiente página de obras, cada una en la columna más corta (por su proporción, si se conoce)
+  if (CL.n >= CL.list.length) return;
+  const colsEl = $('#collGrid').children, end = Math.min(CL.list.length, CL.n + COLL_PAGE);
+  for (; CL.n < end; CL.n++) {
+    const w = CL.list[CL.n], ar = w.w && w.h ? Math.min(2.5, Math.max(0.4, w.h / w.w)) : 1.25;
+    const ci = CL.hs.indexOf(Math.min.apply(null, CL.hs)); CL.hs[ci] += ar;
+    const b = document.createElement('button');
+    b.className = 'ctile'; b.dataset.act = 'coll-show'; b.dataset.id = String(CL.n); b.setAttribute('aria-label', w.title + (w.artist ? ', ' + C.cleanName(w.artist) : ''));
+    if (w.w && w.h) b.style.setProperty('--ar', w.w + '/' + w.h);
+    const im = document.createElement('img'); im.alt = ''; im.loading = 'lazy'; im.decoding = 'async'; im.src = tileSrc(w);
+    b.appendChild(im); colsEl[ci].appendChild(b);
+  }
+}
+function collNear() { const el = $('#colls'); return el.scrollTop + el.clientHeight > el.scrollHeight - 900; }
+$('#colls').addEventListener('scroll', () => { if (collNear()) collMore(); }, { passive: true });
+$('#collGrid').addEventListener('load', e => { // con la proporción real la columna queda bien; si aún no llena la pantalla, otra página
+  const im = e.target; if (im.tagName !== 'IMG') return;
+  const b = im.parentNode; if (!b.style.getPropertyValue('--ar') && im.naturalWidth) b.style.setProperty('--ar', im.naturalWidth + '/' + im.naturalHeight);
+  if (collsOpen() && collNear()) collMore();
+}, true);
+$('#collGrid').addEventListener('error', e => { // miniatura rota: se prueba la imagen grande y, si tampoco, se quita
+  const im = e.target; if (im.tagName !== 'IMG') return;
+  const w = CL.list[+im.parentNode.dataset.id], alt = w && (w.imgs || []).find(u => u !== im.getAttribute('src'));
+  if (alt && !im.dataset.retry) { im.dataset.retry = '1'; im.src = alt; } else im.parentNode.hidden = true;
+}, true);
+function collShow(i) {
+  const w = CL.list[+i]; if (!w) return;
+  navPush('gallery'); $('#colls').hidden = true; $('#home').hidden = true;
+  showFound(w);
+}
 /* Ordena lo encontrado según lo que reconoció la foto: primero las del mismo artista y con más palabras del título.
    Si alguna es del artista reconocido, se quitan las de otros artistas (antes salían obras con títulos parecidos de cualquiera). */
 function rankFound(list, id) {
@@ -3339,7 +3440,7 @@ function showTitleResult(i) {
   if (REMOTE) { if (!RC.gotState) { toast('Todavía no hay conexión con la TV'); return; } relaySend({ t: 'cmd', c: 'show', w: slimWork(w) }); toast('Enviada a la TV: ' + w.title); if (scanOpen()) closeScanner(); return; }
   if (scanOpen()) { // desde la cámara: se cierra y se ve la obra en la galería
     const fromHome = homeOpen();
-    if (fromHome && HOME && history.state && history.state.ga === 'scan') { try { history.replaceState({ ga: 'gallery' }, ''); } catch (e) { /* sin historial */ } }
+    if (fromHome && HOME && history.state && history.state.ga === 'scan') { try { history.replaceState({ ga: 'gallery', d: navDepth() }, ''); } catch (e) { /* sin historial */ } }
     closeScanner(); if (fromHome) { $('#home').hidden = true; }
   }
   closeMenu(); showFound(w);
@@ -3456,6 +3557,9 @@ function onAct(act, id) {
     case 'scan-zoom': setZoom(+id); break;
     case 'sheet-close': sheetClose(); break;
     case 'home-scan': case 'home-gallery': case 'home-collections': case 'home-tv': case 'home-tv-go': case 'home-tv-change': case 'home': homeAct(act); break;
+    case 'coll': CL.key = id; lsSet('coll', id); renderColls(); $('#colls').scrollTop = 0; break;
+    case 'coll-show': collShow(id); break;
+    case 'colls-back': if (navDepth()) try { history.back(); } catch (e) { showHome(); } else showHome(); break;
     case 'title-show': showTitleResult(id); break;
     case 'era': toggleArr(f.eras, id); f.yearFrom = f.yearTo = ''; $('#yFrom').value = $('#yTo').value = ''; render('eras'); applyChange(); break;
     case 'style': toggleArr(f.styles, id); render('styles'); applyChange(); break;
@@ -3495,7 +3599,7 @@ function touchLayout() {
 }
 // Deslizar el dedo también cambia de obra.
 let swipe = null;
-document.addEventListener('touchstart', e => { const t = e.touches[0]; swipe = e.touches.length === 1 && !S.menu && !scanOpen() && !homeOpen() ? { x: t.clientX, y: t.clientY } : null; }, { passive: true });
+document.addEventListener('touchstart', e => { const t = e.touches[0]; swipe = e.touches.length === 1 && !S.menu && !scanOpen() && !homeOpen() && !collsOpen() ? { x: t.clientX, y: t.clientY } : null; }, { passive: true });
 document.addEventListener('touchend', e => {
   if (!swipe || S.menu) return;
   const t = e.changedTouches[0], dx = t.clientX - swipe.x, dy = t.clientY - swipe.y; swipe = null;
@@ -3507,7 +3611,7 @@ document.addEventListener('click', e => {
   if (e.target.id === 'loaderMenu') { openMenu(); return; }
   if (e.target.id === 'loaderDiag') { diagnose(); return; }
   if (e.target.closest('#pair')) { hidePair(); return; }
-  if (e.target.closest('#scanner') || e.target.closest('#home')) return;
+  if (e.target.closest('#scanner') || e.target.closest('#home') || e.target.closest('#colls')) return;
   if (REMOTE) return;
   if (e.target.closest('#drawer') || e.target.closest('#diag')) return;
   if (S.menu) { closeMenu(); return; }
@@ -3536,6 +3640,7 @@ document.addEventListener('keydown', e => {
     if (e.key === 'Escape' || e.key === 'GoBack' || (e.key === 'Backspace' && !inField)) { e.preventDefault(); if (!$('#scanSheet').hidden) sheetClose(); else closeScanner(); }
     return;
   }
+  if (collsOpen()) { if (e.key === 'Escape' || e.key === 'GoBack' || e.key === 'Backspace') { e.preventDefault(); onAct('colls-back'); } return; }
   if (homeOpen()) { if (e.key === 'Enter' && e.target.id === 'homeTvCode') { e.preventDefault(); onAct('home-tv-go'); } return; }
   const tag = (e.target.tagName || '').toLowerCase(), typing = tag === 'input' || tag === 'textarea';
   if (typing) {
@@ -3938,6 +4043,7 @@ function remoteNow(n) {
   if (!n) return;
   remoteFavStyles(n.favStyles);
   S.current = { uid: n.uid }; S.nowFav = !!n.fav; S.paused = !!n.paused;
+  if (n.uid && n.thumb && /^https:\/\//i.test(n.thumb)) addViewed({ uid: n.uid, title: n.title, artist: n.artist, date: n.date, museum: n.museum, thumb: n.thumb, imgs: [n.thumb] }); // lo que se ve en la TV también cuenta como visto en este móvil
   $('#rcnow').hidden = false; $('#rcT').textContent = n.title || ''; $('#rcA').textContent = [C.cleanName(n.artist), n.date].filter(Boolean).join(' · ');
   const im = $('#rcImg'); if (n.thumb && im.dataset.u !== n.thumb) { im.dataset.u = n.thumb; im.src = n.thumb; }
   $('#playBtn').textContent = S.paused ? 'Reanudar' : 'Pausar'; updateFavBtn();
@@ -4050,7 +4156,7 @@ function init() {
   advance();
   initTV();
 }
-window.ArtApp = { openScanner, closeScanner, scanCapture, setZoom, showHome, HOME, cloudSync, checkUpdate, applyUpdate, S, next, prev, advance, openMenu, closeMenu, refill, onAct, render, renderAll, applyChange, present, pullNext, captionMs, capMode, parseCode, Remote: () => RC };
+window.ArtApp = { openColls, openScanner, closeScanner, scanCapture, setZoom, showHome, HOME, cloudSync, checkUpdate, applyUpdate, S, next, prev, advance, openMenu, closeMenu, refill, onAct, render, renderAll, applyChange, present, pullNext, captionMs, capMode, parseCode, Remote: () => RC };
 init();
 })();
 

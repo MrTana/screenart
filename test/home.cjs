@@ -37,9 +37,43 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   A.openMenu(); assert.ok(!d.getElementById('homeBtn').hidden, 'en el menú hay botón «Inicio»');
   d.getElementById('homeBtn').click(); await wait(20);
   assert.ok(!home.hidden && !S.menu, '«Inicio» vuelve a la pantalla de inicio');
-  // Colecciones: abre el menú (de momento, en «Colección rápida»)
+  // Colecciones: círculos (Favoritas, Pinturas vistas) y cuadrícula masonry que se alarga al bajar
+  const colls = d.getElementById('colls'), grid = d.getElementById('collGrid');
+  const mkw = (i, extra) => Object.assign({ uid: 'wiki:' + i, src: 'wiki', title: 'Obra ' + i, artist: 'Pintor ' + i, imgs: ['https://img.test/' + i + '.jpg'], thumb: 'https://img.test/t' + i + '.jpg' }, extra);
+  S.favs = Array.from({ length: 70 }, (_, i) => mkw(i, { w: 1000, h: 500 + i * 10 }));
+  A.present(Object.assign(mkw('v1'), { url: 'https://img.test/v1.jpg', url_page: 'https://page.test/v1' }));
+  A.present(Object.assign(mkw('v2'), { url: 'https://img.test/v2.jpg' }));
+  A.present(Object.assign(mkw('v1'), { url: 'https://img.test/v1.jpg' }));
+  assert.deepStrictEqual(Array.from(S.viewed, x => x.uid), ['wiki:v1', 'wiki:v2'], 'pinturas vistas: la última primero y sin repetir');
+  Object.defineProperty(w, 'innerWidth', { value: 390, configurable: true });
+  await wait(1700); assert.strictEqual(JSON.parse(w.localStorage.getItem('galeria-arte-v1:viewed')).length, 2, 'las vistas se guardan en el dispositivo');
   home.querySelector('[data-act=home-collections]').click();
-  assert.ok(home.hidden && S.menu, 'Colecciones abre el menú'); A.onAct('home'); await wait(20);
+  assert.ok(home.hidden && !colls.hidden && !S.menu, 'Colecciones abre su pantalla ' + [home.hidden, colls.hidden, S.menu]);
+  const rings = () => Array.from(colls.querySelectorAll('.cring'));
+  assert.deepStrictEqual(rings().map(b => b.querySelector('b').textContent), ['Favoritas', 'Pinturas vistas'], 'círculos arriba');
+  assert.strictEqual(rings()[0].getAttribute('aria-pressed'), 'true', 'Favoritas elegida al empezar');
+  assert.strictEqual(rings()[0].querySelector('img').getAttribute('src'), 'https://img.test/t0.jpg', 'el círculo lleva la última obra');
+  assert.strictEqual(grid.children.length, 2, 'dos columnas en el móvil');
+  const tiles = () => grid.querySelectorAll('.ctile');
+  assert.ok(tiles().length >= 30, 'primera página de obras: ' + tiles().length);
+  const hs = Array.from(grid.children).map(c => c.children.length); assert.ok(Math.abs(hs[0] - hs[1]) <= 3, 'las columnas quedan parejas: ' + hs);
+  for (let i = 0; i < 5; i++) colls.dispatchEvent(new w.Event('scroll'));
+  assert.strictEqual(tiles().length, 70, 'al bajar salen todas');
+  rings()[1].click();
+  assert.strictEqual(rings()[1].getAttribute('aria-pressed'), 'true');
+  assert.deepStrictEqual(Array.from(tiles()).map(t => t.querySelector('img').getAttribute('src')), ['https://img.test/tv1.jpg', 'https://img.test/tv2.jpg'], 'pinturas vistas en la cuadrícula');
+  tiles()[1].click(); await wait(60);
+  assert.ok(colls.hidden && home.hidden && S.current.uid === 'wiki:v2', 'tocar una obra la muestra en la galería');
+  w.history.back(); await wait(60);
+  assert.ok(!colls.hidden, 'Atrás vuelve a Colecciones');
+  colls.querySelector('[data-act=colls-back]').click(); await wait(60);
+  assert.ok(colls.hidden && !home.hidden, 'la flecha vuelve al inicio');
+  S.favs = []; home.querySelector('[data-act=home-collections]').click(); rings()[0].click();
+  assert.ok(!d.getElementById('collEmpty').hidden && /favoritas/i.test(d.getElementById('collEmpty').textContent), 'colección vacía: dice cómo llenarla');
+  // desde la galería (dos pasos), «Inicio» vuelve al inicio sin pasar por Colecciones
+  tiles().length; A.onAct('coll', 'viewed'); grid.querySelector('.ctile').click(); await wait(60);
+  A.openMenu(); A.onAct('home'); await wait(80);
+  assert.ok(!home.hidden && colls.hidden && !S.menu, '«Inicio» desde una obra de Colecciones vuelve al inicio');
   // Escaneo de obra
   let stopped = 0, zoomed = null;
   const track = { stop: () => { stopped++; }, getCapabilities: () => ({}), getSettings: () => ({}) };
