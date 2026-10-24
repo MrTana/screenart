@@ -9,7 +9,7 @@ const Q = (() => { try { return new URLSearchParams(location.search); } catch (e
 // Con «?c=código» la página es el mando del móvil: no muestra obras, controla la TV.
 const REMOTE = /^[a-z0-9]{6,24}$/i.test(Q.get('c') || '') ? Q.get('c').toLowerCase() : '';
 function lsGet(k, def) { try { const v = localStorage.getItem(KEY + ':' + k); return v ? JSON.parse(v) : def; } catch (e) { return def; } }
-function lsSet(k, v) { if (REMOTE && !['rskin', 'upd', 'rc', 'idkeys', 'keys', 'keysent', 'favs', 'favdel', 'keyt', 'cloudv', 'cloudsent'].includes(k)) return; // el mando solo guarda su código y lo que comparte con la versión móvil (claves y favoritas)
+function lsSet(k, v) { if (REMOTE && !['rskin', 'upd', 'rc', 'tvcode', 'idkeys', 'keys', 'keysent', 'favs', 'favdel', 'keyt', 'cloudv', 'cloudsent'].includes(k)) return; // el mando solo guarda su código y lo que comparte con la versión móvil (claves y favoritas)
    try { localStorage.setItem(KEY + ':' + k, JSON.stringify(v)); } catch (e) { /* sin almacenamiento */ } }
 
 /* ───────── estado ───────── */
@@ -827,7 +827,13 @@ const HOME = !REMOTE && (() => {
 })();
 const homeOpen = () => !$('#home').hidden;
 function navPush(k) { if (HOME) try { history.pushState({ ga: k }, ''); } catch (e) { /* sin historial */ } }
-function showHome() { if (!HOME) return; if (S.menu) closeMenu(); if (scanOpen()) closeScanner(); $('#home').hidden = false; }
+function openRemote(c) { lsSet('tvcode', c); toast('Abriendo el mando…'); location.href = location.pathname + '?c=' + c; }
+function homeTvInfo() { // la tarjeta dice a qué TV se conectará
+  const c = lsGet('tvcode', '');
+  $('#homeTvSub').textContent = c ? 'Abre el mando de tu TV (código ' + c.replace(/(.{4})(?=.)/g, '$1-') + ')' : 'Maneja la galería de la TV desde el móvil';
+  $('#homeTvChange').hidden = !c || !$('#homeTv').hidden;
+}
+function showHome() { if (!HOME) return; if (S.menu) closeMenu(); if (scanOpen()) closeScanner(); $('#home').hidden = false; homeTvInfo(); }
 function leaveHome() {
   if (!homeOpen()) return;
   $('#home').hidden = true; navPush('gallery');
@@ -840,6 +846,18 @@ function homeAct(act) {
     leaveHome(); openMenu();
     const sel = $('#c-presets'); try { sel.scrollIntoView({ block: 'center' }); sel.focus({ preventScroll: true }); if (sel.showPicker) sel.showPicker(); } catch (e) { /* el navegador no abre la lista solo */ }
     return;
+  }
+  if (act === 'home-tv') { // con una TV ya usada, directo al mando; si no, se pide el código
+    const c = lsGet('tvcode', '');
+    if (c && $('#homeTv').hidden) { openRemote(c); return; }
+    $('#homeTv').hidden = false; $('#homeTvChange').hidden = true; $('#homeTvCode').value = c ? c.replace(/(.{4})(?=.)/g, '$1-') : ''; try { $('#homeTvCode').focus(); } catch (e) { /* nada */ }
+    return;
+  }
+  if (act === 'home-tv-change') { $('#homeTv').hidden = false; $('#homeTvChange').hidden = true; $('#homeTvCode').value = ''; try { $('#homeTvCode').focus(); } catch (e) { /* nada */ } return; }
+  if (act === 'home-tv-go') {
+    const c = parseCode($('#homeTvCode').value);
+    if (!c) { $('#homeTvMsg').textContent = 'El código no es válido: son 12 letras y números y salen bajo el QR de la TV.'; return; }
+    openRemote(c); return;
   }
   if (act === 'home') { showHome(); if (history.state && history.state.ga) try { history.back(); } catch (e) { /* sin historial */ } }
 }
@@ -986,7 +1004,7 @@ function onAct(act, id) {
     case 'scan-name-go': searchTitle($('#scanTitleIn').value); break;
     case 'scan-zoom': setZoom(+id); break;
     case 'sheet-close': sheetClose(); break;
-    case 'home-scan': case 'home-gallery': case 'home-collections': case 'home': homeAct(act); break;
+    case 'home-scan': case 'home-gallery': case 'home-collections': case 'home-tv': case 'home-tv-go': case 'home-tv-change': case 'home': homeAct(act); break;
     case 'title-show': showTitleResult(id); break;
     case 'era': toggleArr(f.eras, id); f.yearFrom = f.yearTo = ''; $('#yFrom').value = $('#yTo').value = ''; render('eras'); applyChange(); break;
     case 'style': toggleArr(f.styles, id); render('styles'); applyChange(); break;
@@ -1067,7 +1085,7 @@ document.addEventListener('keydown', e => {
     if (e.key === 'Escape' || e.key === 'GoBack' || (e.key === 'Backspace' && !inField)) { e.preventDefault(); if (!$('#scanSheet').hidden) sheetClose(); else closeScanner(); }
     return;
   }
-  if (homeOpen()) return;
+  if (homeOpen()) { if (e.key === 'Enter' && e.target.id === 'homeTvCode') { e.preventDefault(); onAct('home-tv-go'); } return; }
   const tag = (e.target.tagName || '').toLowerCase(), typing = tag === 'input' || tag === 'textarea';
   if (typing) {
     if (e.key === 'Enter') { if (e.target.id === 'artistIn') { addArtist(e.target.value); e.target.value = ''; } if (e.target.id === 'kwIn') { addKeyword(e.target.value); e.target.value = ''; } if (e.target.id === 'museumIn') addMuseumByName(); if (e.target.id === 'titleIn') searchTitle(); if (e.target.id === 'tvCode') onAct('tv-go'); if (e.target.id === 'exwIn') { addExWord(e.target.value); e.target.value = ''; } }
@@ -1547,7 +1565,7 @@ function remoteSetSoon() {
   RC.setT = setTimeout(() => { relaySend({ t: 'set', f: slimF(S.f), st: S.st, custom: S.custom, keys: S.keys }); toast('Enviado a la TV'); }, 900);
 }
 function initRemote() {
-  RC.code = REMOTE; lsSet('rc', REMOTE);
+  RC.code = REMOTE; lsSet('rc', REMOTE); lsSet('tvcode', REMOTE); // el inicio del móvil recuerda la TV para «Conectar a la TV»
   setTimeout(cloudSync, 1500); setInterval(cloudSync, 600000);
   setTimeout(checkUpdate, 30000); setInterval(checkUpdate, 300000);
   document.body.classList.add('rc');
@@ -1571,7 +1589,7 @@ function init() {
   if (REMOTE) { initRemote(); return; }
   applyLook(); renderAll(); activity(); keepAwake();
   document.body.classList.add('active');
-  if (HOME) { $('#home').hidden = false; $('#homeBtn').hidden = false; try { history.replaceState(null, ''); } catch (e) { /* sin historial */ } }
+  if (HOME) { $('#home').hidden = false; $('#homeBtn').hidden = false; homeTvInfo(); try { history.replaceState(null, ''); } catch (e) { /* sin historial */ } }
   else if (touchLayout() && !lsGet('tapHint', false)) { lsSet('tapHint', true); setTimeout(() => toast('Toca el borde derecho: siguiente · el izquierdo: anterior · el centro: menú'), 2500); }
   showLoader('Buscando obras en los museos…', 'Pulsa Intro o toca la pantalla para abrir los filtros.', false);
   planSweep();

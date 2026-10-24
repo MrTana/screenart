@@ -53,7 +53,7 @@ publicada en **https://screenart.pages.dev** (Cloudflare Pages, se despliega sol
 - **Presentación «Con cartela»**: verticales y cuadradas a un lado con su cartela al otro, alternando lados.
 - **Pantalla de inicio del móvil** (`#home`, solo en el móvil: no en la TV ni en el mando; `?home=1`/`?home=0` la fuerzan): Escaneo de obra,
   Galería de arte y Colecciones (de momento abre el menú en «Colección rápida»; el usuario definirá Galería y Colecciones). El botón Atrás
-  del móvil y «Inicio» del menú vuelven a ella (`history.pushState`).
+  del móvil y «Inicio» del menú vuelven a ella (`history.pushState`). «Conectar a la TV» abre el mando con el último código usado (`tvcode`, que guarda el mando al abrirse) o lo pide.
 - **Escáner tipo cámara** (`#scanner`, el mismo desde el inicio y desde el menú): zoom (1× 2× 3× y pellizco; zoom de la cámara si lo tiene,
   si no ampliación), círculo = escanear (manual; el marco se pone verde cuando está quieto), cuadrado izquierdo = buscar por nombre,
   derecho = buscar por foto de la galería. Resultados en una hoja desde abajo (`#scanSheet`, que también pide la clave si falta).

@@ -30,7 +30,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   await wait(50);
   const home = d.getElementById('home'), sc = d.getElementById('scanner'), sheet = d.getElementById('scanSheet');
   assert.ok(!home.hidden, 'el móvil arranca en la pantalla de inicio');
-  assert.deepStrictEqual(Array.from(home.querySelectorAll('.hcard b')).map(b => b.textContent), ['Escaneo de obra', 'Galería de arte', 'Colecciones']);
+  assert.deepStrictEqual(Array.from(home.querySelectorAll('.hcard b')).map(b => b.textContent), ['Escaneo de obra', 'Galería de arte', 'Colecciones', 'Conectar a la TV']);
   // Galería de arte: se ve la galería; «Inicio» del menú vuelve
   home.querySelector('[data-act=home-gallery]').click();
   assert.ok(home.hidden && !S.menu, 'Galería de arte abre la galería');
@@ -122,6 +122,19 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   d.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); assert.ok(sheet.hidden && !sc.hidden, 'Escape cierra la hoja');
   d.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); assert.ok(sc.hidden && stopped === 2, 'y luego la cámara');
   assert.ok(!home.hidden, 'y se vuelve al inicio');
+  { // Conectar a la TV: sin código, se pide; con código, directo al mando
+    const w2 = load('https://example.test/?home=1'), d2 = w2.document; await wait(50);
+    assert.ok(/desde el móvil/.test(d2.getElementById('homeTvSub').textContent));
+    d2.querySelector('[data-act=home-tv]').click(); assert.ok(!d2.getElementById('homeTv').hidden, 'sin código, pide el código');
+    d2.getElementById('homeTvCode').value = 'xx'; d2.querySelector('[data-act=home-tv-go]').click();
+    assert.ok(/no es válido/.test(d2.getElementById('homeTvMsg').textContent), 'código no válido');
+    w2.localStorage.setItem('galeria-arte-v1:tvcode', JSON.stringify('abcdefghjkmn'));
+    w2.ArtApp.showHome(); assert.ok(/abcd-efgh-jkmn/.test(d2.getElementById('homeTvSub').textContent), 'la tarjeta dice el código guardado');
+  }
+  { // abrir el mando guarda el código de la TV para la próxima vez
+    const w3 = load('https://example.test/?c=abcdefghjkmn'); await wait(50);
+    assert.strictEqual(JSON.parse(w3.localStorage.getItem('galeria-arte-v1:tvcode')), 'abcdefghjkmn');
+  }
   console.log('INICIO OK');
   process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });

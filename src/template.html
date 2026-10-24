@@ -353,6 +353,8 @@ section.sec .hint{margin:8px 0 0;font:400 14px/20px var(--sans);color:var(--md-o
 [data-skin^=m3e] .hcard:active{border-radius:var(--r-lg)}
 [data-skin^=m3e] .hcard b{font-weight:700}
 [data-skin^=m3e] .hcard.main i{border-radius:50%}
+.htv{padding:4px 4px 8px}.htv .row{flex-wrap:nowrap}.htv input{flex:1;min-width:0}.htv .hint{margin:8px 0 0;font:400 12px/16px var(--sans);color:var(--md-on-surface-variant)}
+.htvchg{align-self:center}
 .hfoot{margin-top:auto;padding:24px 4px 0;font:400 12px/16px var(--sans);letter-spacing:.4px;color:var(--md-on-surface-variant)}
 .musrow{flex-wrap:nowrap}.musrow input{flex:1;min-width:0}
 .ibtn.tonal{background:var(--md-secondary-container);color:var(--md-on-secondary-container)}
@@ -435,6 +437,12 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
     <button class="hcard main" data-act="home-scan" style="--ic:var(--i-camera)"><i></i><div><b>Escaneo de obra</b><span>Apunta la cámara a una pintura y descubre cuál es</span></div></button>
     <button class="hcard" data-act="home-gallery" style="--ic:var(--i-slides)"><i></i><div><b>Galería de arte</b><span>Obras de museos que cambian solas</span></div></button>
     <button class="hcard" data-act="home-collections" style="--ic:var(--i-library)"><i></i><div><b>Colecciones</b><span>Movimientos, artistas y regiones</span></div></button>
+    <button class="hcard" data-act="home-tv" style="--ic:var(--i-cast)"><i></i><div><b>Conectar a la TV</b><span id="homeTvSub">Maneja la galería de la TV desde el móvil</span></div></button>
+    <div class="htv" id="homeTv" hidden>
+      <div class="row"><input type="text" id="homeTvCode" placeholder="Código de la TV (ej. abcd-efgh-jkmn)" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn pri" data-act="home-tv-go">Conectar</button></div>
+      <p class="hint" id="homeTvMsg">El código sale bajo el QR en la pantalla de la TV. También puedes apuntar la cámara del móvil a ese QR.</p>
+    </div>
+    <button class="btn out htvchg" data-act="home-tv-change" id="homeTvChange" hidden>Conectar a otra TV</button>
   </nav>
   <p class="hfoot">Toca una opción para empezar. Desde la galería vuelves aquí con «Inicio» en el menú o con el botón Atrás del móvil.</p>
 </div>

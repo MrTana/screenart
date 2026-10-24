@@ -353,6 +353,8 @@ section.sec .hint{margin:8px 0 0;font:400 14px/20px var(--sans);color:var(--md-o
 [data-skin^=m3e] .hcard:active{border-radius:var(--r-lg)}
 [data-skin^=m3e] .hcard b{font-weight:700}
 [data-skin^=m3e] .hcard.main i{border-radius:50%}
+.htv{padding:4px 4px 8px}.htv .row{flex-wrap:nowrap}.htv input{flex:1;min-width:0}.htv .hint{margin:8px 0 0;font:400 12px/16px var(--sans);color:var(--md-on-surface-variant)}
+.htvchg{align-self:center}
 .hfoot{margin-top:auto;padding:24px 4px 0;font:400 12px/16px var(--sans);letter-spacing:.4px;color:var(--md-on-surface-variant)}
 .musrow{flex-wrap:nowrap}.musrow input{flex:1;min-width:0}
 .ibtn.tonal{background:var(--md-secondary-container);color:var(--md-on-secondary-container)}
@@ -435,6 +437,12 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
     <button class="hcard main" data-act="home-scan" style="--ic:var(--i-camera)"><i></i><div><b>Escaneo de obra</b><span>Apunta la cámara a una pintura y descubre cuál es</span></div></button>
     <button class="hcard" data-act="home-gallery" style="--ic:var(--i-slides)"><i></i><div><b>Galería de arte</b><span>Obras de museos que cambian solas</span></div></button>
     <button class="hcard" data-act="home-collections" style="--ic:var(--i-library)"><i></i><div><b>Colecciones</b><span>Movimientos, artistas y regiones</span></div></button>
+    <button class="hcard" data-act="home-tv" style="--ic:var(--i-cast)"><i></i><div><b>Conectar a la TV</b><span id="homeTvSub">Maneja la galería de la TV desde el móvil</span></div></button>
+    <div class="htv" id="homeTv" hidden>
+      <div class="row"><input type="text" id="homeTvCode" placeholder="Código de la TV (ej. abcd-efgh-jkmn)" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn pri" data-act="home-tv-go">Conectar</button></div>
+      <p class="hint" id="homeTvMsg">El código sale bajo el QR en la pantalla de la TV. También puedes apuntar la cámara del móvil a ese QR.</p>
+    </div>
+    <button class="btn out htvchg" data-act="home-tv-change" id="homeTvChange" hidden>Conectar a otra TV</button>
   </nav>
   <p class="hfoot">Toca una opción para empezar. Desde la galería vuelves aquí con «Inicio» en el menú o con el botón Atrás del móvil.</p>
 </div>
@@ -532,7 +540,7 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
     <button class="acch" data-act="acc" data-id="skin" aria-expanded="false"><span class="at">Skin</span><span class="as" data-sum="skin"></span><span class="ac">›</span></button>
     <div class="accb"><label class="fld"><span>Aspecto de la interfaz</span><select id="c-skin"></select></label><p class="hint">Material Design 3 y Material 3 Expressive, en claro y oscuro. Solo cambia el menú, el mando y los avisos; la obra y su ficha no cambian.</p></div>
   </section>
-  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión debe3ed93d · 2026-10-24 00:36 CEST</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
+  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 0f34848220 · 2026-10-25 01:32 CEST</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
   <div id="rcfoot" hidden><button class="btn pri" data-act="rc-update">Buscar actualización</button><p id="rcver"></p></div>
 <div id="tvConnect"><button class="btn pri" data-act="tv-connect">Conectar a la TV</button><div class="row" id="tvRow" hidden><input type="text" id="tvCode" placeholder="Código de la TV (ej. abcd-efgh-jkmn)" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn pri" data-act="tv-go">Abrir mando</button></div><p class="hint" id="tvMsg">El código sale bajo el QR en la pantalla de la TV.</p></div>
 </aside>
@@ -2452,7 +2460,7 @@ const Q = (() => { try { return new URLSearchParams(location.search); } catch (e
 // Con «?c=código» la página es el mando del móvil: no muestra obras, controla la TV.
 const REMOTE = /^[a-z0-9]{6,24}$/i.test(Q.get('c') || '') ? Q.get('c').toLowerCase() : '';
 function lsGet(k, def) { try { const v = localStorage.getItem(KEY + ':' + k); return v ? JSON.parse(v) : def; } catch (e) { return def; } }
-function lsSet(k, v) { if (REMOTE && !['rskin', 'upd', 'rc', 'idkeys', 'keys', 'keysent', 'favs', 'favdel', 'keyt', 'cloudv', 'cloudsent'].includes(k)) return; // el mando solo guarda su código y lo que comparte con la versión móvil (claves y favoritas)
+function lsSet(k, v) { if (REMOTE && !['rskin', 'upd', 'rc', 'tvcode', 'idkeys', 'keys', 'keysent', 'favs', 'favdel', 'keyt', 'cloudv', 'cloudsent'].includes(k)) return; // el mando solo guarda su código y lo que comparte con la versión móvil (claves y favoritas)
    try { localStorage.setItem(KEY + ':' + k, JSON.stringify(v)); } catch (e) { /* sin almacenamiento */ } }
 
 /* ───────── estado ───────── */
@@ -3270,7 +3278,13 @@ const HOME = !REMOTE && (() => {
 })();
 const homeOpen = () => !$('#home').hidden;
 function navPush(k) { if (HOME) try { history.pushState({ ga: k }, ''); } catch (e) { /* sin historial */ } }
-function showHome() { if (!HOME) return; if (S.menu) closeMenu(); if (scanOpen()) closeScanner(); $('#home').hidden = false; }
+function openRemote(c) { lsSet('tvcode', c); toast('Abriendo el mando…'); location.href = location.pathname + '?c=' + c; }
+function homeTvInfo() { // la tarjeta dice a qué TV se conectará
+  const c = lsGet('tvcode', '');
+  $('#homeTvSub').textContent = c ? 'Abre el mando de tu TV (código ' + c.replace(/(.{4})(?=.)/g, '$1-') + ')' : 'Maneja la galería de la TV desde el móvil';
+  $('#homeTvChange').hidden = !c || !$('#homeTv').hidden;
+}
+function showHome() { if (!HOME) return; if (S.menu) closeMenu(); if (scanOpen()) closeScanner(); $('#home').hidden = false; homeTvInfo(); }
 function leaveHome() {
   if (!homeOpen()) return;
   $('#home').hidden = true; navPush('gallery');
@@ -3283,6 +3297,18 @@ function homeAct(act) {
     leaveHome(); openMenu();
     const sel = $('#c-presets'); try { sel.scrollIntoView({ block: 'center' }); sel.focus({ preventScroll: true }); if (sel.showPicker) sel.showPicker(); } catch (e) { /* el navegador no abre la lista solo */ }
     return;
+  }
+  if (act === 'home-tv') { // con una TV ya usada, directo al mando; si no, se pide el código
+    const c = lsGet('tvcode', '');
+    if (c && $('#homeTv').hidden) { openRemote(c); return; }
+    $('#homeTv').hidden = false; $('#homeTvChange').hidden = true; $('#homeTvCode').value = c ? c.replace(/(.{4})(?=.)/g, '$1-') : ''; try { $('#homeTvCode').focus(); } catch (e) { /* nada */ }
+    return;
+  }
+  if (act === 'home-tv-change') { $('#homeTv').hidden = false; $('#homeTvChange').hidden = true; $('#homeTvCode').value = ''; try { $('#homeTvCode').focus(); } catch (e) { /* nada */ } return; }
+  if (act === 'home-tv-go') {
+    const c = parseCode($('#homeTvCode').value);
+    if (!c) { $('#homeTvMsg').textContent = 'El código no es válido: son 12 letras y números y salen bajo el QR de la TV.'; return; }
+    openRemote(c); return;
   }
   if (act === 'home') { showHome(); if (history.state && history.state.ga) try { history.back(); } catch (e) { /* sin historial */ } }
 }
@@ -3429,7 +3455,7 @@ function onAct(act, id) {
     case 'scan-name-go': searchTitle($('#scanTitleIn').value); break;
     case 'scan-zoom': setZoom(+id); break;
     case 'sheet-close': sheetClose(); break;
-    case 'home-scan': case 'home-gallery': case 'home-collections': case 'home': homeAct(act); break;
+    case 'home-scan': case 'home-gallery': case 'home-collections': case 'home-tv': case 'home-tv-go': case 'home-tv-change': case 'home': homeAct(act); break;
     case 'title-show': showTitleResult(id); break;
     case 'era': toggleArr(f.eras, id); f.yearFrom = f.yearTo = ''; $('#yFrom').value = $('#yTo').value = ''; render('eras'); applyChange(); break;
     case 'style': toggleArr(f.styles, id); render('styles'); applyChange(); break;
@@ -3510,7 +3536,7 @@ document.addEventListener('keydown', e => {
     if (e.key === 'Escape' || e.key === 'GoBack' || (e.key === 'Backspace' && !inField)) { e.preventDefault(); if (!$('#scanSheet').hidden) sheetClose(); else closeScanner(); }
     return;
   }
-  if (homeOpen()) return;
+  if (homeOpen()) { if (e.key === 'Enter' && e.target.id === 'homeTvCode') { e.preventDefault(); onAct('home-tv-go'); } return; }
   const tag = (e.target.tagName || '').toLowerCase(), typing = tag === 'input' || tag === 'textarea';
   if (typing) {
     if (e.key === 'Enter') { if (e.target.id === 'artistIn') { addArtist(e.target.value); e.target.value = ''; } if (e.target.id === 'kwIn') { addKeyword(e.target.value); e.target.value = ''; } if (e.target.id === 'museumIn') addMuseumByName(); if (e.target.id === 'titleIn') searchTitle(); if (e.target.id === 'tvCode') onAct('tv-go'); if (e.target.id === 'exwIn') { addExWord(e.target.value); e.target.value = ''; } }
@@ -3990,7 +4016,7 @@ function remoteSetSoon() {
   RC.setT = setTimeout(() => { relaySend({ t: 'set', f: slimF(S.f), st: S.st, custom: S.custom, keys: S.keys }); toast('Enviado a la TV'); }, 900);
 }
 function initRemote() {
-  RC.code = REMOTE; lsSet('rc', REMOTE);
+  RC.code = REMOTE; lsSet('rc', REMOTE); lsSet('tvcode', REMOTE); // el inicio del móvil recuerda la TV para «Conectar a la TV»
   setTimeout(cloudSync, 1500); setInterval(cloudSync, 600000);
   setTimeout(checkUpdate, 30000); setInterval(checkUpdate, 300000);
   document.body.classList.add('rc');
@@ -4014,7 +4040,7 @@ function init() {
   if (REMOTE) { initRemote(); return; }
   applyLook(); renderAll(); activity(); keepAwake();
   document.body.classList.add('active');
-  if (HOME) { $('#home').hidden = false; $('#homeBtn').hidden = false; try { history.replaceState(null, ''); } catch (e) { /* sin historial */ } }
+  if (HOME) { $('#home').hidden = false; $('#homeBtn').hidden = false; homeTvInfo(); try { history.replaceState(null, ''); } catch (e) { /* sin historial */ } }
   else if (touchLayout() && !lsGet('tapHint', false)) { lsSet('tapHint', true); setTimeout(() => toast('Toca el borde derecho: siguiente · el izquierdo: anterior · el centro: menú'), 2500); }
   showLoader('Buscando obras en los museos…', 'Pulsa Intro o toca la pantalla para abrir los filtros.', false);
   planSweep();
