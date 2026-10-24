@@ -862,13 +862,13 @@ window.addEventListener('popstate', e => {
   if (!HOME) return;
   const k = e.state && e.state.ga;
   if (k !== 'scan' && scanOpen()) closeScanner();
-  if (k === 'colls') { if (S.menu) closeMenu(); $('#home').hidden = true; openColls(); } else $('#colls').hidden = true;
+  if (k === 'colls') { if (S.menu) closeMenu(); $('#home').hidden = true; openColls(true); } else $('#colls').hidden = true;
   if (!k) showHome();
 });
 
 /* ───────── colecciones (pantalla del móvil) ─────────
    Arriba, círculos para elegir la colección (Favoritas y Pinturas vistas); debajo, sus obras en una cuadrícula tipo masonry
-   (cada obra va a la columna más corta) que se alarga sola al bajar. Tocar una obra la muestra en la galería; Atrás vuelve aquí. */
+   (cada obra va a la columna más corta, en orden aleatorio cada vez que se abre) que se alarga sola al bajar. Tocar una obra la muestra en la galería; Atrás vuelve aquí. */
 const VIEWED_MAX = 500, COLL_PAGE = 30;
 function addViewed(w) { // «Pinturas vistas»: la más reciente primero, sin repetir
   if (!w || !w.uid || !(w.thumb || w.url)) return;
@@ -886,7 +886,11 @@ const COLLS = [
 const CL = { key: lsGet('coll', 'favs'), list: [], n: 0, hs: [] };
 const collsOpen = () => !$('#colls').hidden;
 const tileSrc = w => w.thumb || (w.imgs || [])[0] || '';
-function openColls() { $('#home').hidden = true; $('#colls').hidden = false; renderColls(); }
+function openColls(back) { // al volver de una obra con Atrás se deja todo como estaba (mismo orden y mismo sitio)
+  $('#home').hidden = true; $('#colls').hidden = false;
+  if (!(back && CL.done === CL.key)) renderColls();
+}
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function renderColls() {
   if (!COLLS.some(c => c.key === CL.key)) CL.key = 'favs';
   $('#collRow').innerHTML = COLLS.map(c => {
@@ -895,7 +899,7 @@ function renderColls() {
       (first ? '<img alt="" src="' + esc(tileSrc(first)) + '">' : '<i style="--ic:' + c.ic + '"></i>') + '</span></span><b>' + esc(c.es) + '</b><small>' + l.length + '</small></button>';
   }).join('');
   const c = COLLS.find(x => x.key === CL.key);
-  CL.list = c.list().filter(w => tileSrc(w) && Array.isArray(w.imgs) && w.imgs.length).slice(); CL.n = 0;
+  CL.list = shuffle(c.list().filter(w => tileSrc(w) && Array.isArray(w.imgs) && w.imgs.length)); CL.n = 0; CL.done = CL.key; // cada vez en otro orden
   const cols = (window.innerWidth || 360) >= 1000 ? 4 : (window.innerWidth || 360) >= 640 ? 3 : 2;
   CL.hs = new Array(cols).fill(0);
   $('#collGrid').innerHTML = CL.hs.map(() => '<div class="ccol"></div>').join('');

@@ -61,11 +61,20 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   assert.strictEqual(tiles().length, 70, 'al bajar salen todas');
   rings()[1].click();
   assert.strictEqual(rings()[1].getAttribute('aria-pressed'), 'true');
-  assert.deepStrictEqual(Array.from(tiles()).map(t => t.querySelector('img').getAttribute('src')), ['https://img.test/tv1.jpg', 'https://img.test/tv2.jpg'], 'pinturas vistas en la cuadrícula');
-  tiles()[1].click(); await wait(60);
+  const srcs = () => Array.from(tiles()).map(t => t.querySelector('img').getAttribute('src'));
+  assert.deepStrictEqual(srcs().sort(), ['https://img.test/tv1.jpg', 'https://img.test/tv2.jpg'], 'pinturas vistas en la cuadrícula');
+  const order = srcs(), pick = /v2/.test(order[0]) ? 0 : 1;
+  tiles()[pick].click(); await wait(60);
   assert.ok(colls.hidden && home.hidden && S.current.uid === 'wiki:v2', 'tocar una obra la muestra en la galería');
   w.history.back(); await wait(60);
   assert.ok(!colls.hidden, 'Atrás vuelve a Colecciones');
+  assert.deepStrictEqual(srcs(), order, 'al volver de una obra sigue el mismo orden');
+  { // al abrir, orden aleatorio
+    const seen = new Set();
+    for (let i = 0; i < 8; i++) { A.onAct('coll', 'favs'); seen.add(srcs().slice(0, 30).join()); }
+    assert.ok(seen.size > 1, 'cada vez que se abre cambia el orden');
+    A.onAct('coll', 'viewed');
+  }
   colls.querySelector('[data-act=colls-back]').click(); await wait(60);
   assert.ok(colls.hidden && !home.hidden, 'la flecha vuelve al inicio');
   S.favs = []; home.querySelector('[data-act=home-collections]').click(); rings()[0].click();
