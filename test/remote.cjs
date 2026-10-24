@@ -92,7 +92,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   assert.ok(!tv.document.getElementById('pair').hidden, 'el QR sigue hasta que el móvil manda una orden');
   assert.ok(posts <= 3, 'hello y estado caben en pocos mensajes: ' + posts);
   assert.ok(/Relé propio ✓ · Relé 3 de 3 brokers/.test(tv.document.getElementById('pairSt').textContent), 'la TV muestra el estado del relé: ' + tv.document.getElementById('pairSt').textContent);
-  { const ks = Array.from({ length: ph.localStorage.length }, (_, i) => ph.localStorage.key(i).replace('galeria-arte-v1:', '')).sort(); assert.ok(ks.every(k => ['rc', 'rskin'].includes(k)) && ks.includes('rc'), 'el móvil solo guarda el código y el aspecto (no pisa filtros): ' + ks); }
+  { const ks = Array.from({ length: ph.localStorage.length }, (_, i) => ph.localStorage.key(i).replace('galeria-arte-v1:', '')).sort(); assert.ok(ks.every(k => ['rc', 'rskin', 'tvcode'].includes(k)) && ks.includes('rc'), 'el móvil solo guarda el código y el aspecto (no pisa filtros): ' + ks); }
 
   // órdenes
   const h0 = tvA.S.hist.length;
