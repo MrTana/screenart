@@ -1,87 +1,88 @@
 {
- "at": "2026-10-23 22:40 UTC",
- "ok": 20,
+ "at": "2026-10-24 09:49 UTC",
+ "ok": 19,
  "total": 20,
  "results": {
   "The Met": {
    "ok": true,
-   "n": 12,
-   "sample": "Evening Glow in a Mountain Village and Calligraphy",
-   "ms": 715
+   "n": 24,
+   "sample": "The Toilet of Bathsheba",
+   "ms": 1862
   },
   "Art Institute of Chicago": {
    "ok": true,
    "n": 24,
    "err": "imagen no comprobable desde GitHub (protección contra robots)",
-   "sample": "Horsemen of the Apocalypse",
-   "ms": 437
+   "sample": "Inventions of the Monsters",
+   "ms": 422
   },
   "Cleveland Museum of Art": {
    "ok": true,
    "n": 24,
-   "sample": "Dr. James Stuart; Mary Campbell Stuart",
-   "ms": 763
+   "sample": "Prajnaparamita ﬂanked by two female ﬁgures, folio 1 (verso),",
+   "ms": 1325
   },
   "Rijksmuseum": {
    "ok": true,
    "n": 8,
-   "sample": "Portret van Johannes Otto van Setten",
-   "ms": 3388
+   "sample": "The Seven Works of Mercy",
+   "ms": 3035
   },
   "Victoria and Albert": {
    "ok": true,
    "n": 24,
-   "sample": "The Flag of the Quartermasters in the Eight Banners",
-   "ms": 1323
+   "sample": "Painting",
+   "ms": 1230
   },
   "SMK": {
-   "ok": true,
-   "n": 16,
-   "sample": "Kampen mellem Tereus og hans svigerinde Filomele (tredje bla",
-   "ms": 1066
+   "ok": false,
+   "n": 4,
+   "err": "imagen: tiempo agotado",
+   "sample": "Tre store træer på en bakke",
+   "ms": 60705
   },
   "Minneapolis": {
    "ok": true,
-   "n": 14,
-   "sample": "Bandolier Bag",
-   "ms": 1360
+   "n": 15,
+   "sample": "Red Ink Cake",
+   "ms": 731
   },
   "Smithsonian": {
    "ok": true,
    "n": 24,
-   "sample": "Charles and Lavinia Stratton",
-   "ms": 2543
+   "sample": "Boats at Peel--Isle of Man",
+   "ms": 1571
   },
   "Europeana": {
    "ok": true,
    "n": 24,
-   "sample": "Målning",
-   "ms": 1430
+   "sample": "Måltavla",
+   "ms": 1756
   },
   "Wikidata (museo)": {
    "ok": true,
-   "n": 2,
-   "sample": "Britannicus in toga",
-   "ms": 1458,
+   "n": 26,
+   "sample": "Portrait of a Woman with a Basket of Spindles",
+   "ms": 1451,
    "timing": {
     "app": {
-     "ms": 27,
+     "ms": 14,
      "status": 200,
      "n": "841"
     },
     "conPista": {
-     "ms": 432,
+     "ms": 1484,
      "status": 200,
      "n": "841"
     },
     "selApp": {
-     "ms": 65010,
+     "ms": 65004,
      "status": 504,
      "rows": 0,
      "head": "upstream request timeout"
     },
     "selSub": {
-     "ms": 1564,
+     "ms": 267,
      "status": 200,
      "rows": 3
     }
@@ -89,63 +90,63 @@
   },
   "Wikidata (general)": {
    "ok": true,
-   "n": 50,
-   "sample": "Corner of a Studio",
-   "ms": 3022
+   "n": 39,
+   "sample": "Haystacks, end of Summer",
+   "ms": 620
   },
   "Commons": {
    "ok": true,
-   "n": 32,
-   "sample": "Mrs Ellinor Guthrie",
-   "ms": 3897
+   "n": 37,
+   "sample": "The Baptism of Christ in the River Jordan",
+   "ms": 2888
   },
   "Google Art Project": {
    "ok": true,
-   "n": 40,
-   "sample": "The Forge",
-   "ms": 720
+   "n": 39,
+   "sample": "River View by Moonlight",
+   "ms": 3474
   },
   "Wikipedia": {
    "ok": true,
-   "n": 20,
-   "sample": "En plein air",
-   "ms": 600
+   "n": 16,
+   "sample": "List of most expensive paintings",
+   "ms": 571
   },
   "WikiArt": {
    "ok": true,
    "n": 60,
-   "sample": "Le Pont des Arts",
-   "ms": 1601
+   "sample": "The fisherman",
+   "ms": 1691
   },
   "MoMA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Kali",
-   "ms": 492
+   "sample": "Vertical and Diagonal Planes",
+   "ms": 660
   },
   "NGA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "View of Bozen with a Painter",
-   "ms": 512
+   "sample": "Weary Wayfarers",
+   "ms": 511
   },
   "Tate (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Cupid and Psyche",
-   "ms": 1514
+   "sample": "Amy Robsart",
+   "ms": 820
   },
   "Louvre (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "La Vierge trônant avec l'enfant Jésus entre saint Jean-Bapti",
-   "ms": 312
+   "sample": "Les deux amies.",
+   "ms": 212
   },
   "Prado (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Retrato de niña",
-   "ms": 256
+   "sample": "Salón de Porcelana del Palacio Real de Madrid",
+   "ms": 202
   }
  }
 }
