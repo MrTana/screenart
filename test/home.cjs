@@ -25,6 +25,17 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   { // mando: tampoco
     const w = load('https://example.test/?c=abcdefgh'); await wait(50);
     assert.ok(w.document.getElementById('home').hidden, 'en el mando no hay pantalla de inicio');
+    // en el mando, la obra encontrada también tiene sus botones; las favoritas se guardan y viajan a la TV
+    const A = w.ArtApp, d = w.document; w.navigator.mediaDevices = undefined;
+    A.openScanner(); await wait(20);
+    A.S.tres = [{ uid: 'wd:Q1', src: 'wd', title: 'Obra', artist: 'Pintor', imgs: ['https://img.test/a.jpg'], thumb: 'https://img.test/t.jpg', url: 'https://www.wikidata.org/wiki/Q1' }];
+    A.onAct('title-show', '0'); await wait(30);
+    assert.ok(!d.getElementById('scanFound').hidden, 'mando: se abre la obra encontrada');
+    d.getElementById('foundFav').click();
+    assert.ok(JSON.parse(w.localStorage.getItem('galeria-arte-v1:favs')).some(x => x.uid === 'wd:Q1'), 'mando: favorita guardada');
+    d.getElementById('foundViewed').click();
+    assert.ok(JSON.parse(w.localStorage.getItem('galeria-arte-v1:viewed')).some(x => x.uid === 'wd:Q1'), 'mando: vista guardada');
+    A.closeScanner(); assert.ok(d.getElementById('scanFound').hidden, 'al cerrar la cámara se cierra la obra');
   }
   const w = load('https://example.test/?home=1'), d = w.document, A = w.ArtApp, S = A.S;
   await wait(50);
@@ -155,8 +166,32 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     if (/props=claims/.test(u)) return J({ entities: { Q45585: { id: 'Q45585', labels: { es: { value: 'La noche estrellada' } }, descriptions: { es: { value: 'pintura de Vincent van Gogh' } }, claims: { P18: [{ mainsnak: { datavalue: { value: 'Starry.jpg' } } }] } } } });
     throw new TypeError('Failed to fetch'); };
   A.onAct('scan-name-go'); await wait(300);
-  // elegir el resultado: se cierra la cámara y se ve la obra en la galería
+  // elegir el resultado: se abre la obra con tres botones redondos (favorita, vista, ver en galería), sin cerrar la cámara
+  const found = d.getElementById('scanFound'), fav = d.getElementById('foundFav'), seen = d.getElementById('foundViewed');
   d.querySelector('#scanRes .tres').click(); await wait(100);
+  assert.ok(!found.hidden && !sc.hidden && stopped === 0, 'se abre la obra encontrada');
+  assert.strictEqual(d.getElementById('foundT').textContent, 'La noche estrellada');
+  assert.strictEqual(found.querySelectorAll('.fbar .fbtn').length, 3, 'tres botones');
+  assert.ok(/^https:/.test(d.getElementById('foundImg').src), 'con su imagen');
+  const nf = S.favs.length, nv = S.viewed.length;
+  assert.strictEqual(fav.getAttribute('aria-pressed'), 'false');
+  fav.click(); assert.strictEqual(S.favs.length, nf + 1, 'la estrella la guarda en favoritas');
+  assert.strictEqual(S.favs[0].title, 'La noche estrellada'); assert.ok(/^https:/.test(S.favs[0].imgs[0]) && !/wikidata\.org\/wiki/.test(S.favs[0].imgs[0]), 'con la imagen, no la ficha: ' + S.favs[0].imgs[0]);
+  assert.strictEqual(fav.getAttribute('aria-pressed'), 'true', 'y queda marcada');
+  assert.ok(JSON.parse(w.localStorage.getItem('galeria-arte-v1:favs')).some(x => x.title === 'La noche estrellada'), 'guardada en el dispositivo');
+  seen.click(); assert.strictEqual(S.viewed.length, nv + 1, 'el ojo la añade a pinturas vistas'); assert.strictEqual(S.viewed[0].title, 'La noche estrellada');
+  assert.strictEqual(seen.getAttribute('aria-pressed'), 'true');
+  assert.ok(JSON.parse(w.localStorage.getItem('galeria-arte-v1:viewed')).some(x => x.title === 'La noche estrellada'), 'vista guardada en el dispositivo');
+  seen.click(); assert.strictEqual(S.viewed.length, nv, 'otra vez el ojo la quita'); assert.strictEqual(seen.getAttribute('aria-pressed'), 'false');
+  fav.click(); assert.strictEqual(S.favs.length, nf, 'otra vez la estrella la quita'); fav.click();
+  // Atrás vuelve a los resultados
+  found.querySelector('[data-act=found-close]').click(); await wait(100);
+  assert.ok(found.hidden && !sheet.hidden && !sc.hidden, 'Atrás vuelve a los resultados');
+  d.querySelector('#scanRes .tres').click(); await wait(50);
+  assert.strictEqual(fav.getAttribute('aria-pressed'), 'true', 'la estrella recuerda que ya es favorita');
+  // ver en galería: se cierra la cámara y se ve la obra en la galería
+  found.querySelector('[data-act=found-gallery]').click(); await wait(300);
+  assert.ok(found.hidden, 'se cierra la obra encontrada');
   assert.ok(sc.hidden && stopped === 1, 'la cámara se apaga'); assert.ok(home.hidden, 'se sale del inicio');
   assert.strictEqual(S.current.title, 'La noche estrellada', 'se ve la obra elegida');
   // Escape en la cámara: primero cierra la hoja, luego la cámara

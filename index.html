@@ -64,6 +64,10 @@
   --i-back:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z'/%3E%3C/svg%3E");
   --i-eye:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z'/%3E%3C/svg%3E");
   --i-home:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z'/%3E%3C/svg%3E");
+  --i-star:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z'/%3E%3C/svg%3E");
+  --i-star-o:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zM12 15.4l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28L12 15.4z'/%3E%3C/svg%3E");
+  --i-eye-o:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 6c3.79 0 7.17 2.13 8.82 5.5C19.17 14.87 15.79 17 12 17s-7.17-2.13-8.82-5.5C4.83 8.13 8.21 6 12 6m0-2C7 4 2.73 7.11 1 11.5 2.73 15.89 7 19 12 19s9.27-3.11 11-7.5C21.27 7.11 17 4 12 4zm0 5c1.38 0 2.5 1.12 2.5 2.5S13.38 14 12 14s-2.5-1.12-2.5-2.5S10.62 9 12 9m0-2c-2.48 0-4.5 2.02-4.5 4.5S9.52 16 12 16s4.5-2.02 4.5-4.5S14.48 7 12 7z'/%3E%3C/svg%3E");
+  --i-artwork:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill-rule='evenodd' d='M12 1.5L7.6 5H4c-1.1 0-2 .9-2 2v13c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2h-3.6L12 1.5zM9.9 5L12 3.3 14.1 5H9.9zM4 7h16v13H4V7z'/%3E%3Cpath d='M6 18h12l-3.75-5-2.75 3.5-2-2.5L6 18z'/%3E%3Ccircle cx='8.5' cy='10' r='1.5'/%3E%3C/svg%3E");
   --dur:30s; color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -333,6 +337,28 @@ section.sec .hint{margin:8px 0 0;font:400 14px/20px var(--sans);color:var(--md-o
 .ssheet details.adv{margin-top:8px}
 .ssheet input[type=password]{width:100%}
 #scanner.sheet .szoom{display:none}
+/* obra encontrada en el escáner: la obra grande y tres botones redondos (favorita, vista, verla en la galería) */
+.sfound{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;background:var(--md-surface);color:var(--md-on-surface);touch-action:pan-y}
+.sfound[hidden]{display:none}
+.sfound .fhead{display:flex;align-items:center;padding:max(8px,env(safe-area-inset-top,0px)) 8px 0}
+.sfound .fhead .ibtn{color:var(--md-on-surface)}.sfound .fhead .ibtn::before{--ic:var(--i-back)}
+.sfound .fimg{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:8px 16px}
+.sfound .fimg img{max-width:100%;max-height:100%;object-fit:contain;border-radius:var(--r-xs);box-shadow:var(--e3)}
+.sfound .finfo{padding:8px 24px 0;text-align:center}
+.sfound .finfo b{display:block;font:400 22px/28px var(--serif)}
+.sfound .finfo span{display:block;margin-top:4px;font:400 14px/20px var(--sans);letter-spacing:.25px;color:var(--md-on-surface-variant)}
+.sfound .finfo small{display:block;font:400 12px/16px var(--sans);letter-spacing:.4px;color:var(--md-on-surface-variant)}
+.fbar{display:flex;justify-content:center;gap:32px;padding:20px 16px max(24px,env(safe-area-inset-bottom,0px))}
+.fbtn{position:relative;overflow:hidden;display:grid;place-items:center;width:64px;height:64px;padding:0;border:0;border-radius:50%;background:var(--md-sc-highest);color:var(--md-on-surface);-webkit-tap-highlight-color:transparent;transition:background .2s var(--ease),color .2s var(--ease)}
+.fbtn::before{content:"";width:28px;height:28px;background:currentColor;-webkit-mask:var(--ic) center/contain no-repeat;mask:var(--ic) center/contain no-repeat}
+.fbtn::after{content:"";position:absolute;inset:0;background:currentColor;opacity:0;pointer-events:none;transition:opacity .2s var(--ease)}
+.fbtn:active::after{opacity:.12}.fbtn:focus-visible{outline:2px solid var(--md-primary);outline-offset:2px}
+.fbtn[aria-pressed=true]{background:var(--md-primary);color:var(--md-on-primary)}
+#foundFav{--ic:var(--i-star-o)}#foundFav[aria-pressed=true]{--ic:var(--i-star)}
+#foundViewed{--ic:var(--i-eye-o)}#foundViewed[aria-pressed=true]{--ic:var(--i-eye)}
+.fbtn[data-act=found-gallery]{--ic:var(--i-artwork);background:var(--md-primary-container);color:var(--md-on-primary-container)}
+body.fv #toast{top:calc(64px + env(safe-area-inset-top,0px));bottom:auto}
+[data-skin^=m3e] .sfound .finfo b{font-weight:600}
 /* Pantalla de inicio (solo en el móvil) */
 #home{position:fixed;inset:0;z-index:11;overflow-y:auto;background:var(--md-surface);color:var(--md-on-surface);padding:max(24px,env(safe-area-inset-top,0px)) 20px max(24px,env(safe-area-inset-bottom,0px));display:flex;flex-direction:column}
 #home[hidden]{display:none}
@@ -459,6 +485,16 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
     </details>
     <div class="srcs" id="scanRes"></div>
   </div>
+  <div class="sfound" id="scanFound" hidden aria-label="Obra encontrada">
+    <div class="fhead"><button class="ibtn" data-act="found-close" aria-label="Volver a los resultados"></button></div>
+    <div class="fimg"><img id="foundImg" alt="" referrerpolicy="no-referrer"></div>
+    <div class="finfo"><b id="foundT"></b><span id="foundM"></span><small id="foundS"></small></div>
+    <div class="fbar">
+      <button class="fbtn" id="foundFav" data-act="found-fav" aria-pressed="false" aria-label="Agregar a favoritas"></button>
+      <button class="fbtn" id="foundViewed" data-act="found-viewed" aria-pressed="false" aria-label="Agregar a pinturas vistas"></button>
+      <button class="fbtn" data-act="found-gallery" aria-label="Ver en la galería"></button>
+    </div>
+  </div>
 </div>
 <div id="home" hidden aria-label="Inicio">
   <header class="hhead"><h1>Galería de arte</h1><p>¿Qué te apetece hacer?</p></header>
@@ -576,7 +612,7 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
     <button class="acch" data-act="acc" data-id="skin" aria-expanded="false"><span class="at">Skin</span><span class="as" data-sum="skin"></span><span class="ac">›</span></button>
     <div class="accb"><label class="fld"><span>Aspecto de la interfaz</span><select id="c-skin"></select></label><p class="hint">Material Design 3 y Material 3 Expressive, en claro y oscuro. Solo cambia el menú, el mando y los avisos; la obra y su ficha no cambian.</p></div>
   </section>
-  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 6e7a0d5852 · 2026-10-25 01:56 CEST</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
+  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 16db776825 · 2026-10-25 02:22 CEST</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
   <div id="rcfoot" hidden><button class="btn pri" data-act="rc-update">Buscar actualización</button><p id="rcver"></p></div>
 <div id="tvConnect"><button class="btn pri" data-act="tv-connect">Conectar a la TV</button><div class="row" id="tvRow" hidden><input type="text" id="tvCode" placeholder="Código de la TV (ej. abcd-efgh-jkmn)" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn pri" data-act="tv-go">Abrir mando</button></div><p class="hint" id="tvMsg">El código sale bajo el QR en la pantalla de la TV.</p></div>
 </aside>
@@ -2726,6 +2762,8 @@ async function pullNext(maxMs) {
 
 /* ───────── escenario ───────── */
 function isFav(w) { return !!w && S.favs.some(x => x.uid === w.uid); }
+function isViewed(w) { return !!w && S.viewed.some(x => x.uid === w.uid); }
+const FD = { w: null, img: '', iw: 0, ih: 0, go: null }; // obra encontrada en el escáner (ver openFound)
 /* Ficha «predeterminada»: en un móvil/tableta (sin TV conectada) siempre visible; en la TV, al inicio de cada obra. */
 function capMode() { const c = S.st.caption; return c === 'def' || !c ? (touchLayout() ? 'always' : 'auto') : c; }
 function captionMs() { const s = +S.st.interval || 30; return (s >= 1800 ? 300 : s * 0.25) * 1000; }
@@ -2855,7 +2893,17 @@ function toggleFav() {
   saveAll(); updateFavBtn(); render('presets'); render('opts'); tvNowSoon(true);
   tvFavPush(w, isFav(w)); cloudSyncSoon();
 }
-function updateFavBtn() { $('#favBtn').textContent = (REMOTE ? !!S.nowFav : isFav(S.current)) ? 'Quitar favorita' : 'Guardar favorita'; }
+/* Guardar o quitar una obra cualquiera de favoritas (la de la obra encontrada en el escáner); w.url es la imagen y w.url_page la ficha. */
+function setFav(w, on) {
+  if (!w || on === isFav(w)) return;
+  if (on) S.favs.unshift({ ft: Date.now(), uid: w.uid, src: w.src, museum: w.museum, title: w.title, artist: w.artist, date: w.date, year: w.year, imgs: [w.url].concat((w.imgs || []).filter(u => u !== w.url)).filter(Boolean), thumb: w.thumb, url: w.url_page || w.url, type: w.type, pd: w.pd, license: w.license, w: w.iw || w.w, h: w.ih || w.h });
+  else { S.favs = S.favs.filter(x => x.uid !== w.uid); favDel(w.uid); }
+  if (S.favs.length > FAV_MAX) S.favs.length = FAV_MAX;
+  if (REMOTE) { lsSet('favs', S.favs); relaySend(on ? { t: 'favs', w: [slimWork(S.favs[0])] } : { t: 'favs', rm: [w.uid] }); } // el mando se lo cuenta a la TV
+  else { saveAll(); tvNowSoon(true); tvFavPush(w, on); }
+  updateFavBtn(); render('presets'); render('opts'); cloudSyncSoon();
+}
+function updateFavBtn() { if (FD.w) renderFound(); $('#favBtn').textContent = (REMOTE ? !!S.nowFav : isFav(S.current)) ? 'Quitar favorita' : 'Guardar favorita'; }
 function toggleFS() {
   try {
     if (document.fullscreenElement) document.exitFullscreen();
@@ -3216,7 +3264,7 @@ function closeScanner() {
   clearInterval(SC.timer); SC.timer = 0; SC.busy = false; SC.pinch = null;
   if (SC.stream) { try { SC.stream.getTracks().forEach(tr => tr.stop()); } catch (e) { /* ya parada */ } }
   SC.stream = null; SC.hw = null; const v = $('#scanVideo'); try { v.srcObject = null; } catch (e) { /* nada */ }
-  const was = scanOpen(); $('#scanner').hidden = true; sheetClose(true);
+  const was = scanOpen(); $('#scanner').hidden = true; sheetClose(true); hideFound();
   if (was && HOME && history.state && history.state.ga === 'scan') try { history.back(); } catch (e) { /* sin historial */ }
 }
 /* Zoom: botones 1× 2× 3× (el que está más cerca muestra el valor real, como en la cámara) y pellizco con dos dedos. */
@@ -3348,6 +3396,7 @@ function homeAct(act) {
 window.addEventListener('popstate', e => {
   if (!HOME) return;
   const k = e.state && e.state.ga;
+  if (foundOpen() && !(e.state && e.state.fv)) { const g = FD.go; FD.go = null; hideFound(); if (g) { showWork(g); return; } }
   if (k !== 'scan' && scanOpen()) closeScanner();
   if (k === 'colls') { if (S.menu) closeMenu(); $('#home').hidden = true; openColls(true); } else $('#colls').hidden = true;
   if (!k) showHome();
@@ -3441,6 +3490,10 @@ function rankFound(list, id) {
 }
 function showTitleResult(i) {
   const w = (S.tres || [])[+i]; if (!w) return;
+  if (scanOpen()) { openFound(w); return; } // desde la cámara: primero la obra, con sus botones
+  showWork(w);
+}
+function showWork(w) {
   if (REMOTE) { if (!RC.gotState) { toast('Todavía no hay conexión con la TV'); return; } relaySend({ t: 'cmd', c: 'show', w: slimWork(w) }); toast('Enviada a la TV: ' + w.title); if (scanOpen()) closeScanner(); return; }
   if (scanOpen()) { // desde la cámara: se cierra y se ve la obra en la galería
     const fromHome = homeOpen();
@@ -3448,6 +3501,46 @@ function showTitleResult(i) {
     closeScanner(); if (fromHome) { $('#home').hidden = true; }
   }
   closeMenu(); showFound(w);
+}
+/* Obra encontrada (escáner: escaneo, foto o nombre): la obra a pantalla completa y debajo tres botones redondos:
+   estrella = favorita, ojo = pinturas vistas, cuadro = verla en la galería (en el mando, en la TV). Atrás vuelve a los resultados. */
+const foundOpen = () => !$('#scanFound').hidden;
+function openFound(w) {
+  Object.assign(FD, { w, img: '', iw: 0, ih: 0, go: null });
+  const im = $('#foundImg'); im.src = w.thumb || (w.imgs || [])[0] || ''; // la miniatura enseguida; la grande en cuanto carga
+  $('#foundT').textContent = w.title || '';
+  $('#foundM').textContent = [C.cleanName(w.artist), w.date || w.year].filter(Boolean).join(' · ');
+  $('#foundS').textContent = w.museum || '';
+  $('#scanFound').hidden = false; document.body.classList.add('fv'); renderFound();
+  if (HOME && history.state && history.state.ga === 'scan') try { history.pushState({ ga: 'scan', d: navDepth() + 1, fv: 1 }, ''); } catch (e) { /* sin historial */ }
+  loadImage(w.imgs || []).then(r => { if (!r || FD.w !== w) return; Object.assign(FD, { img: r.url, iw: r.w, ih: r.h }); im.src = r.url; });
+}
+function hideFound() { $('#scanFound').hidden = true; document.body.classList.remove('fv'); FD.w = null; }
+function closeFound() { if (history.state && history.state.fv) try { history.back(); return; } catch (e) { /* sin historial */ } hideFound(); }
+function renderFound() {
+  const w = FD.w; if (!w) return;
+  const f = isFav(w), v = isViewed(w), fb = $('#foundFav'), vb = $('#foundViewed');
+  fb.setAttribute('aria-pressed', String(f)); fb.setAttribute('aria-label', f ? 'Quitar de favoritas' : 'Agregar a favoritas');
+  vb.setAttribute('aria-pressed', String(v)); vb.setAttribute('aria-label', v ? 'Quitar de pinturas vistas' : 'Agregar a pinturas vistas');
+}
+const foundWork = () => Object.assign({}, FD.w, { url: FD.img || (FD.w.imgs || [])[0], url_page: FD.w.url, iw: FD.iw, ih: FD.ih }); // como la ve la galería: url = imagen
+function foundAct(act) {
+  const w = FD.w; if (!w) return;
+  if (act === 'found-fav') { const on = !isFav(w); setFav(foundWork(), on); toast(on ? 'Guardada en favoritas' : 'Quitada de favoritas'); }
+  else if (act === 'found-viewed') {
+    const on = !isViewed(w);
+    if (on) { addViewed(foundWork()); clearTimeout(S.viewedT); } else S.viewed = S.viewed.filter(x => x.uid !== w.uid);
+    lsSet('viewed', S.viewed);
+    toast(on ? 'Añadida a pinturas vistas' : 'Quitada de pinturas vistas');
+  } else if (act === 'found-gallery') {
+    if (history.state && history.state.fv) { // primero se quita el paso de la obra del historial y después se va a la galería
+      FD.go = w; try { history.back(); } catch (e) { FD.go = null; }
+      setTimeout(() => { if (FD.go === w) { FD.go = null; hideFound(); showWork(w); } }, 600);
+      if (FD.go) return;
+    }
+    hideFound(); showWork(w); return;
+  }
+  renderFound();
 }
 async function addMuseumByName() {
   const el = $('#museumIn'), msg = $('#museumMsg'), name = el.value.trim();
@@ -3565,6 +3658,8 @@ function onAct(act, id) {
     case 'coll-show': collShow(id); break;
     case 'colls-back': if (navDepth()) try { history.back(); } catch (e) { showHome(); } else showHome(); break;
     case 'title-show': showTitleResult(id); break;
+    case 'found-close': closeFound(); break;
+    case 'found-fav': case 'found-viewed': case 'found-gallery': foundAct(act); break;
     case 'era': toggleArr(f.eras, id); f.yearFrom = f.yearTo = ''; $('#yFrom').value = $('#yTo').value = ''; render('eras'); applyChange(); break;
     case 'style': toggleArr(f.styles, id); render('styles'); applyChange(); break;
     case 'kw': toggleArr(f.keywords, id); render('kws'); applyChange(); break;
@@ -3641,7 +3736,7 @@ document.addEventListener('keydown', e => {
   if (scanOpen()) {
     const inField = /^(input|textarea)$/i.test(e.target.tagName || '');
     if (inField && e.key === 'Enter' && e.target.id === 'scanTitleIn') { e.preventDefault(); searchTitle(e.target.value); return; }
-    if (e.key === 'Escape' || e.key === 'GoBack' || (e.key === 'Backspace' && !inField)) { e.preventDefault(); if (!$('#scanSheet').hidden) sheetClose(); else closeScanner(); }
+    if (e.key === 'Escape' || e.key === 'GoBack' || (e.key === 'Backspace' && !inField)) { e.preventDefault(); if (foundOpen()) closeFound(); else if (!$('#scanSheet').hidden) sheetClose(); else closeScanner(); }
     return;
   }
   if (collsOpen()) { if (e.key === 'Escape' || e.key === 'GoBack' || e.key === 'Backspace') { e.preventDefault(); onAct('colls-back'); } return; }

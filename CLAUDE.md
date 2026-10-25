@@ -61,6 +61,8 @@ publicada en **https://screenart.pages.dev** (Cloudflare Pages, se despliega sol
 - **Escáner tipo cámara** (`#scanner`, el mismo desde el inicio y desde el menú): zoom (1× 2× 3× y pellizco; zoom de la cámara si lo tiene,
   si no ampliación), círculo = escanear (manual; el marco se pone verde cuando está quieto), cuadrado izquierdo = buscar por nombre,
   derecho = buscar por foto de la galería. Resultados en una hoja desde abajo (`#scanSheet`, que también pide la clave si falta).
+  Al tocar un resultado se abre la obra (`#scanFound`, `openFound`) con tres botones redondos: estrella = favorita (`setFav`), ojo = pinturas
+  vistas, cuadro = verla en la galería (en el mando, la manda a la TV). Atrás vuelve a los resultados (paso de historial con `fv`).
 - **Buscar por título** y **por foto** (subir foto o escanear con la cámara; reconoce con la clave de Gemini o Anthropic del usuario).
 - Aspectos (skins) Material 3 y Material 3 Expressive, claro y oscuro: afectan al menú, mando, avisos, fondo y ficha.
 

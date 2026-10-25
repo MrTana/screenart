@@ -239,6 +239,8 @@ async function pullNext(maxMs) {
 
 /* ───────── escenario ───────── */
 function isFav(w) { return !!w && S.favs.some(x => x.uid === w.uid); }
+function isViewed(w) { return !!w && S.viewed.some(x => x.uid === w.uid); }
+const FD = { w: null, img: '', iw: 0, ih: 0, go: null }; // obra encontrada en el escáner (ver openFound)
 /* Ficha «predeterminada»: en un móvil/tableta (sin TV conectada) siempre visible; en la TV, al inicio de cada obra. */
 function capMode() { const c = S.st.caption; return c === 'def' || !c ? (touchLayout() ? 'always' : 'auto') : c; }
 function captionMs() { const s = +S.st.interval || 30; return (s >= 1800 ? 300 : s * 0.25) * 1000; }
@@ -368,7 +370,17 @@ function toggleFav() {
   saveAll(); updateFavBtn(); render('presets'); render('opts'); tvNowSoon(true);
   tvFavPush(w, isFav(w)); cloudSyncSoon();
 }
-function updateFavBtn() { $('#favBtn').textContent = (REMOTE ? !!S.nowFav : isFav(S.current)) ? 'Quitar favorita' : 'Guardar favorita'; }
+/* Guardar o quitar una obra cualquiera de favoritas (la de la obra encontrada en el escáner); w.url es la imagen y w.url_page la ficha. */
+function setFav(w, on) {
+  if (!w || on === isFav(w)) return;
+  if (on) S.favs.unshift({ ft: Date.now(), uid: w.uid, src: w.src, museum: w.museum, title: w.title, artist: w.artist, date: w.date, year: w.year, imgs: [w.url].concat((w.imgs || []).filter(u => u !== w.url)).filter(Boolean), thumb: w.thumb, url: w.url_page || w.url, type: w.type, pd: w.pd, license: w.license, w: w.iw || w.w, h: w.ih || w.h });
+  else { S.favs = S.favs.filter(x => x.uid !== w.uid); favDel(w.uid); }
+  if (S.favs.length > FAV_MAX) S.favs.length = FAV_MAX;
+  if (REMOTE) { lsSet('favs', S.favs); relaySend(on ? { t: 'favs', w: [slimWork(S.favs[0])] } : { t: 'favs', rm: [w.uid] }); } // el mando se lo cuenta a la TV
+  else { saveAll(); tvNowSoon(true); tvFavPush(w, on); }
+  updateFavBtn(); render('presets'); render('opts'); cloudSyncSoon();
+}
+function updateFavBtn() { if (FD.w) renderFound(); $('#favBtn').textContent = (REMOTE ? !!S.nowFav : isFav(S.current)) ? 'Quitar favorita' : 'Guardar favorita'; }
 function toggleFS() {
   try {
     if (document.fullscreenElement) document.exitFullscreen();
@@ -729,7 +741,7 @@ function closeScanner() {
   clearInterval(SC.timer); SC.timer = 0; SC.busy = false; SC.pinch = null;
   if (SC.stream) { try { SC.stream.getTracks().forEach(tr => tr.stop()); } catch (e) { /* ya parada */ } }
   SC.stream = null; SC.hw = null; const v = $('#scanVideo'); try { v.srcObject = null; } catch (e) { /* nada */ }
-  const was = scanOpen(); $('#scanner').hidden = true; sheetClose(true);
+  const was = scanOpen(); $('#scanner').hidden = true; sheetClose(true); hideFound();
   if (was && HOME && history.state && history.state.ga === 'scan') try { history.back(); } catch (e) { /* sin historial */ }
 }
 /* Zoom: botones 1× 2× 3× (el que está más cerca muestra el valor real, como en la cámara) y pellizco con dos dedos. */
@@ -861,6 +873,7 @@ function homeAct(act) {
 window.addEventListener('popstate', e => {
   if (!HOME) return;
   const k = e.state && e.state.ga;
+  if (foundOpen() && !(e.state && e.state.fv)) { const g = FD.go; FD.go = null; hideFound(); if (g) { showWork(g); return; } }
   if (k !== 'scan' && scanOpen()) closeScanner();
   if (k === 'colls') { if (S.menu) closeMenu(); $('#home').hidden = true; openColls(true); } else $('#colls').hidden = true;
   if (!k) showHome();
@@ -954,6 +967,10 @@ function rankFound(list, id) {
 }
 function showTitleResult(i) {
   const w = (S.tres || [])[+i]; if (!w) return;
+  if (scanOpen()) { openFound(w); return; } // desde la cámara: primero la obra, con sus botones
+  showWork(w);
+}
+function showWork(w) {
   if (REMOTE) { if (!RC.gotState) { toast('Todavía no hay conexión con la TV'); return; } relaySend({ t: 'cmd', c: 'show', w: slimWork(w) }); toast('Enviada a la TV: ' + w.title); if (scanOpen()) closeScanner(); return; }
   if (scanOpen()) { // desde la cámara: se cierra y se ve la obra en la galería
     const fromHome = homeOpen();
@@ -961,6 +978,46 @@ function showTitleResult(i) {
     closeScanner(); if (fromHome) { $('#home').hidden = true; }
   }
   closeMenu(); showFound(w);
+}
+/* Obra encontrada (escáner: escaneo, foto o nombre): la obra a pantalla completa y debajo tres botones redondos:
+   estrella = favorita, ojo = pinturas vistas, cuadro = verla en la galería (en el mando, en la TV). Atrás vuelve a los resultados. */
+const foundOpen = () => !$('#scanFound').hidden;
+function openFound(w) {
+  Object.assign(FD, { w, img: '', iw: 0, ih: 0, go: null });
+  const im = $('#foundImg'); im.src = w.thumb || (w.imgs || [])[0] || ''; // la miniatura enseguida; la grande en cuanto carga
+  $('#foundT').textContent = w.title || '';
+  $('#foundM').textContent = [C.cleanName(w.artist), w.date || w.year].filter(Boolean).join(' · ');
+  $('#foundS').textContent = w.museum || '';
+  $('#scanFound').hidden = false; document.body.classList.add('fv'); renderFound();
+  if (HOME && history.state && history.state.ga === 'scan') try { history.pushState({ ga: 'scan', d: navDepth() + 1, fv: 1 }, ''); } catch (e) { /* sin historial */ }
+  loadImage(w.imgs || []).then(r => { if (!r || FD.w !== w) return; Object.assign(FD, { img: r.url, iw: r.w, ih: r.h }); im.src = r.url; });
+}
+function hideFound() { $('#scanFound').hidden = true; document.body.classList.remove('fv'); FD.w = null; }
+function closeFound() { if (history.state && history.state.fv) try { history.back(); return; } catch (e) { /* sin historial */ } hideFound(); }
+function renderFound() {
+  const w = FD.w; if (!w) return;
+  const f = isFav(w), v = isViewed(w), fb = $('#foundFav'), vb = $('#foundViewed');
+  fb.setAttribute('aria-pressed', String(f)); fb.setAttribute('aria-label', f ? 'Quitar de favoritas' : 'Agregar a favoritas');
+  vb.setAttribute('aria-pressed', String(v)); vb.setAttribute('aria-label', v ? 'Quitar de pinturas vistas' : 'Agregar a pinturas vistas');
+}
+const foundWork = () => Object.assign({}, FD.w, { url: FD.img || (FD.w.imgs || [])[0], url_page: FD.w.url, iw: FD.iw, ih: FD.ih }); // como la ve la galería: url = imagen
+function foundAct(act) {
+  const w = FD.w; if (!w) return;
+  if (act === 'found-fav') { const on = !isFav(w); setFav(foundWork(), on); toast(on ? 'Guardada en favoritas' : 'Quitada de favoritas'); }
+  else if (act === 'found-viewed') {
+    const on = !isViewed(w);
+    if (on) { addViewed(foundWork()); clearTimeout(S.viewedT); } else S.viewed = S.viewed.filter(x => x.uid !== w.uid);
+    lsSet('viewed', S.viewed);
+    toast(on ? 'Añadida a pinturas vistas' : 'Quitada de pinturas vistas');
+  } else if (act === 'found-gallery') {
+    if (history.state && history.state.fv) { // primero se quita el paso de la obra del historial y después se va a la galería
+      FD.go = w; try { history.back(); } catch (e) { FD.go = null; }
+      setTimeout(() => { if (FD.go === w) { FD.go = null; hideFound(); showWork(w); } }, 600);
+      if (FD.go) return;
+    }
+    hideFound(); showWork(w); return;
+  }
+  renderFound();
 }
 async function addMuseumByName() {
   const el = $('#museumIn'), msg = $('#museumMsg'), name = el.value.trim();
@@ -1078,6 +1135,8 @@ function onAct(act, id) {
     case 'coll-show': collShow(id); break;
     case 'colls-back': if (navDepth()) try { history.back(); } catch (e) { showHome(); } else showHome(); break;
     case 'title-show': showTitleResult(id); break;
+    case 'found-close': closeFound(); break;
+    case 'found-fav': case 'found-viewed': case 'found-gallery': foundAct(act); break;
     case 'era': toggleArr(f.eras, id); f.yearFrom = f.yearTo = ''; $('#yFrom').value = $('#yTo').value = ''; render('eras'); applyChange(); break;
     case 'style': toggleArr(f.styles, id); render('styles'); applyChange(); break;
     case 'kw': toggleArr(f.keywords, id); render('kws'); applyChange(); break;
@@ -1154,7 +1213,7 @@ document.addEventListener('keydown', e => {
   if (scanOpen()) {
     const inField = /^(input|textarea)$/i.test(e.target.tagName || '');
     if (inField && e.key === 'Enter' && e.target.id === 'scanTitleIn') { e.preventDefault(); searchTitle(e.target.value); return; }
-    if (e.key === 'Escape' || e.key === 'GoBack' || (e.key === 'Backspace' && !inField)) { e.preventDefault(); if (!$('#scanSheet').hidden) sheetClose(); else closeScanner(); }
+    if (e.key === 'Escape' || e.key === 'GoBack' || (e.key === 'Backspace' && !inField)) { e.preventDefault(); if (foundOpen()) closeFound(); else if (!$('#scanSheet').hidden) sheetClose(); else closeScanner(); }
     return;
   }
   if (collsOpen()) { if (e.key === 'Escape' || e.key === 'GoBack' || e.key === 'Backspace') { e.preventDefault(); onAct('colls-back'); } return; }
