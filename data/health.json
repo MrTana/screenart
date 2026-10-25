@@ -1,87 +1,87 @@
 {
- "at": "2026-10-25 13:01 UTC",
- "ok": 19,
+ "at": "2026-10-25 13:05 UTC",
+ "ok": 20,
  "total": 20,
  "results": {
   "The Met": {
    "ok": true,
-   "n": 16,
-   "sample": "Autumn Landscape with a Flock of Turkeys",
-   "ms": 1504
+   "n": 18,
+   "sample": "Moorish Buildings in Sunlight",
+   "ms": 1122
   },
   "Art Institute of Chicago": {
    "ok": true,
    "n": 24,
    "err": "imagen no comprobable desde GitHub (protección contra robots)",
-   "sample": "Coast Scene, Bathers",
-   "ms": 826
+   "sample": "Charing Cross Bridge, London",
+   "ms": 711
   },
   "Cleveland Museum of Art": {
    "ok": true,
    "n": 24,
-   "sample": "Text, Folio 10 (recto), from a Manuscript of the Perfection ",
-   "ms": 1614
+   "sample": "The Tired Gleaner",
+   "ms": 2261
   },
   "Rijksmuseum": {
    "ok": true,
    "n": 8,
-   "sample": "Allegorizing Group Portrait of the Children of Diederic Piet",
-   "ms": 4338
+   "sample": "Portrait of the Children of Barend Goudriaan",
+   "ms": 4846
   },
   "Victoria and Albert": {
    "ok": true,
    "n": 24,
-   "sample": "Sudama",
-   "ms": 1959
+   "sample": "Krishna and Jasoda",
+   "ms": 1585
   },
   "SMK": {
    "ok": true,
-   "n": 8,
-   "sample": "Landskab. Hjarnø",
-   "ms": 2365
+   "n": 9,
+   "sample": "Gående bondepar",
+   "ms": 2501
   },
   "Minneapolis": {
-   "ok": false,
-   "n": 0,
-   "err": "sin obras",
-   "ms": 1488
+   "ok": true,
+   "n": 19,
+   "sample": "Pincushion",
+   "ms": 801
   },
   "Smithsonian": {
    "ok": true,
    "n": 24,
-   "sample": "The Sphynx, Apostle Islands, Lake Superior",
-   "ms": 1637
+   "sample": "Weaving Feathers",
+   "ms": 1537
   },
   "Europeana": {
    "ok": true,
    "n": 24,
-   "sample": "Painting",
-   "ms": 1667
+   "sample": "Gemälde",
+   "ms": 2425
   },
   "Wikidata (museo)": {
    "ok": true,
    "n": 1,
    "sample": "Landscape with ruins and figure",
-   "ms": 995,
+   "ms": 662,
    "timing": {
     "app": {
-     "ms": 55,
+     "ms": 16,
      "status": 200,
      "n": "841"
     },
     "conPista": {
-     "ms": 296,
+     "ms": 10,
      "status": 200,
      "n": "841"
     },
     "selApp": {
-     "ms": 65062,
+     "ms": 65048,
      "status": 504,
      "rows": 0,
      "head": "upstream request timeout"
     },
     "selSub": {
-     "ms": 969,
+     "ms": 65,
      "status": 200,
      "rows": 3
     }
@@ -89,66 +89,110 @@
   },
   "Wikidata (general)": {
    "ok": true,
-   "n": 45,
-   "sample": "Autorretrato",
-   "ms": 821
+   "n": 44,
+   "sample": "Poppy Fields near Argenteuil",
+   "ms": 634
   },
   "Commons": {
    "ok": true,
-   "n": 40,
-   "sample": "Heimsuchung, Szene: Maria und Hl. Elisabeth, Hl. Nikolaus un",
-   "ms": 5482
+   "n": 35,
+   "sample": "Petra Camara",
+   "ms": 6880
   },
   "Google Art Project": {
    "ok": true,
-   "n": 40,
-   "sample": "The Torment of Saint Anthony",
-   "ms": 10586
+   "n": 38,
+   "sample": "WLA ima La Voile jaune The Yellow Sail",
+   "ms": 6763
   },
   "Wikipedia": {
    "ok": true,
-   "n": 15,
-   "sample": "List of most expensive paintings",
-   "ms": 736
+   "n": 22,
+   "sample": "En plein air",
+   "ms": 600
   },
   "WikiArt": {
    "ok": true,
    "n": 60,
-   "sample": "Young Woman Lifting Her Skirt",
-   "ms": 1390
+   "sample": "Sulking",
+   "ms": 2040
   },
   "MoMA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Untitled (Grupo Frente)",
-   "ms": 914
+   "sample": "Physichromy 21",
+   "ms": 822
   },
   "NGA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "The Judgment of Paris",
-   "ms": 980
+   "sample": "Sunlight",
+   "ms": 943
   },
   "Tate (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Painted in a Welsh Village",
-   "ms": 2348
+   "sample": "A Lady Reading",
+   "ms": 1381
   },
   "Louvre (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Portrait de Jacques de Roore, 1722",
-   "ms": 1026
+   "sample": "Vue du salon carré du Louvre en 1831",
+   "ms": 480
   },
   "Prado (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Alfonso XII",
-   "ms": 802
+   "sample": "Castillo de Alcalá de Guadaíra",
+   "ms": 416
   }
  },
  "photo": {
+  "El Salvador": {
+   "n": 24,
+   "exact": 0,
+   "artist": {
+    "who": "Luis de Morales",
+    "qid": "Q703250",
+    "match": 0,
+    "other": 8,
+    "q": [
+     0,
+     12
+    ]
+   },
+   "firstMs": 166,
+   "ms": 3083,
+   "top": [
+    "Virgen de la leche · Luis de Morales · wiki",
+    "Ecce Homo · Luis de Morales · wiki",
+    "Pietà · Luis de Morales · wiki",
+    "Virgin and Child · Luis de Morales · wiki"
+   ]
+  },
+  "La Virgen del Pajarito": {
+   "n": 17,
+   "exact": 0,
+   "artist": {
+    "who": "Luis de Morales",
+    "qid": "Q703250",
+    "match": 8,
+    "other": 8,
+    "q": [
+     37,
+     12
+    ]
+   },
+   "firstMs": 627,
+   "ms": 1491,
+   "top": [
+    "Madonna and Child · Luis de Morales · wiki",
+    "Madonna and Child · Luis de Morales · wiki",
+    "The Virgin and Child · Luis de Morales · wiki",
+    "Virgin with the Little Bird · Luis de Morales · wiki"
+   ]
+  },
   "La noche estrellada": {
    "n": 20,
    "exact": 1,
@@ -162,8 +206,8 @@
      12
     ]
    },
-   "firstMs": 717,
-   "ms": 1983,
+   "firstMs": 81,
+   "ms": 1275,
    "top": [
     "La noche estrellada · Vincent van Gogh · wiki",
     "Noche estrellada sobre el rodano · Vincent van Gogh · wiki",
@@ -184,8 +228,8 @@
      12
     ]
    },
-   "firstMs": 643,
-   "ms": 1457,
+   "firstMs": 118,
+   "ms": 1387,
    "top": [
     "Los cazadores en la nieve · Pieter Brueghel el Viejo · wiki",
     "Adoración de los Magos en la nieve · Pieter Brueghel el Viejo · wiki",
@@ -206,8 +250,8 @@
      12
     ]
    },
-   "firstMs": 374,
-   "ms": 1706,
+   "firstMs": 80,
+   "ms": 1150,
    "top": [
     "The School of Athens · Rafael Sanzio · wiki",
     "La escuela de Atenas · Rafael Sanzio · wiki",
@@ -228,8 +272,8 @@
      12
     ]
    },
-   "firstMs": 354,
-   "ms": 1560,
+   "firstMs": 127,
+   "ms": 1503,
    "top": [
     "El jardín de las Delicias · Jerónimo Bosch · wiki",
     "The Garden of Earthly Delights · Jerónimo Bosch · wiki",
@@ -250,8 +294,8 @@
      12
     ]
    },
-   "firstMs": 351,
-   "ms": 2403,
+   "firstMs": 128,
+   "ms": 1986,
    "top": [
     "La ronda de noche · Rembrandt · wiki",
     "The Night Watch · Rembrandt · wiki",
@@ -260,113 +304,59 @@
    ]
   },
   "Venus de Urbino": {
-   "n": 18,
+   "n": 2,
    "exact": 0,
-   "artist": {
-    "who": "Tiziano",
-    "qid": "Q47551",
-    "match": 8,
-    "other": 8,
-    "q": [
-     94,
-     12
-    ]
-   },
-   "firstMs": 329,
-   "ms": 2282,
+   "artist": "HTTP 429",
+   "firstMs": 129,
+   "ms": 1854,
    "top": [
-    "Venus de Urbino · Tiziano · wiki",
-    "Venus with the Organ Player · Tiziano · wiki",
-    "Venus with Cupid · Tiziano · wiki",
-    "Venus with Musician · Tiziano · wiki"
+    "Venus of Urbino · Titian · commons",
+    "Urbinói Venus · Tiziano · wphu"
    ]
   },
   "La joven de la perla": {
-   "n": 17,
+   "n": 4,
    "exact": 0,
-   "artist": {
-    "who": "Johannes Vermeer",
-    "qid": "Q41264",
-    "match": 5,
-    "other": 8,
-    "q": [
-     8,
-     12
-    ]
-   },
-   "firstMs": 377,
-   "ms": 1577,
+   "artist": "HTTP 429",
+   "firstMs": 49,
+   "ms": 860,
    "top": [
-    "La joven de la perla · Johannes Vermeer · wiki",
-    "La muchacha del collar de perlas · Johannes Vermeer · wiki",
-    "Retrato de una mujer joven · Johannes Vermeer · wiki",
-    "La tasadora de perlas · Johannes Vermeer · wiki"
+    "Girl with a Pearl Earring · Johannes Vermeer · commons",
+    "Het meisje met de parel (Girl with a Pearl Earring) · Johannes Vermeer · commons",
+    "Johannes Vermeer - Girl with a Pearl Earring (1660s) - negative · Johannes Vermeer · commo",
+    "The Girl with a Pearl Earring · Johannes Vermeer · wikiart"
    ]
   },
   "Las meninas": {
    "n": 1,
    "exact": 0,
    "artist": "HTTP 429",
-   "firstMs": 305,
-   "ms": 1443,
+   "firstMs": 92,
+   "ms": 2002,
    "top": [
-    "Las Meninas · Diego Velázquez · wpen"
+    "Las Meninas · Diego Velazquez · wikiart"
    ]
   },
   "Campo de trigo con cipreses": {
    "n": 2,
    "exact": 0,
    "artist": "HTTP 429",
-   "firstMs": 1042,
-   "ms": 1238,
+   "firstMs": 984,
+   "ms": 989,
    "top": [
     "Wheat Field with Cypresses · Vincent van Gogh · wikiart",
     "Wheat Field with Cypresses at the Haude Galline near Eygalieres · Vincent van Gogh · wikia"
    ]
   },
-  "El Salvador": {
-   "n": 24,
-   "exact": 0,
-   "artist": "HTTP 429",
-   "firstMs": 368,
-   "ms": 2256,
-   "top": [
-    "The Saviour · Israhel van Meckenem, the younger · aic",
-    "The Saviour · Hans Sebald Beham · cma",
-    "The Saviour Blessing the Bread · George Baxter · aic",
-    "The Saviour, also called Ecce Homo · George Baxter · aic"
-   ]
-  },
-  "La Virgen del Pajarito": {
-   "n": 1,
-   "exact": 0,
-   "artist": "HTTP 429",
-   "firstMs": 997,
-   "ms": 997,
-   "top": [
-    "Virgin and Child with little bird · Antoniazzo Romano · wikiart"
-   ]
-  },
   "La Piedad": {
-   "n": 16,
+   "n": 2,
    "exact": 0,
-   "artist": {
-    "who": "Annibale Carracci",
-    "qid": "Q7824",
-    "match": 7,
-    "other": 8,
-    "q": [
-     28,
-     12
-    ]
-   },
-   "firstMs": 269,
-   "ms": 2404,
+   "artist": "HTTP 429",
+   "firstMs": 44,
+   "ms": 2271,
    "top": [
-    "Pietà · Annibale Carracci · wiki",
-    "Portable Altarpiece with Pietà and Saints · Annibale Carracci · wiki",
-    "Pietà · Annibale Carracci · wiki",
-    "Lamentation over the Dead Christ · Annibale Carracci · wiki"
+    "Pietà · Annibale Carracci · commons",
+    "Pietà · Carracci, Annibale (1560 - 1609) – After Details on Google Art Project · commons"
    ]
   },
   "El caminante sobre el mar de nubes": {
@@ -382,11 +372,11 @@
      12
     ]
    },
-   "firstMs": 331,
-   "ms": 1426,
+   "firstMs": 108,
+   "ms": 1026,
    "top": [
     "El caminante sobre el mar de nubes · Caspar David Friedrich · wiki",
-    "Wanderer Above the Sea of Fog · Caspar David Friedrich · wpen",
+    "Wanderer above the Sea of Fog · Caspar David Friedrich · commons",
     "The Wanderer Above the Sea of Fog · Caspar David Friedrich · wikiart",
     "Two men by the sea · Caspar David Friedrich · wiki"
    ]
