@@ -1390,6 +1390,8 @@ async function museumFetch(m, plan, f, ctx) {
   if (m.open) {
     jobs.push(['WikiArt', () => wikiartFetch(plan, f, ctx)], ['Google Art Project', () => commonsSpecial('gap', plan, f, ctx)], ['Commons destacadas', () => commonsSpecial('fp', plan, f, ctx)], ['Commons', () => commonsFetch(plan, f, ctx)], ['Wikipedia', () => wikipediaFetch(plan, f, ctx)], ['Wikidata', () => wikiFetch(plan, f, ctx)]);
     if (ctx.keys && ctx.keys.europeana) jobs.push(['Europeana', () => europeanaFetch(plan, f, ctx)]);
+  } else if (ctx.directOnly && m.direct && DIRECT[m.direct]) {
+    jobs.push(['Directa', () => DIRECT[m.direct](plan, f, ctx)]); // búsqueda por título: Wikidata, Commons y Wikipedia ya se consultan aparte
   } else {
     if (m.direct && DIRECT[m.direct]) jobs.push(['Directa', () => DIRECT[m.direct](plan, f, ctx)]);
     jobs.push(['Wikidata', () => wikidataMuseum(m, plan, f, ctx)], ['Commons', () => commonsFetch(plan, f, ctx, m)], ['Wikipedia', () => wikipediaFetch(plan, f, ctx, m)], ['Google Art Project', () => gapMuseum(m, plan, f, ctx)]);
@@ -1594,7 +1596,7 @@ async function searchPaintings(text, ctx, onPart, hint) {
   jobs.push(searchCommonsTitle(q, hint, ctx).then(l => add(l, true), () => { errors++; }));
   const f = defaultFilters();
   TITLE_SOURCES.map(id => SOURCE_LIST.find(s => s.id === id)).filter(s => s && !(s.museum && s.museum.needsKey && !(ctx.keys && ctx.keys[s.museum.needsKey]))).forEach(s => {
-    jobs.push(Promise.race([s.fetch({ keyword: q, top: true, type: null, range: null, style: null, artist: null, hintArtist: null }, f, Object.assign({ anyRights: true }, ctx)), new Promise((_, rej) => setTimeout(() => rej(new Error('tiempo')), 20000))]).then(l => add(l, true), () => { errors++; }));
+    jobs.push(Promise.race([s.fetch({ keyword: q, top: true, type: null, range: null, style: null, artist: null, hintArtist: null }, f, Object.assign({ anyRights: true, directOnly: true }, ctx)), new Promise((_, rej) => setTimeout(() => rej(new Error('tiempo')), 20000))]).then(l => add(l, true), () => { errors++; }));
   });
   await Promise.all(jobs);
   const out = merged();
