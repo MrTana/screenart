@@ -1,88 +1,87 @@
 {
- "at": "2026-10-25 12:46 UTC",
- "ok": 19,
+ "at": "2026-10-25 12:54 UTC",
+ "ok": 20,
  "total": 20,
  "results": {
   "The Met": {
    "ok": true,
-   "n": 16,
-   "sample": "Landscape with Fishing Village and Boat on Lake",
-   "ms": 1698
+   "n": 24,
+   "sample": "River View with a Village Church",
+   "ms": 1186
   },
   "Art Institute of Chicago": {
    "ok": true,
-   "n": 24,
+   "n": 12,
    "err": "imagen no comprobable desde GitHub (protección contra robots)",
-   "sample": "Seascape",
-   "ms": 778
+   "sample": "Landscape with Cottages",
+   "ms": 469
   },
   "Cleveland Museum of Art": {
    "ok": true,
    "n": 24,
-   "sample": "Text, Folio 109 (verso), from a Manuscript of the Perfection",
-   "ms": 1264
+   "sample": "King Vikrama summons Madhava, folio 15 from a Madhavanala-Ka",
+   "ms": 939
   },
   "Rijksmuseum": {
    "ok": true,
-   "n": 3,
-   "sample": "Catharina van Hemessen (1527/28–after 1567), Antwerp, 1548, ",
-   "ms": 3632
+   "n": 8,
+   "sample": "A Woman with a Dog",
+   "ms": 3802
   },
   "Victoria and Albert": {
    "ok": true,
    "n": 24,
-   "sample": "The King's Head, Hackney",
-   "ms": 1867
+   "sample": "Watercolour",
+   "ms": 1503
   },
   "SMK": {
    "ok": true,
-   "n": 9,
-   "sample": "Alexander preventing the burning of Homer’s works (?)",
-   "ms": 9352
+   "n": 4,
+   "sample": "Egeløkke\". Langeland",
+   "ms": 2682
   },
   "Minneapolis": {
-   "ok": false,
-   "n": 14,
-   "err": "HTTP 403 application/xml",
-   "sample": "Locked in the Ice--Waiting it Out",
-   "ms": 1030
+   "ok": true,
+   "n": 1,
+   "sample": "The Harbor, Monhegan Coast, Maine",
+   "ms": 1448
   },
   "Smithsonian": {
    "ok": true,
-   "n": 23,
-   "sample": "Shipping, Connecticut",
-   "ms": 1402
+   "n": 24,
+   "sample": "The Sky Simulated by White Flamingoes study for book, Concea",
+   "ms": 1455
   },
   "Europeana": {
    "ok": true,
    "n": 24,
-   "sample": "painting",
-   "ms": 2533
+   "sample": "Painting",
+   "ms": 1742
   },
   "Wikidata (museo)": {
    "ok": true,
-   "n": 19,
-   "sample": "Tabernáculo de los lineros",
-   "ms": 1210,
+   "n": 1,
+   "sample": "Landscape with ruins and figure",
+   "ms": 863,
    "timing": {
     "app": {
-     "ms": 60,
+     "ms": 61,
      "status": 200,
      "n": "841"
     },
     "conPista": {
-     "ms": 220,
+     "ms": 249,
      "status": 200,
      "n": "841"
     },
     "selApp": {
-     "ms": 65064,
+     "ms": 65025,
      "status": 504,
      "rows": 0,
      "head": "upstream request timeout"
     },
     "selSub": {
-     "ms": 513,
+     "ms": 301,
      "status": 200,
      "rows": 3
     }
@@ -90,83 +89,103 @@
   },
   "Wikidata (general)": {
    "ok": true,
-   "n": 53,
-   "sample": "Grainstack, Sun in the Mist",
-   "ms": 691
+   "n": 46,
+   "sample": "Retrato de Père Paul",
+   "ms": 403
   },
   "Commons": {
    "ok": true,
-   "n": 34,
-   "sample": "Portrait of a Man holding Gloves .",
-   "ms": 3409
+   "n": 35,
+   "sample": "Garçon au gilet rouge",
+   "ms": 3368
   },
   "Google Art Project": {
    "ok": true,
-   "n": 36,
-   "sample": "Claudio et Isabelle",
-   "ms": 6536
+   "n": 40,
+   "sample": "Queen Eleanor & Fair Rosamund",
+   "ms": 6079
   },
   "Wikipedia": {
    "ok": true,
-   "n": 17,
-   "sample": "Snow at Argenteuil",
-   "ms": 817
+   "n": 15,
+   "sample": "Olympia (Manet)",
+   "ms": 1253
   },
   "WikiArt": {
    "ok": true,
    "n": 60,
-   "sample": "Na Ilha de Capri",
-   "ms": 2171
+   "sample": "Wharf of Louvre, Paris",
+   "ms": 1809
   },
   "MoMA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Leda and the Swan",
-   "ms": 878
+   "sample": "Street Light",
+   "ms": 723
   },
   "NGA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Eleanora O'Donnell Iselin (Mrs. Adrian Iselin)",
-   "ms": 1104
+   "sample": "Seascape at Port-en-Bessin, Normandy",
+   "ms": 775
   },
   "Tate (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Marilyn Diptych",
-   "ms": 1916
+   "sample": "Interior with Waterlilies",
+   "ms": 1231
   },
   "Louvre (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Les Ombres de Francesca da Rimini et de Paolo Malatesta appa",
-   "ms": 693
+   "sample": "Les Aveugles de Jéricho",
+   "ms": 375
   },
   "Prado (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Elisa Tapia y Parrella",
-   "ms": 551
+   "sample": "La Huida a Egipto",
+   "ms": 367
   }
  },
  "photo": {
   "La noche estrellada": {
    "n": 20,
    "exact": 1,
-   "firstMs": 897,
-   "ms": 20030,
+   "artist": {
+    "who": "Vincent van Gogh",
+    "qid": "Q5582",
+    "match": 8,
+    "other": 8,
+    "q": [
+     13,
+     12
+    ]
+   },
+   "firstMs": 478,
+   "ms": 20018,
    "top": [
     "La noche estrellada · Vincent van Gogh · wiki",
     "Noche estrellada sobre el rodano · Vincent van Gogh · wiki",
-    "El café de noche · Vincent van Gogh · wiki",
-    "Casa blanca por la noche · Vincent van Gogh · wiki"
+    "Terraza de café por la noche · Vincent van Gogh · wiki",
+    "El café de noche · Vincent van Gogh · wiki"
    ]
   },
   "Cazadores en la nieve": {
    "n": 16,
    "exact": 0,
-   "firstMs": 611,
-   "ms": 23687,
+   "artist": {
+    "who": "Pieter Brueghel el Viejo",
+    "qid": "Q43270",
+    "match": 3,
+    "other": 8,
+    "q": [
+     5,
+     12
+    ]
+   },
+   "firstMs": 523,
+   "ms": 22583,
    "top": [
     "Los cazadores en la nieve · Pieter Brueghel el Viejo · wiki",
     "Adoración de los Magos en la nieve · Pieter Brueghel el Viejo · wiki",
@@ -175,22 +194,42 @@
    ]
   },
   "La escuela de Atenas": {
-   "n": 6,
+   "n": 20,
    "exact": 0,
-   "firstMs": 387,
-   "ms": 30026,
+   "artist": {
+    "who": "Rafael Sanzio",
+    "qid": "Q5597",
+    "match": 8,
+    "other": 8,
+    "q": [
+     15,
+     12
+    ]
+   },
+   "firstMs": 284,
+   "ms": 20019,
    "top": [
-    "The School of Athens · Raphael · wpen",
-    "The School of Athens (detail) · Raphael · wikiart",
-    "The School of Athens (after Raphael) · Anton Raphael Mengs · wikiart",
-    "Raphael School of Athens · Raphael · commons"
+    "The School of Athens · Rafael Sanzio · wiki",
+    "La escuela de Atenas · Rafael Sanzio · wiki",
+    "School of Athens · Rafael Sanzio · wiki",
+    "The School of Athens · Rafael Sanzio · wiki"
    ]
   },
   "El jardín de las delicias": {
    "n": 22,
    "exact": 0,
-   "firstMs": 556,
-   "ms": 20031,
+   "artist": {
+    "who": "Jerónimo Bosch",
+    "qid": "Q130531",
+    "match": 3,
+    "other": 8,
+    "q": [
+     7,
+     12
+    ]
+   },
+   "firstMs": 351,
+   "ms": 20016,
    "top": [
     "El jardín de las Delicias · Jerónimo Bosch · wiki",
     "The Garden of Earthly Delights · Jerónimo Bosch · wiki",
@@ -199,100 +238,124 @@
    ]
   },
   "La ronda de noche": {
-   "n": 4,
+   "n": 18,
    "exact": 0,
-   "firstMs": 414,
-   "ms": 30033,
+   "artist": {
+    "who": "Rembrandt",
+    "qid": "Q5598",
+    "match": 8,
+    "other": 8,
+    "q": [
+     11,
+     12
+    ]
+   },
+   "firstMs": 593,
+   "ms": 20017,
    "top": [
-    "The Night Watch · Rembrandt · wpen",
-    "The Company of Frans Banning Cocq and Willem van Ruytenburch, known as the ‘Night Watch’, ",
-    "The Nightwatch · Rembrandt · wikiart",
-    "La ronda de noche · Rembrandt · wiki"
+    "La ronda de noche · Rembrandt · wiki",
+    "The Night Watch · Rembrandt · wiki",
+    "The holy family at night · Rembrandt · wiki",
+    "The Adoration of the Shepherds: a Night Piece · Rembrandt · wiki"
    ]
   },
   "Venus de Urbino": {
-   "n": 18,
+   "n": 3,
    "exact": 0,
-   "firstMs": 482,
-   "ms": 20023,
+   "artist": "HTTP 429",
+   "firstMs": 277,
+   "ms": 21677,
    "top": [
-    "Venus de Urbino · Tiziano · wiki",
-    "Venus with the Organ Player · Tiziano · wiki",
-    "Venus with Cupid · Tiziano · wiki",
-    "Venus with Musician · Tiziano · wiki"
+    "Venus of Urbino · Titian · wpen",
+    "Urbinói Venus · Tiziano · wphu",
+    "Venus de Urbino · Tiziano · wiki"
    ]
   },
   "La joven de la perla": {
-   "n": 5,
+   "n": 1,
    "exact": 0,
-   "firstMs": 400,
-   "ms": 27236,
+   "artist": "HTTP 429",
+   "firstMs": 899,
+   "ms": 20016,
    "top": [
-    "Girl with a Pearl Earring · Johannes Vermeer · wpen",
-    "Het meisje met de parel (Girl with a Pearl Earring) · Johannes Vermeer · commons",
-    "Johannes Vermeer - Girl with a Pearl Earring (1660s) - negative · Johannes Vermeer · commo",
     "The Girl with a Pearl Earring · Johannes Vermeer · wikiart"
    ]
   },
   "Las meninas": {
-   "n": 1,
+   "n": 14,
    "exact": 0,
-   "firstMs": 1129,
-   "ms": 20014,
+   "artist": {
+    "who": "Diego Velázquez",
+    "qid": "Q297",
+    "match": 1,
+    "other": 8,
+    "q": [
+     6,
+     12
+    ]
+   },
+   "firstMs": 255,
+   "ms": 27352,
    "top": [
-    "Las Meninas · Diego Velazquez · wikiart"
+    "Las Meninas · Diego Velázquez · wiki",
+    "Las Meninas (detail) · Diego Velázquez · commons",
+    "Las Meninas (The Maids of Honor) · Diego Velázquez · commons",
+    "Las Meninas (1656), by Velazquez · Diego Velázquez · commons"
    ]
   },
   "Campo de trigo con cipreses": {
-   "n": 18,
+   "n": 2,
    "exact": 0,
-   "firstMs": 373,
-   "ms": 20024,
+   "artist": "HTTP 429",
+   "firstMs": 329,
+   "ms": 20014,
    "top": [
-    "Campo de trigo con cipreses · Vincent van Gogh · wiki",
-    "Trigal verde con ciprés · Vincent van Gogh · wiki",
-    "Campo de trigo con cipreses · Vincent van Gogh · wiki",
-    "Wheatfield with Cypresses · Vincent van Gogh · wiki"
+    "Wheat Field with Cypresses · Vincent van Gogh · wpen",
+    "Wheat Field with Cypresses at the Haude Galline near Eygalieres · Vincent van Gogh · wikia"
    ]
   },
   "El Salvador": {
-   "n": 22,
+   "n": 19,
    "exact": 0,
-   "firstMs": 937,
-   "ms": 20022,
+   "artist": "HTTP 429",
+   "firstMs": 1606,
+   "ms": 20018,
    "top": [
-    "The Saviour · El Greco · wiki",
-    "The Saviour · Hans Sebald Beham · wiki",
     "The saviour over the door · Nicholas Roerich · wikiart",
-    "The Saviour's Transfiguration · Theophanes the Greek). · wiki"
+    "Christ blessing (The Saviour of the World) · El Greco · wikiart",
+    "Ancient Novgorod (The Saviour Nereditsa) · Nicholas Roerich · wikiart",
+    "Christ the saviour. Saint Peter and Saint Paul. · Nicholas Roerich · wikiart"
    ]
   },
   "La Virgen del Pajarito": {
    "n": 1,
    "exact": 0,
-   "firstMs": 1097,
-   "ms": 20024,
+   "artist": "HTTP 429",
+   "firstMs": 343,
+   "ms": 20013,
    "top": [
-    "Virgin and Child with little bird · Antoniazzo Romano · wikiart"
+    "La Virgen del pajarito · Luis de Morales · commons"
    ]
   },
   "La Piedad": {
-   "n": 21,
+   "n": 5,
    "exact": 0,
-   "firstMs": 518,
-   "ms": 20025,
+   "artist": "HTTP 429",
+   "firstMs": 1444,
+   "ms": 20016,
    "top": [
-    "Pietà · Annibale Carracci · wiki",
-    "Portable Altarpiece with Pietà and Saints · Annibale Carracci · wiki",
-    "Pietà (the \"Christ of Caprarola\") · Annibale Carracci · wiki",
-    "Pieta (the \"Christ of Caprarola\") · Annibale Carracci · wiki"
+    "Pieta · Pietro Perugino · wikiart",
+    "Pieta · Titian · wikiart",
+    "Pieta · Gustave Moreau · wikiart",
+    "La Piedad · Palma il Giovane · wikiart"
    ]
   },
   "El caminante sobre el mar de nubes": {
    "n": 1,
    "exact": 0,
-   "firstMs": 1231,
-   "ms": 20022,
+   "artist": "HTTP 429",
+   "firstMs": 834,
+   "ms": 20018,
    "top": [
     "The Wanderer Above the Sea of Fog · Caspar David Friedrich · wikiart"
    ]
