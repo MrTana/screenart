@@ -237,8 +237,8 @@ body.rc #drawer{width:100vw;left:0;border-radius:0;box-shadow:none}
 .btn.out{background:transparent;color:var(--md-primary);border-color:var(--md-outline)}
 .btn[aria-pressed=true]{background:var(--md-primary);color:var(--md-on-primary)}
 .btn[data-act]::before,.ibtn::before{content:"";flex:none;width:18px;height:18px;background:currentColor;-webkit-mask:var(--ic) center/contain no-repeat;mask:var(--ic) center/contain no-repeat}
-.btn:not([data-act=prev]):not([data-act=next]):not([data-act=play]):not([data-act=fav]):not([data-act=fs]):not([data-act=qr]):not([data-act=update]):not([data-act=rc-update]):not([data-act=home])::before{display:none}
-[data-act=prev]{--ic:var(--i-prev)}[data-act=next]{--ic:var(--i-next)}[data-act=play]{--ic:var(--i-pause)}[data-act=fav]{--ic:var(--i-fav)}[data-act=fs]{--ic:var(--i-fs)}[data-act=qr]{--ic:var(--i-cast)}[data-act=update],[data-act=rc-update]{--ic:var(--i-refresh)}[data-act=home]{--ic:var(--i-home)}
+.btn:not([data-act=prev]):not([data-act=next]):not([data-act=play]):not([data-act=fav]):not([data-act=seen]):not([data-act=fs]):not([data-act=qr]):not([data-act=update]):not([data-act=rc-update]):not([data-act=home])::before{display:none}
+[data-act=prev]{--ic:var(--i-prev)}[data-act=next]{--ic:var(--i-next)}[data-act=play]{--ic:var(--i-pause)}[data-act=fav]{--ic:var(--i-fav)}[data-act=seen]{--ic:var(--i-eye-o)}[data-act=fs]{--ic:var(--i-fs)}[data-act=qr]{--ic:var(--i-cast)}[data-act=update],[data-act=rc-update]{--ic:var(--i-refresh)}[data-act=home]{--ic:var(--i-home)}
 .ibtn{display:grid;place-items:center;flex:none;width:48px;height:48px;border:0;border-radius:50%;background:transparent;color:var(--md-on-surface-variant)}
 .ibtn::before{width:24px;height:24px;--ic:var(--i-close)}
 
@@ -528,6 +528,7 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
     <button class="btn" data-act="play" id="playBtn">Pausar</button>
     <button class="btn pri" data-act="next">Siguiente</button>
     <button class="btn" data-act="fav" id="favBtn">Guardar favorita</button>
+    <button class="btn" data-act="seen" id="seenBtn">Marcar como vista</button>
     <button class="btn out" data-act="fs">Pantalla completa</button>
     <button class="btn out" data-act="qr">Mando en el móvil</button>
     <button class="btn out" data-act="home" id="homeBtn" hidden>Inicio</button>

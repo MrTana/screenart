@@ -126,8 +126,8 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   { // colecciones rápidas: solo «Todo el arte» y «Mis favoritas»; cada una borra los filtros de abajo
     const favs0 = S.favs; S.favs = [{ uid: 'f1', title: 'A', imgs: ['https://x/a.jpg'] }, { uid: 'f2', title: 'B', imgs: ['https://x/b.jpg'] }]; A.render('presets');
     const opts = Array.from(d.querySelectorAll('#c-presets option')).map(o => o.textContent);
-    assert.deepStrictEqual(opts.slice(1, 3), ['Todo el arte', 'Mis favoritas (2)'], 'primero Todo el arte y Mis favoritas: ' + opts.join(' | '));
-    assert.ok(opts.includes('Barroco') && opts.includes('Surrealismo y realismo mágico') && opts.length === 3 + C0().QUICK_COLLECTIONS.length && d.querySelector('#c-presets optgroup[label=Movimientos]'), 'y los movimientos');
+    assert.deepStrictEqual(opts.slice(1, 4), ['Todo el arte', 'Mis favoritas (2)', 'Mis pinturas vistas (' + S.viewed.length + ')'], 'primero Todo el arte, Mis favoritas y Mis pinturas vistas: ' + opts.join(' | '));
+    assert.ok(opts.includes('Barroco') && opts.includes('Surrealismo y realismo mágico') && opts.length === 4 + C0().QUICK_COLLECTIONS.length && d.querySelector('#c-presets optgroup[label=Movimientos]'), 'y los movimientos');
     const dirty = () => { A.onAct('era', 'mod'); S.f.styles = ['surrealism']; S.f.artists = ['Monet']; S.f.keywords = ['caballos']; S.f.exclude = ['portraits']; S.f.noWords = ['x']; S.f.orientation = 'landscape'; S.f.soloPD = true; Object.keys(S.f.sources).forEach(k => { S.f.sources[k] = k === 'm:met'; }); };
     const clean = f => !f.eras.length && !f.styles.length && !f.artists.length && !f.keywords.length && !f.exclude.length && !f.noWords.length && f.orientation === 'any' && !f.soloPD && !f.yearFrom && !f.yearTo;
     dirty(); pick('Todo el arte');

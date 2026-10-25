@@ -56,7 +56,9 @@ publicada en **https://screenart.pages.dev** (Cloudflare Pages, se despliega sol
   del móvil y «Inicio» del menú vuelven a ella (`history.pushState`). «Conectar a la TV» abre el mando con el último código usado (`tvcode`, que guarda el mando al abrirse) o lo pide.
 - **Colecciones** (`#colls`, desde «Colecciones» del inicio del móvil): círculos arriba (Favoritas y Pinturas vistas, lista `COLLS` en ui.js) y
   cuadrícula masonry (orden aleatorio cada vez que se abre; cada obra a la columna más corta, 30 por página al bajar; al volver con Atrás se mantiene). Tocar una obra la muestra en la galería; Atrás vuelve.
-  «Pinturas vistas» (`S.viewed`, clave `viewed`, 500 como máximo) se apunta en `present()` y, en el mando, con cada obra que manda la TV.
+  «Pinturas vistas» (`S.viewed`, clave `vistas`, 500 como máximo) funciona como Favoritas: solo las que marca el usuario (ojo de la obra
+  encontrada o «Marcar como vista» del menú, `setViewed`); nunca se apunta sola. En el menú: colección rápida «Mis pinturas vistas» y opción
+  «Solo mis pinturas vistas» (`f.onlyViewed`, excluyente con `onlyFavs`). Viaja entre mando y TV por el relé (`vs`/`vws`/`vneed`), sin nube.
   El historial lleva la profundidad (`history.state.d`) para que «Inicio» vuelva al inicio en un solo salto.
 - **Escáner tipo cámara** (`#scanner`, el mismo desde el inicio y desde el menú): zoom (1× 2× 3× y pellizco; zoom de la cámara si lo tiene,
   si no ampliación), círculo = escanear (manual; el marco se pone verde cuando está quieto), cuadrado izquierdo = buscar por nombre,

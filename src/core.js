@@ -344,7 +344,7 @@ const EXCLUDES = [
 EXCLUDES.forEach(e => { e.re = new RegExp('(?:^|[^a-z])(?:' + e.t + ')', 'i'); });
 const exTerm = w => { const a = norm(w), b = norm(keywordToQuery(w)); return Array.from(new Set([a, b])).filter(x => x.length > 2).map(x => (x.length > 4 ? x.replace(/(es|s)$/, '') : x).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')); };
 function excluded(w, f) {
-  if (!f || f.onlyFavs) return false;
+  if (!f || f.onlyFavs || f.onlyViewed) return false;
   const ids = f.exclude || [], words = f.noWords || [];
   if (!ids.length && !words.length) return false;
   const t = norm(w.title);
@@ -385,7 +385,7 @@ function defaultFilters() {
     sources: Object.assign({}, SOURCE_DEFAULTS),
     eras: [], yearFrom: '', yearTo: '',
     styles: [], types: [], artists: [], keywords: [], exclude: [], noWords: [],
-    orientation: 'any', soloPD: false, onlyFavs: false
+    orientation: 'any', soloPD: false, onlyFavs: false, onlyViewed: false
   };
 }
 

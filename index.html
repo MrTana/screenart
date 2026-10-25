@@ -237,8 +237,8 @@ body.rc #drawer{width:100vw;left:0;border-radius:0;box-shadow:none}
 .btn.out{background:transparent;color:var(--md-primary);border-color:var(--md-outline)}
 .btn[aria-pressed=true]{background:var(--md-primary);color:var(--md-on-primary)}
 .btn[data-act]::before,.ibtn::before{content:"";flex:none;width:18px;height:18px;background:currentColor;-webkit-mask:var(--ic) center/contain no-repeat;mask:var(--ic) center/contain no-repeat}
-.btn:not([data-act=prev]):not([data-act=next]):not([data-act=play]):not([data-act=fav]):not([data-act=fs]):not([data-act=qr]):not([data-act=update]):not([data-act=rc-update]):not([data-act=home])::before{display:none}
-[data-act=prev]{--ic:var(--i-prev)}[data-act=next]{--ic:var(--i-next)}[data-act=play]{--ic:var(--i-pause)}[data-act=fav]{--ic:var(--i-fav)}[data-act=fs]{--ic:var(--i-fs)}[data-act=qr]{--ic:var(--i-cast)}[data-act=update],[data-act=rc-update]{--ic:var(--i-refresh)}[data-act=home]{--ic:var(--i-home)}
+.btn:not([data-act=prev]):not([data-act=next]):not([data-act=play]):not([data-act=fav]):not([data-act=seen]):not([data-act=fs]):not([data-act=qr]):not([data-act=update]):not([data-act=rc-update]):not([data-act=home])::before{display:none}
+[data-act=prev]{--ic:var(--i-prev)}[data-act=next]{--ic:var(--i-next)}[data-act=play]{--ic:var(--i-pause)}[data-act=fav]{--ic:var(--i-fav)}[data-act=seen]{--ic:var(--i-eye-o)}[data-act=fs]{--ic:var(--i-fs)}[data-act=qr]{--ic:var(--i-cast)}[data-act=update],[data-act=rc-update]{--ic:var(--i-refresh)}[data-act=home]{--ic:var(--i-home)}
 .ibtn{display:grid;place-items:center;flex:none;width:48px;height:48px;border:0;border-radius:50%;background:transparent;color:var(--md-on-surface-variant)}
 .ibtn::before{width:24px;height:24px;--ic:var(--i-close)}
 
@@ -528,6 +528,7 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
     <button class="btn" data-act="play" id="playBtn">Pausar</button>
     <button class="btn pri" data-act="next">Siguiente</button>
     <button class="btn" data-act="fav" id="favBtn">Guardar favorita</button>
+    <button class="btn" data-act="seen" id="seenBtn">Marcar como vista</button>
     <button class="btn out" data-act="fs">Pantalla completa</button>
     <button class="btn out" data-act="qr">Mando en el móvil</button>
     <button class="btn out" data-act="home" id="homeBtn" hidden>Inicio</button>
@@ -612,7 +613,7 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
     <button class="acch" data-act="acc" data-id="skin" aria-expanded="false"><span class="at">Skin</span><span class="as" data-sum="skin"></span><span class="ac">›</span></button>
     <div class="accb"><label class="fld"><span>Aspecto de la interfaz</span><select id="c-skin"></select></label><p class="hint">Material Design 3 y Material 3 Expressive, en claro y oscuro. Solo cambia el menú, el mando y los avisos; la obra y su ficha no cambian.</p></div>
   </section>
-  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 87ce197c66 · 2026-10-25 02:46 CEST</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
+  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 0d3176a7f2 · 2026-10-25 12:47 CET</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
   <div id="rcfoot" hidden><button class="btn pri" data-act="rc-update">Buscar actualización</button><p id="rcver"></p></div>
 <div id="tvConnect"><button class="btn pri" data-act="tv-connect">Conectar a la TV</button><div class="row" id="tvRow" hidden><input type="text" id="tvCode" placeholder="Código de la TV (ej. abcd-efgh-jkmn)" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn pri" data-act="tv-go">Abrir mando</button></div><p class="hint" id="tvMsg">El código sale bajo el QR en la pantalla de la TV.</p></div>
 </aside>
@@ -967,7 +968,7 @@ const EXCLUDES = [
 EXCLUDES.forEach(e => { e.re = new RegExp('(?:^|[^a-z])(?:' + e.t + ')', 'i'); });
 const exTerm = w => { const a = norm(w), b = norm(keywordToQuery(w)); return Array.from(new Set([a, b])).filter(x => x.length > 2).map(x => (x.length > 4 ? x.replace(/(es|s)$/, '') : x).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')); };
 function excluded(w, f) {
-  if (!f || f.onlyFavs) return false;
+  if (!f || f.onlyFavs || f.onlyViewed) return false;
   const ids = f.exclude || [], words = f.noWords || [];
   if (!ids.length && !words.length) return false;
   const t = norm(w.title);
@@ -1008,7 +1009,7 @@ function defaultFilters() {
     sources: Object.assign({}, SOURCE_DEFAULTS),
     eras: [], yearFrom: '', yearTo: '',
     styles: [], types: [], artists: [], keywords: [], exclude: [], noWords: [],
-    orientation: 'any', soloPD: false, onlyFavs: false
+    orientation: 'any', soloPD: false, onlyFavs: false, onlyViewed: false
   };
 }
 
@@ -2597,7 +2598,7 @@ const Q = (() => { try { return new URLSearchParams(location.search); } catch (e
 // Con «?c=código» la página es el mando del móvil: no muestra obras, controla la TV.
 const REMOTE = /^[a-z0-9]{6,24}$/i.test(Q.get('c') || '') ? Q.get('c').toLowerCase() : '';
 function lsGet(k, def) { try { const v = localStorage.getItem(KEY + ':' + k); return v ? JSON.parse(v) : def; } catch (e) { return def; } }
-function lsSet(k, v) { if (REMOTE && !['rskin', 'upd', 'rc', 'tvcode', 'idkeys', 'keys', 'keysent', 'favs', 'favdel', 'keyt', 'cloudv', 'cloudsent', 'viewed'].includes(k)) return; // el mando solo guarda su código y lo que comparte con la versión móvil (claves, favoritas y pinturas vistas)
+function lsSet(k, v) { if (REMOTE && !['rskin', 'upd', 'rc', 'tvcode', 'idkeys', 'keys', 'keysent', 'favs', 'favdel', 'keyt', 'cloudv', 'cloudsent', 'vistas'].includes(k)) return; // el mando solo guarda su código y lo que comparte con la versión móvil (claves, favoritas y pinturas vistas)
    try { localStorage.setItem(KEY + ':' + k, JSON.stringify(v)); } catch (e) { /* sin almacenamiento */ } }
 
 /* ───────── estado ───────── */
@@ -2615,12 +2616,13 @@ const S = {
   f: loadFilters(),
   st: Object.assign({ interval: 30, mode: 'gallery', quality: 'normal', kenburns: false, caption: 'def', skin: 'm3-dark' }, lsGet('st', {})),
   keys: Object.assign({ europeana: 'api2demo', si: 'DEMO_KEY', harvard: '' }, lsGet('keys', {})),
-  favs: lsGet('favs', []), viewed: lsGet('viewed', []),
+  favs: lsGet('favs', []), viewed: lsGet('vistas', []), // «Pinturas vistas»: solo las que marca el usuario (la lista antigua, que se llenaba sola, ya no se usa)
   pool: [], seen: new Set(), seenKey: new Set(), hist: [], hi: -1,
   paused: false, menu: false, epoch: 0, refilling: 0, adv: false, advAt: 0, flight: new Map(), cool: {}, streak: {}, warned: false, recycleAfter: 6000, artGroup: 'impressionism', mfilter: '', detail: {}, acc: null,
   status: {}, counts: {}, layer: 0, nextP: null, nextEpoch: -1,
   timer: null, capT: null, idleT: null, waiters: [], current: null, shown: 0
 };
+try { localStorage.removeItem(KEY + ':viewed'); } catch (e) { /* sin almacenamiento */ } // la lista antigua de vistas se llenaba sola con todo lo mostrado
 function saveAll() { if (REMOTE) { remoteSetSoon(); return; } lsSet('f', S.f); lsSet('st', S.st); lsSet('keys', S.keys); lsSet('favs', S.favs.slice(0, 300)); }
 
 if (S.st.capv !== 2) { S.st.capv = 2; if (S.st.caption === 'auto') S.st.caption = 'def'; } // la ficha ahora es «predeterminada» (móvil: siempre; TV: al inicio)
@@ -2681,10 +2683,11 @@ function ensureRefill() { if (S.pool.length < 8) refill(); }
 /* Cada fuente va por su cuenta: una lenta no frena a las demás, y las que fallan o vienen vacías descansan un rato (nunca se rinden del todo). */
 function refill() {
   const epoch = S.epoch, f = S.f;
-  if (f.onlyFavs) {
-    let list = S.favs.filter(w => !S.seen.has(w.uid));
-    if (!list.length && S.favs.length) { S.favs.forEach(w => S.seen.delete(w.uid)); list = S.favs.slice(); }
-    if (!list.length) { if (!S.warned) { S.warned = true; toast('Aún no tienes favoritas'); } return; }
+  if (ownOnly(f)) { // solo favoritas o solo pinturas vistas
+    const own = f.onlyFavs ? S.favs : S.viewed;
+    let list = own.filter(w => !S.seen.has(w.uid));
+    if (!list.length && own.length) { own.forEach(w => S.seen.delete(w.uid)); list = own.slice(); }
+    if (!list.length) { if (!S.warned) { S.warned = true; toast(ownEmpty(f)); } return; }
     insertRandom(C.shuffle(list.slice()).filter(w => !S.pool.some(x => x.uid === w.uid)));
     return;
   }
@@ -2743,14 +2746,14 @@ async function launch(s, epoch) {
 /* Orden del barrido: se fija al empezar (al azar) y con él se precalculan en lote los conteos de Wikidata, en el mismo
    orden en que se van a consultar los museos: el primer lote sirve a los primeros museos. */
 function planSweep() {
-  if (REMOTE || S.f.onlyFavs) return;
+  if (REMOTE || ownOnly(S.f)) return;
   const list = C.shuffle(C.SOURCE_LIST.filter(s => S.f.sources[s.id]));
   S.sweepOrder = new Map(list.map((s, i) => [s.id, i]));
   C.primeWikidataCounts(list, S.f, ctx()).catch(() => {});
 }
 function byOrder(l) { const o = S.sweepOrder || new Map(), p = s => (o.has(s.id) ? o.get(s.id) : 1e9); return l.slice().sort((a, b) => p(a) - p(b)); }
 function sweep() {
-  if (S.f.onlyFavs) return;
+  if (ownOnly(S.f)) return;
   const room = Math.max(0, 4 - S.flight.size); if (!room) return;
   const todo = C.SOURCE_LIST.filter(s => S.f.sources[s.id] && !S.status[s.id] && !S.flight.has(s.id));
   byOrder(todo).slice(0, room).forEach(s => launch(s, S.epoch));
@@ -2828,6 +2831,8 @@ async function pullNext(maxMs) {
 /* ───────── escenario ───────── */
 function isFav(w) { return !!w && S.favs.some(x => x.uid === w.uid); }
 function isViewed(w) { return !!w && S.viewed.some(x => x.uid === w.uid); }
+const ownOnly = f => !!(f.onlyFavs || f.onlyViewed); // la galería pasa solo las obras guardadas por el usuario
+const ownEmpty = f => f.onlyFavs ? 'Aún no tienes favoritas' : 'Aún no has marcado pinturas vistas';
 const FD = { w: null, img: '', iw: 0, ih: 0, go: null }; // obra encontrada en el escáner (ver openFound)
 /* Ficha «predeterminada»: en un móvil/tableta (sin TV conectada) siempre visible; en la TV, al inicio de cada obra. */
 function capMode() { const c = S.st.caption; return c === 'def' || !c ? (touchLayout() ? 'always' : 'auto') : c; }
@@ -2871,7 +2876,7 @@ function present(item, fromHist) {
   document.body.classList.toggle('plate-on', s.classList.contains('tall') && !s.classList.contains('noplate'));
   $('#loader').hidden = true;
   if (!fromHist) { S.hist.push(item); if (S.hist.length > 120) S.hist.shift(); S.hi = S.hist.length - 1; }
-  S.current = item; S.shown++; saveStashSoon(); addViewed(item);
+  S.current = item; S.shown++; saveStashSoon();
   setCaption(item); updateFavBtn();
   tvNowSoon();
 }
@@ -2916,7 +2921,7 @@ function prefetch() {
   S.nextP = pullNext().then(it => { if (ep === S.epoch) { S.ready = it; saveStashSoon(); } return it; });
 }
 function saveStash() {
-  if (REMOTE || S.f.onlyFavs) return;
+  if (REMOTE || ownOnly(S.f)) return;
   clearTimeout(S.stashT); S.stashT = 0;
   const r = S.ready, first = r ? [Object.assign({}, r, { imgs: [r.url].concat((r.imgs || []).filter(u => u !== r.url)), url: r.url_page || r.url })] : [];
   const works = first.concat(S.pool.slice(0, STASH_MAX)).map(slimWork).filter(okWork).slice(0, STASH_MAX);
@@ -2926,7 +2931,7 @@ function saveStash() {
 }
 function saveStashSoon() { if (!S.stashT) S.stashT = setTimeout(saveStash, 3000); }
 function loadStash() {
-  if (REMOTE || S.f.onlyFavs) return 0;
+  if (REMOTE || ownOnly(S.f)) return 0;
   const st = lsGet('stash', null);
   if (!st || st.sig !== filterSig(S.f) || !(Date.now() - st.at < STASH_TTL)) return 0;
   (Array.isArray(st.seen) ? st.seen : []).forEach(u => { if (typeof u === 'string') S.seen.add(u); });
@@ -2968,7 +2973,11 @@ function setFav(w, on) {
   else { saveAll(); tvNowSoon(true); tvFavPush(w, on); }
   updateFavBtn(); render('presets'); render('opts'); cloudSyncSoon();
 }
-function updateFavBtn() { if (FD.w) renderFound(); $('#favBtn').textContent = (REMOTE ? !!S.nowFav : isFav(S.current)) ? 'Quitar favorita' : 'Guardar favorita'; }
+function updateFavBtn() {
+  if (FD.w) renderFound();
+  $('#favBtn').textContent = (REMOTE ? !!S.nowFav : isFav(S.current)) ? 'Quitar favorita' : 'Guardar favorita';
+  $('#seenBtn').textContent = (REMOTE ? !!S.nowViewed : isViewed(S.current)) ? 'Quitar de vistas' : 'Marcar como vista';
+}
 function toggleFS() {
   try {
     if (document.fullscreenElement) document.exitFullscreen();
@@ -3044,7 +3053,7 @@ function applyChange() {
   applyT = setTimeout(() => {
     S.epoch++; S.pool = []; S.nextP = null; S.ready = null; S.flight = new Map(); S.cool = {}; S.streak = {}; S.warned = false; S.adv = false; S.counts = {}; S.status = {};
     renderSrcs(); planSweep();
-    if (S.f.onlyFavs && !S.favs.length) toast('Aún no tienes favoritas');
+    if (ownOnly(S.f) && !(S.f.onlyFavs ? S.favs : S.viewed).length) toast(ownEmpty(S.f));
     advance();
   }, 700);
 }
@@ -3063,7 +3072,7 @@ function accSummary(id) {
     case 'skin': return (SKINS.find(x => x[0] === S.st.skin) || SKINS[0])[1];
     case 'noquiero': { const n = f.exclude.map(id => (C.EXCLUDES.find(x => x.id === id) || { es: id }).es).concat(f.noWords); return n.length ? j(n) : 'Nada excluido'; }
     case 'tema': return f.keywords.length ? j(f.keywords.map(q => { const k = C.KEYWORDS.find(x => x.q === q); return k ? k.es : q; })) : 'Cualquier tema';
-    case 'opciones': { const o = []; if (S.st.kenburns) o.push('zoom lento'); if (S.st.quality === 'high') o.push('alta calidad'); if (f.soloPD) o.push('solo dominio público'); if (f.onlyFavs) o.push('solo favoritas'); return o.length ? j(o) : 'Ninguna activada'; }
+    case 'opciones': { const o = []; if (S.st.kenburns) o.push('zoom lento'); if (S.st.quality === 'high') o.push('alta calidad'); if (f.soloPD) o.push('solo dominio público'); if (f.onlyFavs) o.push('solo favoritas'); if (f.onlyViewed) o.push('solo pinturas vistas'); return o.length ? j(o) : 'Ninguna activada'; }
     case 'claves': { const n = ['europeana', 'si', 'harvard'].filter(k => S.keys[k] && !/^(api2demo|DEMO_KEY)$/.test(S.keys[k])).length; return n ? n + ' configuradas' : 'Opcional'; }
   }
   return '';
@@ -3091,7 +3100,7 @@ function favStyleIds() {
 }
 function currentPreset() { return S.st.preset && S.st.presetSig === filterSig(S.f) ? S.st.preset : ''; }
 function presetList() {
-  return [{ key: 'todo', es: 'Todo el arte' }, { key: 'favs', es: 'Mis favoritas (' + S.favs.length + ')', favs: true }].concat(C.QUICK_COLLECTIONS);
+  return [{ key: 'todo', es: 'Todo el arte' }, { key: 'favs', es: 'Mis favoritas (' + S.favs.length + ')', favs: true }, { key: 'viewed', es: 'Mis pinturas vistas (' + S.viewed.length + ')', viewed: true }].concat(C.QUICK_COLLECTIONS);
 }
 const ORIENT = [['any', 'Cualquiera'], ['landscape', 'Horizontal'], ['portrait', 'Vertical'], ['square', 'Cuadrada']];
 const MODES = [['gallery', 'Obra completa'], ['plate', 'Con cartela (verticales a un lado)'], ['frame', 'Con marco'], ['fill', 'Llenar (recorta)']];
@@ -3104,7 +3113,7 @@ const chip = (act, id, label, on, cls) => '<button class="chip' + (cls ? ' ' + c
 const opts = (list, cur) => list.map(o => '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(cur) ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join('');
 const R = {
   // La colección elegida sigue marcada mientras no se toque ningún filtro; si se cambia alguno, pasa a «Filtros a tu gusto».
-  presets: () => { const cur = currentPreset(); return '<option value=""' + (cur ? '' : ' selected') + '>' + (S.st.preset && !cur ? 'Filtros a tu gusto' : 'Elegir una colección…') + '</option>' + presetList().map((p, i, l) => { const g = i < 2 ? '' : (p.g || 'Movimientos'), pg = i < 3 ? '' : (l[i - 1].g || 'Movimientos'); return (g && g !== pg ? (i > 2 ? '</optgroup>' : '') + '<optgroup label="' + esc(g) + '">' : '') + '<option value="' + esc(p.key) + '"' + (p.key === cur ? ' selected' : '') + '>' + esc(p.es) + '</option>' + (i === l.length - 1 && g ? '</optgroup>' : ''); }).join(''); },
+  presets: () => { const cur = currentPreset(); return '<option value=""' + (cur ? '' : ' selected') + '>' + (S.st.preset && !cur ? 'Filtros a tu gusto' : 'Elegir una colección…') + '</option>' + presetList().map((p, i, l) => { const g = i < 3 ? '' : (p.g || 'Movimientos'), pg = i < 4 ? '' : (l[i - 1].g || 'Movimientos'); return (g && g !== pg ? (i > 3 ? '</optgroup>' : '') + '<optgroup label="' + esc(g) + '">' : '') + '<option value="' + esc(p.key) + '"' + (p.key === cur ? ' selected' : '') + '>' + esc(p.es) + '</option>' + (i === l.length - 1 && g ? '</optgroup>' : ''); }).join(''); },
   eras: () => C.ERAS.map(e => chip('era', e.id, e.es, S.f.eras.includes(e.id))).join(''),
   styles: () => C.STYLES.map(s => chip('style', s.id, s.es, S.f.styles.includes(s.id))).join(''),
   artists: () => S.f.artists.map(a => chip('rm-artist', a, a, true, 'rm')).join('') || '<span class="hint" style="font-size:14px;color:var(--muted)">Ninguno. Se muestran todos los artistas.</span>',
@@ -3120,7 +3129,7 @@ const R = {
   caption: () => opts(CAPTIONS, S.st.caption),
   skin: () => opts(SKINS, S.st.skin),
   opts: () => chip('opt', 'kb', 'Zoom lento', S.st.kenburns) + chip('opt', 'hq', 'Imágenes en alta calidad', S.st.quality === 'high') +
-    chip('opt', 'pd', 'Solo dominio público', S.f.soloPD) + chip('opt', 'favs', 'Solo mis favoritas (' + S.favs.length + ')', S.f.onlyFavs)
+    chip('opt', 'pd', 'Solo dominio público', S.f.soloPD) + chip('opt', 'favs', 'Solo mis favoritas (' + S.favs.length + ')', S.f.onlyFavs) + chip('opt', 'viewed', 'Solo mis pinturas vistas (' + S.viewed.length + ')', S.f.onlyViewed)
 };
 const BOX = { presets: 'c-presets', eras: 'c-eras', styles: 'c-styles', artists: 'c-artists', artgroup: 'c-artgroup', artistsug: 'c-artist-sug', kws: 'c-kws', excl: 'c-excl', exwords: 'c-exwords', orient: 'c-orient', mode: 'c-mode', interval: 'c-interval', caption: 'c-caption', skin: 'c-skin', opts: 'c-opts' };
 
@@ -3192,7 +3201,7 @@ function sweepInfoSoon() { if (!S.siT) S.siT = setTimeout(() => { S.siT = 0; swe
 function sweepInfo() {
   const el = $('#sweepInfo'); if (!el) return;
   const sel = C.SOURCE_LIST.filter(s => S.f.sources[s.id]), st = id => S.status[id] && S.status[id].state;
-  if (!sel.length || S.f.onlyFavs) { el.textContent = ''; return; }
+  if (!sel.length || ownOnly(S.f)) { el.textContent = ''; return; }
   const done = sel.filter(s => st(s.id) && st(s.id) !== 'loading').length, busy = sel.filter(s => st(s.id) === 'loading').length;
   const ok = sel.filter(s => st(s.id) === 'ok').length, bad = sel.filter(s => st(s.id) === 'error' || st(s.id) === 'nokey').length;
   const works = Object.keys(S.counts).reduce((a, k) => a + (S.counts[k] || 0), 0);
@@ -3201,7 +3210,7 @@ function sweepInfo() {
   if (!$('#loader').hidden && !S.current) $('#loaderSub').textContent = el.textContent;
 }
 /* ───────── buscar por título ───────── */
-const slimWork = w => ({ ft: w.ft, uid: w.uid, src: w.src, museum: w.museum, title: w.title, artist: w.artist, date: w.date, year: w.year, imgs: (w.imgs || []).slice(0, 2), thumb: w.thumb, url: w.url, type: w.type, pd: w.pd, license: w.license });
+const slimWork = w => ({ ft: w.ft, vt: w.vt, uid: w.uid, src: w.src, museum: w.museum, title: w.title, artist: w.artist, date: w.date, year: w.year, imgs: (w.imgs || []).slice(0, 2), thumb: w.thumb, url: w.url, type: w.type, pd: w.pd, license: w.license });
 function okWork(w) { // lo que llega por el relé se valida: solo imágenes https
   return w && typeof w === 'object' && typeof w.title === 'string' && Array.isArray(w.imgs) && w.imgs.length && w.imgs.every(u => typeof u === 'string' && /^https:\/\//i.test(u));
 }
@@ -3488,11 +3497,24 @@ function addViewed(w) { // «Pinturas vistas»: la más reciente primero, sin re
   S.viewed = S.viewed.filter(x => x.uid !== w.uid);
   S.viewed.unshift({ vt: Date.now(), uid: w.uid, src: w.src, museum: w.museum, title: w.title, artist: w.artist, date: w.date, year: w.year, imgs, thumb: w.thumb, url: w.url_page || w.url, pd: w.pd, license: w.license, w: w.iw || w.w, h: w.ih || w.h });
   if (S.viewed.length > VIEWED_MAX) S.viewed.length = VIEWED_MAX;
-  clearTimeout(S.viewedT); S.viewedT = setTimeout(() => lsSet('viewed', S.viewed), 1500);
+}
+/* Marcar o desmarcar una obra como vista (como las favoritas: solo lo que elige el usuario). En el mando viaja a la TV y al revés. */
+function setViewed(w, on) {
+  if (!w || on === isViewed(w)) return;
+  if (on) addViewed(w); else S.viewed = S.viewed.filter(x => x.uid !== w.uid);
+  lsSet('vistas', S.viewed);
+  const rec = on && S.viewed[0] && S.viewed[0].uid === w.uid ? S.viewed[0] : null;
+  if (REMOTE) relaySend(rec ? { t: 'vws', w: [slimWork(rec)] } : { t: 'vws', rm: [w.uid] });
+  else { tvNowSoon(true); if (RC.code && RC.lastPhone && Date.now() - RC.lastPhone < 240000) relaySend(rec ? { t: 'vws', w: [slimWork(rec)] } : { t: 'vws', rm: [w.uid] }); }
+  updateFavBtn(); render('presets'); render('opts');
+}
+function toggleViewed() { // botón «Marcar como vista» del menú: la obra que está en pantalla
+  const w = S.current; if (!w) return;
+  const on = !isViewed(w); setViewed(w, on); toast(on ? 'Añadida a pinturas vistas' : 'Quitada de pinturas vistas');
 }
 const COLLS = [
   { key: 'favs', es: 'Favoritas', ic: 'var(--i-fav)', list: () => S.favs, empty: 'Aún no tienes favoritas. En la galería, abre el menú y pulsa «Guardar favorita».' },
-  { key: 'viewed', es: 'Pinturas vistas', ic: 'var(--i-eye)', list: () => S.viewed, empty: 'Aquí aparecerán las pinturas que vayas viendo en la galería.' }
+  { key: 'viewed', es: 'Pinturas vistas', ic: 'var(--i-eye)', list: () => S.viewed, empty: 'Aún no has marcado pinturas vistas. Márcalas con el ojo al escanear una obra o con «Marcar como vista» en el menú de la galería.' }
 ];
 const CL = { key: lsGet('coll', 'favs'), list: [], n: 0, hs: [] };
 const collsOpen = () => !$('#colls').hidden;
@@ -3587,9 +3609,7 @@ function foundAct(act) {
   const w = FD.w; if (!w) return;
   if (act === 'found-fav') { const on = !isFav(w); setFav(foundWork(), on); toast(on ? 'Guardada en favoritas' : 'Quitada de favoritas'); }
   else if (act === 'found-viewed') {
-    const on = !isViewed(w);
-    if (on) { addViewed(foundWork()); clearTimeout(S.viewedT); } else S.viewed = S.viewed.filter(x => x.uid !== w.uid);
-    lsSet('viewed', S.viewed);
+    const on = !isViewed(w); setViewed(on ? foundWork() : w, on);
     toast(on ? 'Añadida a pinturas vistas' : 'Quitada de pinturas vistas');
   } else if (act === 'found-gallery') {
     if (history.state && history.state.fv) { // primero se quita el paso de la obra del historial y después se va a la galería
@@ -3662,7 +3682,7 @@ function addKeyword(text) { const q = C.keywordToQuery(text || ''); if (!q || S.
 
 function onAct(act, id) {
   const f = S.f;
-  if (REMOTE && (act === 'prev' || act === 'next' || act === 'play' || act === 'fav')) { remoteCmd(act); return; }
+  if (REMOTE && (act === 'prev' || act === 'next' || act === 'play' || act === 'fav' || act === 'seen')) { remoteCmd(act); return; }
   if (REMOTE && act === 'diag') { remoteDiag(); return; }
   switch (act) {
     case 'close': if (!REMOTE) closeMenu(); break;
@@ -3685,6 +3705,7 @@ function onAct(act, id) {
     case 'next': next(); break;
     case 'play': togglePlay(); break;
     case 'fav': toggleFav(); render('opts'); break;
+    case 'seen': toggleViewed(); break;
     case 'fs': toggleFS(); break;
     case 'reset': {
       const keep = { sources: f.sources }; S.f = Object.assign(C.defaultFilters(), keep); renderAll(); applyChange(); toast('Filtros restablecidos'); break;
@@ -3694,6 +3715,7 @@ function onAct(act, id) {
       const nf = C.defaultFilters(); // todo a cero
       C.SOURCE_LIST.forEach(s => { const nk = s.museum && s.museum.needsKey; nf.sources[s.id] = !(nk && !hasKey(nk)); }); // todos los museos (salvo los que piden una clave que no hay)
       if (p.favs) { nf.onlyFavs = true; if (!S.favs.length) toast('Aún no tienes favoritas'); }
+      if (p.viewed) { nf.onlyViewed = true; if (!S.viewed.length) toast(ownEmpty(nf)); }
       if (p.s || p.a || p.y) Object.assign(nf, C.quickFilters(p));
       S.f = nf; S.st.preset = p.key; S.st.presetSig = filterSig(nf); S.mfilter = ''; try { $('#museumFilter').value = ''; } catch (e) { /* sin campo */ }
       renderAll(); applyChange(); break;
@@ -3741,7 +3763,8 @@ function onAct(act, id) {
       if (id === 'kb') { S.st.kenburns = !S.st.kenburns; applyLook(); saveAll(); render('opts'); }
       else if (id === 'hq') { S.st.quality = S.st.quality === 'high' ? 'normal' : 'high'; saveAll(); render('opts'); toast('Se aplicará a las próximas obras'); }
       else if (id === 'pd') { f.soloPD = !f.soloPD; render('opts'); applyChange(); }
-      else if (id === 'favs') { f.onlyFavs = !f.onlyFavs; render('opts'); applyChange(); }
+      else if (id === 'favs') { f.onlyFavs = !f.onlyFavs; if (f.onlyFavs) f.onlyViewed = false; render('opts'); applyChange(); } // una u otra, no las dos
+      else if (id === 'viewed') { f.onlyViewed = !f.onlyViewed; if (f.onlyViewed) f.onlyFavs = false; render('opts'); applyChange(); }
       break;
   }
 }
@@ -4080,7 +4103,7 @@ function slimF(f) { const d = C.defaultFilters().sources, s = {}; Object.keys(f.
 function tvState() { return { t: 'state', f: slimF(S.f), st: S.st, custom: S.custom, paused: S.paused, now: tvNow(), ver: buildVer(), favStyles: favStyleIds(), keyset: { europeana: !!S.keys.europeana, si: !!S.keys.si, harvard: !!S.keys.harvard } }; }
 function tvNow() {
   const w = S.current; if (!w) return null;
-  return { uid: w.uid, title: w.title, artist: w.artist, date: w.date, museum: w.museum, thumb: w.thumb || w.url, fav: isFav(w), paused: S.paused, favStyles: favStyleIds() };
+  return { uid: w.uid, title: w.title, artist: w.artist, date: w.date, museum: w.museum, thumb: w.thumb || w.url, fav: isFav(w), vw: isViewed(w), paused: S.paused, favStyles: favStyleIds() };
 }
 // Con un móvil conectado la TV le cuenta cada obra nueva (como mucho una cada 8 s) para no agotar el límite diario de ntfy.
 function tvNowSoon(force) {
@@ -4105,9 +4128,20 @@ function mergeFavs(ws, rm) {
   cloudSyncSoon();
   return n;
 }
-function sendFavBatches(list) { // lotes pequeños y espaciados para no saturar el relé
+function sendFavBatches(list, t) { // lotes pequeños y espaciados para no saturar el relé (t = 'vws' para las pinturas vistas)
   const slim = list.slice(0, FAV_MAX).map(slimWork);
-  for (let i = 0; i < slim.length; i += 6) setTimeout(() => relaySend({ t: 'favs', w: slim.slice(i, i + 6) }), (i / 6) * 450);
+  for (let i = 0; i < slim.length; i += 6) setTimeout(() => relaySend({ t: t || 'favs', w: slim.slice(i, i + 6) }), (i / 6) * 450);
+}
+/* Pinturas vistas: viajan igual que las favoritas entre el mando y la TV (sin nube): al conectar se cuentan los identificadores y
+   cada una pide las que le faltan; después cada alta o baja viaja sola. */
+function mergeViewed(ws, rm) {
+  let n = 0;
+  uidList(rm).forEach(u => { const l = S.viewed.length; S.viewed = S.viewed.filter(x => x.uid !== u); if (S.viewed.length !== l) n++; });
+  (Array.isArray(ws) ? ws.slice(0, 12) : []).filter(okWork).forEach(w => { if (!isViewed(w)) { S.viewed.push(Object.assign(slimWork(w), { vt: typeof w.vt === 'number' ? w.vt : Date.now() })); n++; } });
+  if (!n) return 0;
+  S.viewed.sort((a, b) => (b.vt || 0) - (a.vt || 0)); if (S.viewed.length > VIEWED_MAX) S.viewed.length = VIEWED_MAX;
+  lsSet('vistas', S.viewed); updateFavBtn(); render('presets'); render('opts'); if (!REMOTE) tvNowSoon(true);
+  return n;
 }
 function tvFavPush(w, added) {
   if (REMOTE || !RC.code || !RC.lastPhone || Date.now() - RC.lastPhone > 240000) return;
@@ -4135,13 +4169,19 @@ function tvSrcsSoon(now) {
   RC.srcsT = setTimeout(() => { RC.srcsT = 0; relaySend(tvSrcsMsg()); }, now ? 800 : 6000);
 }
 function tvHandle(m) {
-  if (m.t === 'hello' || m.t === 'ping' || m.t === 'cmd' || m.t === 'set' || m.t === 'fs' || m.t === 'favs') RC.lastPhone = Date.now();
+  if (m.t === 'hello' || m.t === 'ping' || m.t === 'cmd' || m.t === 'set' || m.t === 'fs' || m.t === 'favs' || m.t === 'vs' || m.t === 'vws') RC.lastPhone = Date.now();
   if (m.t === 'fs') { // el mando cuenta qué favoritas tiene
     const theirs = uidList(m.u), have = new Set(S.favs.map(w => w.uid)), mine = new Set(theirs);
     const need = theirs.filter(u => !have.has(u)); if (need.length) relaySend({ t: 'fneed', u: need });
     sendFavBatches(S.favs.filter(w => !mine.has(w.uid))); return;
   }
   if (m.t === 'favs') { mergeFavs(m.w, m.rm); return; }
+  if (m.t === 'vs') { // lo mismo con las pinturas vistas
+    const theirs = uidList(m.u), have = new Set(S.viewed.map(w => w.uid)), mine = new Set(theirs);
+    const need = theirs.filter(u => !have.has(u)); if (need.length) relaySend({ t: 'vneed', u: need });
+    sendFavBatches(S.viewed.filter(w => !mine.has(w.uid)), 'vws'); return;
+  }
+  if (m.t === 'vws') { mergeViewed(m.w, m.rm); return; }
   // El QR se oculta solo cuando el móvil ya recibió el estado y manda órdenes (conexión de ida y vuelta).
   if (m.t === 'ping' || m.t === 'cmd' || m.t === 'set') { lsSet('paired', true); hidePair(); }
   if (m.t === 'hello') { RC.hellos++; if (Date.now() - RC.lastState > 2500) { RC.lastState = Date.now(); relaySend(tvState()); tvSrcsSoon(true); } return; }
@@ -4151,7 +4191,7 @@ function tvHandle(m) {
     if (m.c === 'update') { forceUpdate(); return; }
     if (m.c === 'diag') { RC.forceNow = false; diagnose(true).then(() => relaySend({ t: 'diag', text: $('#diagOut').textContent.slice(0, 40000) })); return; }
     if (m.c === 'show') { if (okWork(m.w)) { showFound(m.w); } return; }
-    if (m.c === 'next') next(); else if (m.c === 'prev') prev(); else if (m.c === 'play') togglePlay(); else if (m.c === 'fav') toggleFav();
+    if (m.c === 'next') next(); else if (m.c === 'prev') prev(); else if (m.c === 'play') togglePlay(); else if (m.c === 'fav') toggleFav(); else if (m.c === 'seen') toggleViewed();
     return;
   }
   if (m.t === 'set' && m.f) {
@@ -4201,8 +4241,7 @@ function remoteFavStyles(ids) {
 function remoteNow(n) {
   if (!n) return;
   remoteFavStyles(n.favStyles);
-  S.current = { uid: n.uid }; S.nowFav = !!n.fav; S.paused = !!n.paused;
-  if (n.uid && n.thumb && /^https:\/\//i.test(n.thumb)) addViewed({ uid: n.uid, title: n.title, artist: n.artist, date: n.date, museum: n.museum, thumb: n.thumb, imgs: [n.thumb] }); // lo que se ve en la TV también cuenta como visto en este móvil
+  S.current = { uid: n.uid }; S.nowFav = !!n.fav; S.nowViewed = !!n.vw; S.paused = !!n.paused;
   $('#rcnow').hidden = false; $('#rcT').textContent = n.title || ''; $('#rcA').textContent = [C.cleanName(n.artist), n.date].filter(Boolean).join(' · ');
   const im = $('#rcImg'); if (n.thumb && im.dataset.u !== n.thumb) { im.dataset.u = n.thumb; im.src = n.thumb; }
   $('#playBtn').textContent = S.paused ? 'Reanudar' : 'Pausar'; updateFavBtn();
@@ -4245,12 +4284,14 @@ function remoteHandle(m) {
     applyLook(); lsSet('rskin', S.st.skin); // el aspecto del mando es el de la TV (antes solo cambiaba el selector, no los colores)
     S.tvFavStyles = Array.isArray(m.favStyles) ? m.favStyles : (S.tvFavStyles || []);
     renderAll(); remoteNow(m.now); remoteVer(m.ver); remoteKeys(m.keyset);
-    if (!RC.synced) { RC.synced = true; relaySend({ t: 'fs', u: S.favs.map(w => w.uid).slice(0, 400) }); remoteSyncKeys(); }
+    if (!RC.synced) { RC.synced = true; relaySend({ t: 'fs', u: S.favs.map(w => w.uid).slice(0, 400) }); relaySend({ t: 'vs', u: S.viewed.map(w => w.uid).slice(0, 400) }); remoteSyncKeys(); }
     remoteStat('Conectado a la TV. Lo que cambies aquí se aplica en la pantalla.', true, false);
   } else if (m.t === 'diag') { $('#diagOut').textContent = m.text || ''; $('#diag').hidden = false;
   } else if (m.t === 'srcs') { remoteSrcs(m);
   } else if (m.t === 'favs') { mergeFavs(m.w, m.rm);
   } else if (m.t === 'fneed') { const need = new Set(uidList(m.u)); sendFavBatches(S.favs.filter(w => need.has(w.uid)));
+  } else if (m.t === 'vws') { mergeViewed(m.w, m.rm);
+  } else if (m.t === 'vneed') { const need = new Set(uidList(m.u)); sendFavBatches(S.viewed.filter(w => need.has(w.uid)), 'vws');
   } else if (m.t === 'now') { remoteNow(m.now); if (!RC.gotState) remoteHello(true); }
 }
 function remoteSrcs(m) { // la TV cuenta cómo va cada museo; aquí se pinta igual que en la TV
@@ -4273,7 +4314,7 @@ function remoteSrcs(m) { // la TV cuenta cómo va cada museo; aquí se pinta igu
 function remoteCmd(c) {
   if (!RC.gotState) { toast('Todavía no hay conexión con la TV'); return; }
   relaySend({ t: 'cmd', c });
-  toast(c === 'next' ? 'Siguiente obra…' : c === 'prev' ? 'Obra anterior…' : c === 'play' ? 'Pausa / reanudar…' : 'Favorita…');
+  toast(c === 'next' ? 'Siguiente obra…' : c === 'prev' ? 'Obra anterior…' : c === 'play' ? 'Pausa / reanudar…' : c === 'seen' ? 'Pintura vista…' : 'Favorita…');
 }
 function remoteSetSoon() {
   if (!REMOTE) return;

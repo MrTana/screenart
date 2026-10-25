@@ -107,6 +107,19 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   ph.ArtApp.onAct('fav'); await wait(300);
   assert.strictEqual(tvA.S.favs.length, 1, 'favorita en la TV');
   assert.ok(/Quitar/.test(p.getElementById('favBtn').textContent), 'el móvil refleja la favorita');
+  { // pinturas vistas: el botón del mando marca la obra de la TV, y lo marcado en el mando llega a la TV
+    const cur = tvA.S.current.uid;
+    ph.ArtApp.onAct('seen'); await wait(600);
+    assert.ok(tvA.S.viewed.some(x => x.uid === cur), 'vista marcada en la TV');
+    assert.ok(/Quitar de vistas/.test(p.getElementById('seenBtn').textContent), 'el mando refleja que está vista');
+    assert.ok(ph.ArtApp.S.viewed.some(x => x.uid === cur), 'y el mando la recibe para su colección');
+    ph.ArtApp.S.tres = [{ uid: 'wd:Q9', src: 'wd', title: 'Vista en el mando', artist: 'P', imgs: ['https://example.org/v9.jpg'], thumb: 'https://example.org/v9t.jpg', url: 'https://www.wikidata.org/wiki/Q9' }];
+    ph.ArtApp.openScanner(); ph.ArtApp.onAct('title-show', '0'); await wait(50);
+    p.getElementById('foundViewed').click(); ph.ArtApp.closeScanner(); await wait(600);
+    assert.ok(tvA.S.viewed.some(x => x.uid === 'wd:Q9'), 'lo marcado con el ojo en el mando llega a la TV');
+    ph.ArtApp.onAct('seen'); await wait(600);
+    assert.ok(!tvA.S.viewed.some(x => x.uid === cur) && !ph.ArtApp.S.viewed.some(x => x.uid === cur), 'quitarla también viaja');
+  }
   { // buscar por título en el móvil → la TV muestra la obra
     ph.ArtApp.S.tres = [{ uid: 'wiki:Q45585', src: 'wiki', museum: 'MoMA', title: 'La noche estrellada', artist: 'Vincent van Gogh', year: 1889, date: '1889', imgs: ['https://example.org/s.jpg'], thumb: 'https://example.org/t.jpg', url: 'https://www.wikidata.org/wiki/Q45585' }];
     ph.ArtApp.onAct('title-show', '0'); await wait(600);
