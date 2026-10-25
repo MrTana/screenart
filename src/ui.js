@@ -935,15 +935,28 @@ const collsOpen = () => !$('#colls').hidden;
 const tileSrc = w => w.thumb || (w.imgs || [])[0] || '';
 function openColls(back) { // al volver de una obra con Atrás se deja todo como estaba (mismo orden y mismo sitio)
   $('#home').hidden = true; $('#colls').hidden = false;
-  if (!(back && CL.done === CL.key)) renderColls();
+  if (!(back && CL.done === CL.key)) { CL.pick = null; renderColls(); }
+}
+/* Miniatura de cada círculo: una obra al azar de la colección (elegida al abrir). Si su imagen no carga se prueba la siguiente,
+   y si ninguna carga, queda el icono. */
+function ringPicks() {
+  const p = {};
+  COLLS.forEach(c => { p[c.key] = []; shuffle(c.list().slice()).slice(0, 8).forEach(w => [tileSrc(w)].concat(w.imgs || []).forEach(u => { if (u && typeof u === 'string' && !p[c.key].includes(u)) p[c.key].push(u); })); });
+  return p;
+}
+function ringFail(im) {
+  const l = (CL.pick || {})[im.dataset.c] || []; l.shift();
+  if (l.length) { im.src = l[0]; return; }
+  const ph = im.parentNode, c = COLLS.find(x => x.key === im.dataset.c); ph.innerHTML = '<i style="--ic:' + (c ? c.ic : 'var(--i-library)') + '"></i>';
 }
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function renderColls() {
   if (!COLLS.some(c => c.key === CL.key)) CL.key = 'favs';
+  if (!CL.pick) CL.pick = ringPicks();
   $('#collRow').innerHTML = COLLS.map(c => {
-    const l = c.list(), first = l.find(tileSrc);
+    const l = c.list(), first = CL.pick[c.key][0];
     return '<button class="cring" data-act="coll" data-id="' + c.key + '" aria-pressed="' + (c.key === CL.key) + '"><span class="rg"><span class="ph">' +
-      (first ? '<img alt="" src="' + esc(tileSrc(first)) + '">' : '<i style="--ic:' + c.ic + '"></i>') + '</span></span><b>' + esc(c.es) + '</b><small>' + l.length + '</small></button>';
+      (first ? '<img alt="" data-c="' + c.key + '" src="' + esc(first) + '">' : '<i style="--ic:' + c.ic + '"></i>') + '</span></span><b>' + esc(c.es) + '</b><small>' + l.length + '</small></button>';
   }).join('');
   const c = COLLS.find(x => x.key === CL.key);
   CL.list = shuffle(c.list().filter(w => tileSrc(w) && Array.isArray(w.imgs) && w.imgs.length)); CL.n = 0; CL.done = CL.key; // cada vez en otro orden
@@ -973,6 +986,7 @@ $('#collGrid').addEventListener('load', e => { // con la proporción real la col
   const b = im.parentNode; if (!b.style.getPropertyValue('--ar') && im.naturalWidth) b.style.setProperty('--ar', im.naturalWidth + '/' + im.naturalHeight);
   if (collsOpen() && collNear()) collMore();
 }, true);
+$('#collRow').addEventListener('error', e => { if (e.target.tagName === 'IMG') ringFail(e.target); }, true);
 $('#collGrid').addEventListener('error', e => { // miniatura rota: se prueba la imagen grande y, si tampoco, se quita
   const im = e.target; if (im.tagName !== 'IMG') return;
   const w = CL.list[+im.parentNode.dataset.id], alt = w && (w.imgs || []).find(u => u !== im.getAttribute('src'));

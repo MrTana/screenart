@@ -46,7 +46,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   home.querySelector('[data-act=home-gallery]').click();
   assert.ok(home.hidden && !S.menu, 'Galería de arte abre la galería');
   A.openMenu(); assert.ok(!d.getElementById('homeBtn').hidden, 'en el menú hay botón «Inicio»');
-  d.getElementById('homeBtn').click(); await wait(20);
+  d.getElementById('homeBtn').click(); await wait(200); // el historial de jsdom vuelve atrás con retraso
   assert.ok(!home.hidden && !S.menu, '«Inicio» vuelve a la pantalla de inicio');
   // Colecciones: círculos (Favoritas, Pinturas vistas) y cuadrícula masonry que se alarga al bajar
   const colls = d.getElementById('colls'), grid = d.getElementById('collGrid');
@@ -75,7 +75,15 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   const rings = () => Array.from(colls.querySelectorAll('.cring'));
   assert.deepStrictEqual(rings().map(b => b.querySelector('b').textContent), ['Favoritas', 'Pinturas vistas'], 'círculos arriba');
   assert.strictEqual(rings()[0].getAttribute('aria-pressed'), 'true', 'Favoritas elegida al empezar');
-  assert.strictEqual(rings()[0].querySelector('img').getAttribute('src'), 'https://img.test/t0.jpg', 'el círculo lleva la última obra');
+  { // el círculo lleva una obra al azar de la colección; si su imagen falla, prueba otra
+    const im = rings()[0].querySelector('img'), first = im.getAttribute('src');
+    assert.ok(/^https:\/\/img\.test\/t?\d+\.jpg$/.test(first), 'miniatura de una favorita: ' + first);
+    im.dispatchEvent(new w.Event('error'));
+    assert.ok(rings()[0].querySelector('img').getAttribute('src') !== first, 'si la miniatura falla, prueba otra imagen');
+    const picks = new Set(); for (let i = 0; i < 6; i++) { A.openColls(); picks.add(rings()[0].querySelector('img').getAttribute('src')); }
+    assert.ok(picks.size > 1, 'al abrir, la obra del círculo cambia');
+    A.openColls();
+  }
   assert.strictEqual(grid.children.length, 2, 'dos columnas en el móvil');
   const tiles = () => grid.querySelectorAll('.ctile');
   assert.ok(tiles().length >= 30, 'primera página de obras: ' + tiles().length);
@@ -99,12 +107,12 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     A.onAct('coll', 'viewed');
   }
   colls.querySelector('[data-act=colls-back]').click(); await wait(60);
-  assert.ok(colls.hidden && !home.hidden, 'la flecha vuelve al inicio');
+  assert.ok(colls.hidden && !home.hidden, 'la flecha vuelve al inicio ' + [colls.hidden, home.hidden, JSON.stringify(w.history.state)]);
   S.favs = []; home.querySelector('[data-act=home-collections]').click(); rings()[0].click();
   assert.ok(!d.getElementById('collEmpty').hidden && /favoritas/i.test(d.getElementById('collEmpty').textContent), 'colección vacía: dice cómo llenarla');
   // desde la galería (dos pasos), «Inicio» vuelve al inicio sin pasar por Colecciones
   tiles().length; A.onAct('coll', 'viewed'); grid.querySelector('.ctile').click(); await wait(60);
-  A.openMenu(); A.onAct('home'); await wait(80);
+  A.openMenu(); A.onAct('home'); await wait(200);
   assert.ok(!home.hidden && colls.hidden && !S.menu, '«Inicio» desde una obra de Colecciones vuelve al inicio');
   // Escaneo de obra
   let stopped = 0, zoomed = null;
