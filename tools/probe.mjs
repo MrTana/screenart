@@ -123,7 +123,7 @@ for (const id of PHOTO_CASES) {
   const t0 = Date.now(); let first = 0;
   try {
     const r = await C.searchIdentified(id, ctx, l => { if (l.length && !first) first = Date.now() - t0; }, 30000);
-    photo[id.title] = { n: r.list.length, exact: r.exact, firstMs: first || null, ms: Date.now() - t0, top: r.list.slice(0, 4).map(w => [w.title, w.artist, w.src].join(' · ').slice(0, 90)) };
+    photo[id.title] = { n: r.list.length, exact: r.exact, artist: r.artist, firstMs: first || null, ms: Date.now() - t0, top: r.list.slice(0, 4).map(w => [w.title, w.artist, w.src].join(' · ').slice(0, 90)) };
   } catch (e) { photo[id.title] = { n: 0, err: String(e && e.message || e).slice(0, 120), ms: Date.now() - t0 }; }
   console.log('foto ' + id.title + ' · ' + JSON.stringify(photo[id.title]));
 }

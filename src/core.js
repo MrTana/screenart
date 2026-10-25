@@ -1698,7 +1698,7 @@ async function worksByArtist(id, ctx) {
   const fill = ws => { ws.forEach(w => { w.artist = w.artist || id.artist; }); return ws; };
   const match = top.length ? fill(await wdWorks(top, ctx)).sort((x, y) => (best[y.uid.split(':')[1]] || 0) - (best[x.uid.split(':')[1]] || 0)) : [];
   let other = []; try { other = rest.length ? fill(await wdWorks(rest, ctx)) : []; } catch (e) { /* sin más obras */ }
-  return { who: who.label || id.artist, match, other };
+  return { who: who.label || id.artist, qid: who.id, q: [rows.length, any.length], match, other };
 }
 /* ¿Es el mismo artista? Los nombres llegan en idiomas y formas distintas: «Rafael» / «Raphael» / «Raffaello Sanzio», «Pieter Bruegel el Viejo» /
    «Pieter Brueghel the Elder», «Rembrandt van Rijn» / «Rembrandt», «El Bosco» / «Hieronymus Bosch». Se quitan las partículas y los
@@ -1743,7 +1743,7 @@ function rankFound(list, id, strict) { // strict: ya se encontró la obra exacta
    y, solo si del artista no sale nada con ese título, las de otros artistas con el título entero. Las otras obras del artista llevan
    `more: nombre` y las de otros artistas `others: true` (la pantalla les pone un rótulo). onPart(lista, cuántas son la obra exacta). */
 async function searchIdentified(id, ctx, onPart, wait) {
-  let exact = [], art = null; const parts = {};
+  let exact = [], art = null, artErr = ''; const parts = {};
   const key = w => norm(w.title) + '|' + (artistTokens(w.artist).pop() || '');
   const merged = () => {
     const uids = new Set(), keys = new Set(), out = [];
@@ -1762,10 +1762,10 @@ async function searchIdentified(id, ctx, onPart, wait) {
   const emit = () => { if (onPart) try { onPart(merged(), exact.length); } catch (e) { /* la pantalla ya no escucha */ } };
   const hint = id.artist_en || id.artist;
   const titles = [id.title_en, id.title].filter((t, i, l) => t && t.trim().length > 1 && l.findIndex(x => x && norm(x) === norm(t)) === i);
-  const jobs = [findIdentified(id, ctx).then(l => { exact = l || []; emit(); }, () => {}), worksByArtist(id, ctx).then(a => { art = a; emit(); }, () => {})]
+  const jobs = [findIdentified(id, ctx).then(l => { exact = l || []; emit(); }, () => {}), worksByArtist(id, ctx).then(a => { art = a; emit(); }, e => { artErr = String(e && e.message || e); })]
     .concat(titles.map((t, i) => searchPaintings(t, ctx, l => { parts[i] = l; emit(); }, hint).then(l => { parts[i] = l; emit(); }, () => {})));
   await Promise.race([Promise.all(jobs), sleep(wait || 25000)]);
-  return { list: merged(), exact: exact.length };
+  return { list: merged(), exact: exact.length, artist: art ? { who: art.who, qid: art.qid, match: art.match.length, other: art.other.length, q: art.q } : artErr || null };
 }
 async function identifyArtwork(b64, mime, keys) {
   keys = keys || {};
