@@ -105,6 +105,9 @@ if (!results['Wikidata (museo)'].ok) {
 // el artista escrito de formas distintas). No cuenta para el total: es para ver si salen opciones y cuáles.
 const photo = {};
 const PHOTO_CASES = [
+  // primero las de títulos muy repetidos, donde debe salir antes la obra del artista reconocido
+  { title: 'El Salvador', title_en: 'The Saviour', artist: 'Luis de Morales', year: 'c. 1560-1570' },
+  { title: 'La Virgen del Pajarito', title_en: 'Virgin and Child with a Bird', artist: 'Luis de Morales', year: '1550' },
   { title: 'La noche estrellada', title_en: 'The Starry Night', artist: 'Vincent van Gogh', year: '1889', wikipedia_en: 'The Starry Night' },
   { title: 'Cazadores en la nieve', title_en: 'Hunters in the Snow', artist: 'Pieter Bruegel el Viejo', year: '1565' },
   { title: 'La escuela de Atenas', title_en: 'The School of Athens', artist: 'Rafael', year: '1511' },
@@ -114,8 +117,6 @@ const PHOTO_CASES = [
   { title: 'La joven de la perla', title_en: 'Girl with a Pearl Earring', artist: 'Johannes Vermeer', year: '1665' },
   { title: 'Las meninas', title_en: 'Las Meninas', artist: 'Diego Velázquez', year: '1656' },
   { title: 'Campo de trigo con cipreses', title_en: 'Wheat Field with Cypresses', artist: 'Vincent van Gogh', year: '1889' },
-  { title: 'El Salvador', title_en: 'The Saviour', artist: 'Luis de Morales', year: 'c. 1560-1570' },
-  { title: 'La Virgen del Pajarito', title_en: 'Virgin and Child with a Bird', artist: 'Luis de Morales', year: '1550' },
   { title: 'La Piedad', title_en: 'Pietà', artist: 'Annibale Carracci', year: '1600' },
   { title: 'El caminante sobre el mar de nubes', title_en: 'Wanderer above the Sea of Fog', artist: 'Caspar David Friedrich', year: '1818' }
 ];
