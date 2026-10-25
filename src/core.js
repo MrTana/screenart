@@ -1692,7 +1692,9 @@ async function worksByArtist(id, ctx) {
   const best = {};
   rows.forEach(r => {
     const q = String(r.w.value).split('/').pop(), l = norm(r.l.value);
-    const sc = Math.max.apply(null, sets.map(ws => ws.filter(x => hit(l, x)).length / ws.length));
+    // las palabras genéricas (Virgen, Niño, Cristo…) cuentan la mitad: «Virgen del Pajarito» es antes «…Little Bird» que «Madonna and Child»
+    const wt = x => (TITLE_SYN.some(g => g.includes(x)) ? 0.5 : 1), sum = l2 => l2.reduce((t, x) => t + wt(x), 0);
+    const sc = Math.max.apply(null, sets.map(ws => sum(ws.filter(x => hit(l, x))) / sum(ws)));
     if (sc > (best[q] || 0)) best[q] = sc;
   });
   const top = Object.keys(best).filter(q => best[q] >= 0.5).sort((x, y) => best[y] - best[x]).slice(0, 8);
