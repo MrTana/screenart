@@ -365,6 +365,28 @@ globalThis.fetch = async (url, init) => {
     globalThis.fetch = async (u) => u.includes('anthropic') ? J({ content: [{ type: 'text', text: '{"unknown":true}' }] }) : prev(u);
     assert.strictEqual(await C.identifyArtwork('QUJD', 'image/jpeg', { anthropic: 'k' }), null, 'obra no reconocida');
     globalThis.fetch = prev; }
+  { // mismo artista escrito de otra forma (idiomas, partículas, «el Viejo»), y no el de otro con un apellido parecido
+    const same = [['Pieter Bruegel el Viejo', 'Pieter Brueghel the Elder'], ['Rembrandt van Rijn', 'Rembrandt'], ['Rafael', 'Raphael'], ['Rafael Sanzio', 'Raffaello Sanzio da Urbino'],
+      ['Tiziano', 'Titian'], ['El Bosco', 'Hieronymus Bosch'], ['El Greco', 'Doménikos Theotokópoulos'], ['Miguel Ángel', 'Michelangelo'], ['Leonardo da Vinci', 'Leonardo'],
+      ['Diego Velázquez', 'Diego Rodríguez de Silva y Velázquez'], ['Vincent van Gogh', 'Vincent Willem van Gogh'], ['Caravaggio', 'Michelangelo Merisi da Caravaggio'], ['Durero', 'Albrecht Dürer']];
+    same.forEach(([x, y]) => assert.ok(C.sameArtist(x, y), x + ' = ' + y));
+    [['Claude Monet', 'Édouard Manet'], ['Pieter Bruegel el Viejo', 'Pieter de Hooch'], ['Vincent van Gogh', 'Karl Daubigny'], ['Rafael', ''], ['', ''], ['Pieter Bruegel el Viejo', 'Pieter Brueghel the Younger']].forEach(([x, y]) => assert.ok(!C.sameArtist(x, y), x + ' ≠ ' + y));
+    const id = { title: 'Cazadores en la nieve', title_en: 'Hunters in the Snow', artist: 'Pieter Bruegel el Viejo' };
+    const w = (t, a, uid) => ({ uid, title: t, artist: a });
+    assert.deepStrictEqual(C.rankFound([w('Hunters in the Snow (Winter)', 'Pieter Brueghel the Elder', 'a'), w('Hunters in the Snow', 'Pieter de Hooch', 'b')], id).map(x => x.uid), ['a'], 'del artista reconocido, sin el de otro');
+    assert.deepStrictEqual(C.rankFound([w('Hunters in the Snow', 'Bruegel (taller)', 'a'), w('Snow', 'Otro', 'b')], Object.assign({}, id, { artist: 'Peter Bruegel' })).map(x => x.uid), ['a']);
+    assert.deepStrictEqual(C.rankFound([w('Hunters in the Snow', 'Anónimo flamenco', 'a'), w('Winter', 'Otro', 'b')], id).map(x => x.uid), ['a'], 'si ninguna dice el mismo artista, las que tienen el título entero (antes no salía nada)');
+    assert.deepStrictEqual(C.rankFound([w('Hunters in the Snow', 'Anónimo flamenco', 'a')], id, true).map(x => x.uid), [], 'con la obra exacta ya encontrada, nada de otros artistas');
+  }
+  { // búsqueda por nombre con el artista escrito detrás
+    const prev = globalThis.fetch, J = o => ({ ok: true, status: 200, json: async () => o });
+    globalThis.fetch = async u => { u = String(u);
+      if (/wikiart/.test(u)) return J([{ id: 'w1', title: 'The Starry Night', artistName: 'Vincent van Gogh', image: 'https://uploads.wikiart.org/x.jpg', year: '1889' }, { id: 'w2', title: 'Starry Night over the Rhone', artistName: 'Vincent van Gogh', image: 'https://uploads.wikiart.org/y.jpg' }, { id: 'w3', title: 'Starry Night', artistName: 'Edvard Munch', image: 'https://uploads.wikiart.org/z.jpg' }]);
+      throw new TypeError('Failed to fetch'); };
+    const r = await C.searchPaintings('starry night van gogh', {});
+    globalThis.fetch = prev;
+    assert.deepStrictEqual(r.map(x => x.title).sort(), ['Starry Night over the Rhone', 'The Starry Night'], 'el artista en la búsqueda filtra por artista: ' + r.map(x => x.title + '/' + x.artist));
+  }
   { const sin = C.SOURCE_LIST.filter(s => s.museum && !s.museum.open && !s.museum.custom && !C.museumCountry(s.museum)).map(s => s.id); assert.deepStrictEqual(sin, [], 'todo museo debe tener país (así tiene su colección «Museos de …»): ' + sin);
     assert.ok(C.countryCollections().some(c => c.es === 'Museos de España' && c.ids.length >= 10), 'Museos de España'); assert.strictEqual(C.countryCollectionName('Reino Unido'), 'Museos del Reino Unido'); }
   console.log('TODO OK');

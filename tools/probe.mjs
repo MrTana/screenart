@@ -101,6 +101,29 @@ if (!results['Wikidata (museo)'].ok) {
   const t0 = Date.now(); const d = await diagJSON('https://query.wikidata.org/sparql?format=json&query=' + encodeURIComponent('SELECT (COUNT(*) AS ?n) WHERE { ?item wdt:P195 wd:Q51252; wdt:P18 ?i. }'));
   results['Wikidata (museo)'].diag = { simpleCountMs: Date.now() - t0, status: d.status, body: (d.body || d.error || '').slice(0, 200) };
 }
-const out = { at: new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC', ok: Object.values(results).filter(r => r.ok).length, total: Object.keys(results).length, results };
+// Búsqueda por foto: lo que haría la app después de que Gemini/Claude reconociera estas obras (como suelen responder, en español y con
+// el artista escrito de formas distintas). No cuenta para el total: es para ver si salen opciones y cuáles.
+const photo = {};
+const PHOTO_CASES = [
+  { title: 'La noche estrellada', title_en: 'The Starry Night', artist: 'Vincent van Gogh', year: '1889', wikipedia_en: 'The Starry Night' },
+  { title: 'Cazadores en la nieve', title_en: 'Hunters in the Snow', artist: 'Pieter Bruegel el Viejo', year: '1565' },
+  { title: 'La escuela de Atenas', title_en: 'The School of Athens', artist: 'Rafael', year: '1511' },
+  { title: 'El jardín de las delicias', title_en: 'The Garden of Earthly Delights', artist: 'El Bosco', year: 'c. 1500' },
+  { title: 'La ronda de noche', title_en: 'The Night Watch', artist: 'Rembrandt van Rijn', year: '1642' },
+  { title: 'Venus de Urbino', title_en: 'Venus of Urbino', artist: 'Tiziano', year: '1538' },
+  { title: 'La joven de la perla', title_en: 'Girl with a Pearl Earring', artist: 'Johannes Vermeer', year: '1665' },
+  { title: 'Las meninas', title_en: 'Las Meninas', artist: 'Diego Velázquez', year: '1656' },
+  { title: 'Campo de trigo con cipreses', title_en: 'Wheat Field with Cypresses', artist: 'Vincent van Gogh', year: '1889' },
+  { title: 'El caminante sobre el mar de nubes', title_en: 'Wanderer above the Sea of Fog', artist: 'Caspar David Friedrich', year: '1818' }
+];
+for (const id of PHOTO_CASES) {
+  const t0 = Date.now(); let first = 0;
+  try {
+    const r = await C.searchIdentified(id, ctx, l => { if (l.length && !first) first = Date.now() - t0; }, 30000);
+    photo[id.title] = { n: r.list.length, exact: r.exact, firstMs: first || null, ms: Date.now() - t0, top: r.list.slice(0, 4).map(w => [w.title, w.artist, w.src].join(' · ').slice(0, 90)) };
+  } catch (e) { photo[id.title] = { n: 0, err: String(e && e.message || e).slice(0, 120), ms: Date.now() - t0 }; }
+  console.log('foto ' + id.title + ' · ' + JSON.stringify(photo[id.title]));
+}
+const out = { at: new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC', ok: Object.values(results).filter(r => r.ok).length, total: Object.keys(results).length, results, photo };
 fs.writeFileSync(path.join(here, '..', 'data', 'health.json'), JSON.stringify(out, null, 1));
 if (out.ok < out.total) process.exit(1);

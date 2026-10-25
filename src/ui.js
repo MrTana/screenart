@@ -680,23 +680,33 @@ async function searchByPhoto(file, pre) { // pre: imagen ya preparada { b64, mim
     if (mine !== S.titleQ) return;
     if (!id) { tmsg('No reconozco la obra. Prueba con otra foto más recta, con buena luz y sin reflejos, o búscala por su nombre.'); return; }
     const label = '«' + (id.title || id.title_en) + '»' + (id.artist ? ', ' + id.artist : '') + (id.year ? ' (' + id.year + ')' : '');
+    S.lastId = id;
     tmsg('Parece ser ' + label + '. Buscándola…');
-    // 1) directo a esa obra (Wikipedia / Wikidata); 2) a la vez, búsqueda por título para otras versiones, como mucho 25 s
-    let exact = [];
-    try { exact = await C.findIdentified(id, ctx()); } catch (e) { /* se sigue con la búsqueda por título */ }
+    // a la vez: la ficha directa de esa obra (Wikipedia / Wikidata) y la búsqueda por título para otras versiones, como mucho 25 s
+    const r = await C.searchIdentified(id, ctx(), (list, nx) => {
+      if (mine !== S.titleQ) return;
+      S.tres = list; renderTres();
+      if (list.length) tmsg((nx === 1 ? 'Es ' : 'Parece ser ') + label + '. Toca la que sea para verla. Buscando más versiones…');
+    });
     if (mine !== S.titleQ) return;
-    const seen = new Set(exact.map(w => w.uid)), parts = {};
-    const show = () => { if (mine !== S.titleQ) return; const all = [].concat(...Object.values(parts)).filter((w, i, l) => !seen.has(w.uid) && l.findIndex(x => x.uid === w.uid) === i); S.tres = exact.concat(rankFound(all, id)).slice(0, 20); renderTres(); };
-    if (exact.length) { show(); tmsg((exact.length === 1 ? 'Es ' : 'Parece ser ') + label + '. Tócala para verla. Buscando más versiones…'); }
-    const titles = [id.title_en, id.title].filter((t, i, l) => t && l.findIndex(x => C.norm(x) === C.norm(t)) === i);
-    const jobs = titles.map((t, i) => C.searchPaintings(t, ctx(), list => { parts[i] = list; show(); }, id.artist).then(list => { parts[i] = list; show(); }, () => {}));
-    await Promise.race([Promise.all(jobs), new Promise(r => setTimeout(r, 25000))]);
-    if (mine !== S.titleQ) return;
-    show();
-    tmsg(exact.length === 1 ? 'Es ' + label + '. Tócala para verla.' : exact.length ? 'Parece ser ' + label + '. Estas son las obras del artista con ese título: toca la que sea.' : S.tres.length ? 'Parece ser ' + label + '. Toca una para verla ahora.' : 'Parece ser ' + label + ', pero no encuentro esa obra con imagen. Prueba a buscarla por su nombre.');
+    S.tres = r.list; renderTres();
+    if (!S.tres.length) { tmsg('Parece ser ' + label + ', pero no encuentro esa obra con imagen.'); retryBtn(id.title || id.title_en); return; }
+    tmsg(r.exact === 1 ? 'Es ' + label + '. Tócala para verla.' : r.exact ? 'Parece ser ' + label + '. Estas son las obras del artista con ese título: toca la que sea.' : 'Parece ser ' + label + '. Toca una para verla ahora.');
   } catch (e) {
     tmsg(e && e.noKey ? 'Falta la clave para reconocer fotos.' : e && (e.status === 400 || e.status === 401 || e.status === 403) ? 'La clave no es válida o no tiene permiso para reconocer imágenes (' + e.status + ').' : e && (e.status === 503 || e.status === 500 || e.status === 502 || e.status === 504 || e.status === 529) ? 'El servicio de reconocimiento está saturado (' + e.status + '). Espera unos segundos y vuelve a intentarlo.' : e && e.status === 429 ? 'Se acabó la cuota de la clave por ahora; prueba más tarde.' : e && e.timeout ? 'No pude reconocer la foto: ' + e.message + '. Prueba de nuevo; si sigue igual, usa la otra clave o una foto más pequeña.' : 'No pude reconocer la foto: ' + errText(e));
   }
+}
+/* Sin resultados de una foto: un botón busca la obra por el nombre reconocido (en el escáner, en la hoja «Buscar por nombre», ya escrito). */
+function retryBtn(t) {
+  if (!t) return;
+  const h = '<button class="btn out" data-act="title-retry" style="width:100%;margin-top:8px">Buscar «' + esc(t) + '» por su nombre</button>';
+  $('#c-tres').innerHTML = $('#scanRes').innerHTML = h;
+}
+function titleRetry() {
+  const id = S.lastId; if (!id) return;
+  const t = id.title || id.title_en;
+  if (scanOpen()) { sheetOpen('name'); $('#scanTitleIn').value = t; } else $('#titleIn').value = t;
+  searchTitle(t);
 }
 /* Sin clave para reconocer: se dice dónde ponerla (en el escáner, en la propia hoja; en el menú, abajo del todo). */
 function askKey() {
@@ -949,22 +959,6 @@ function collShow(i) {
   navPush('gallery'); $('#colls').hidden = true; $('#home').hidden = true;
   showFound(w);
 }
-/* Ordena lo encontrado según lo que reconoció la foto: primero las del mismo artista y con más palabras del título.
-   Si alguna es del artista reconocido, se quitan las de otros artistas (antes salían obras con títulos parecidos de cualquiera). */
-function rankFound(list, id) {
-  const words = t => C.norm(t || '').replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(x => x.length > 2 && !/^(the|del|las|los|una|les|des|and|with|con|por|para|sur|von|van|der|het)$/.test(x));
-  const a = words(id.artist).pop(), tw = [words(id.title), words(id.title_en)].filter(x => x.length);
-  const sc = w => {
-    const t = C.norm(w.title), byA = !!a && C.norm(w.artist).includes(a);
-    const tit = tw.length ? Math.max.apply(null, tw.map(ws => ws.filter(x => t.includes(x)).length / ws.length)) : 0;
-    return { w, byA, tit, s: (byA ? 2 : 0) + tit };
-  };
-  let rows = list.map(sc);
-  // con artista reconocido, solo sus obras (un cuadro de otro con el mismo título es un error); se dejan las que no dicen autor si el título encaja del todo
-  if (a) rows = rows.filter(r => r.byA || (!C.cleanName(r.w.artist) && r.tit >= 1));
-  else rows = rows.filter(r => r.tit >= 0.5);
-  return rows.sort((x, y) => y.s - x.s).map(r => r.w);
-}
 function showTitleResult(i) {
   const w = (S.tres || [])[+i]; if (!w) return;
   if (scanOpen()) { openFound(w); return; } // desde la cámara: primero la obra, con sus botones
@@ -1135,6 +1129,7 @@ function onAct(act, id) {
     case 'coll-show': collShow(id); break;
     case 'colls-back': if (navDepth()) try { history.back(); } catch (e) { showHome(); } else showHome(); break;
     case 'title-show': showTitleResult(id); break;
+    case 'title-retry': titleRetry(); break;
     case 'found-close': closeFound(); break;
     case 'found-fav': case 'found-viewed': case 'found-gallery': foundAct(act); break;
     case 'era': toggleArr(f.eras, id); f.yearFrom = f.yearTo = ''; $('#yFrom').value = $('#yTo').value = ''; render('eras'); applyChange(); break;

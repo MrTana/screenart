@@ -160,6 +160,32 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   assert.deepStrictEqual(vg.map(x => x.split(' · ')[0]).length, 1, 'solo la de Van Gogh: ' + vg + ' · ' + d.getElementById('scanMsg').textContent);
   assert.ok(/Windmills near Dordrecht/.test(vg[0]) && /Vincent van Gogh/.test(vg[0]), vg[0]);
   A.onAct('sheet-close');
+  // obra reconocida con el artista en español («el Viejo») y sin ficha directa: las fuentes lo escriben en inglés y aun así sale
+  // (antes se descartaba todo y no salía ninguna opción)
+  let wikiartQ = [];
+  w.fetch = async u => { u = String(u);
+    if (/generativelanguage/.test(u)) return J({ candidates: [{ content: { parts: [{ text: '{"title":"Cazadores en la nieve","title_en":"Hunters in the Snow","artist":"Pieter Bruegel el Viejo","year":"1565","wikipedia_en":"","wikidata":""}' }] } }] });
+    if (/wikiart/.test(u)) { wikiartQ.push(decodeURIComponent(u)); return J(/Hunters/.test(decodeURIComponent(u)) ? [{ id: 'h1', title: 'The Hunters in the Snow (Winter)', artistName: 'Pieter Bruegel the Elder', image: 'https://uploads.wikiart.org/h.jpg', year: '1565' }, { id: 'h2', title: 'Hunters in the Snow', artistName: 'Pieter de Hooch', image: 'https://uploads.wikiart.org/k.jpg' }] : []); }
+    throw new TypeError('Failed to fetch'); };
+  inp.dispatchEvent(new w.Event('change', { bubbles: true })); await wait(900);
+  const bh = Array.from(d.querySelectorAll("#scanRes .tres span")).map(b => b.textContent);
+  assert.strictEqual(bh.length, 1, 'sale la de Bruegel: ' + bh + ' · ' + d.getElementById('scanMsg').textContent + ' · ' + wikiartQ);
+  assert.ok(/Hunters in the Snow/.test(bh[0]) && /Bruegel the Elder/.test(bh[0]), bh[0]);
+  assert.ok(/Toca una/.test(d.getElementById('scanMsg').textContent), d.getElementById('scanMsg').textContent);
+  d.querySelector('#scanRes .tres').click(); await wait(80);
+  assert.ok(!d.getElementById('scanFound').hidden && /Hunters/.test(d.getElementById('foundT').textContent), 'y se abre la obra con sus botones');
+  d.querySelector('#scanFound [data-act=found-close]').click(); await wait(80);
+  A.onAct('sheet-close');
+  // reconocida pero sin nada con imagen: un botón la busca por su nombre (ya escrito en «Buscar por nombre»)
+  w.fetch = async u => { u = String(u);
+    if (/generativelanguage/.test(u)) return J({ candidates: [{ content: { parts: [{ text: '{"title":"Obra perdida","title_en":"Lost work","artist":"Nadie Conocido"}' }] } }] });
+    throw new TypeError('Failed to fetch'); };
+  inp.dispatchEvent(new w.Event('change', { bubbles: true })); await wait(600);
+  const retry = d.querySelector('#scanRes [data-act=title-retry]');
+  assert.ok(retry && /Obra perdida/.test(retry.textContent), 'botón para buscarla por su nombre: ' + d.getElementById('scanRes').innerHTML);
+  retry.click(); await wait(50);
+  assert.ok(!d.getElementById('scanNameRow').hidden && d.getElementById('scanTitleIn').value === 'Obra perdida', 'abre la búsqueda por nombre con el título escrito');
+  await wait(300); A.onAct('sheet-close');
   sc.querySelector('[data-act=scan-name]').click(); d.getElementById('scanTitleIn').value = 'noche estrellada';
   w.fetch = async u => { u = String(u);
     if (/wbsearchentities/.test(u)) return J({ search: /language=es/.test(u) ? [{ id: 'Q45585', label: 'La noche estrellada', description: 'pintura de Vincent van Gogh' }] : [] });

@@ -73,4 +73,7 @@ publicada en **https://screenart.pages.dev** (Cloudflare Pages, se despliega sol
 - AIC necesita `fields=…image_id` y pasa por el intermediario `/api/p` (no da CORS con `fields`).
 - Una imagen rota cuenta como vista en esa vuelta (si no, una colección pequeña como favoritas se quedaba parada).
 - El mando debe aplicar el aspecto de la TV (`applyLook`) al recibir su estado, no solo marcar el selector.
+- Búsqueda por foto: el modelo da el artista en español («Pieter Bruegel el Viejo», «Rafael», «El Bosco») y las fuentes en otra forma; se
+  compara con `sameArtist` (alias y sin partículas) y `searchIdentified` (core.js) busca la ficha y por título a la vez. Si no sale nada, botón
+  «Buscar … por su nombre». La prueba diaria guarda en `health.json` → `photo` qué opciones salen para 10 obras conocidas.
 - `localStorage` usa el prefijo `galeria-arte-v1:`; en el mando solo se guardan claves concretas (ver `lsSet`).

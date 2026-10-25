@@ -1506,7 +1506,7 @@ async function searchWikipediaTitle(q, hint, ctx) {
       const desc = p.description || '', title = p.title.replace(/\s*\([^)]*\)\s*$/, '');
       if (WD_NOT_ART.test(desc) && !WD_ARTWORK.test(desc) && !WP_ART_EXTRA.test(desc)) return null;
       if (!(WD_ARTWORK.test(desc) || WP_ART_EXTRA.test(desc))) return null; // solo artículos de obras de arte
-      if (!(tok.length ? tok.every(x => norm(title).includes(x)) : norm(title).includes(norm(q)))) return null;
+      if (!titleFits(tok, norm(q), title, desc)) return null;
       const src = (p.thumbnail && p.thumbnail.source) || p.original.source, full = p.original && p.original.source;
       if (!/\.(jpe?g|png|webp)(\?|$)/i.test(src) && !/\.(jpe?g|png|webp)(\?|$)/i.test(full || '')) return null;
       const by = (desc.match(/\b(?:by|de|par|von|door|di|van|od)\s+([^,;(]+)/i) || [])[1];
@@ -1531,7 +1531,7 @@ async function searchCommonsTitle(q, hint, ctx) {
     const ii = (p.imageinfo || [])[0]; if (!ii || !/^image\/(jpeg|png|webp)$/.test(ii.mime || '') || (ii.width || 0) < 600) return null;
     const md = ii.extmetadata || {}, file = p.title.replace(/^File:/i, '').replace(/\.[a-z0-9]+$/i, '').replace(/_/g, ' ');
     const title = strip(md.ObjectName && md.ObjectName.value) || file;
-    if (!(tok.length ? tok.every(x => norm(title + ' ' + file).includes(x)) : norm(title + ' ' + file).includes(norm(q)))) return null;
+    if (!titleFits(tok, norm(q), title + ' ' + file, md.Artist && strip(md.Artist.value))) return null;
     const date = strip(md.DateTimeOriginal && md.DateTimeOriginal.value);
     return mk({
       src: 'commons', museum: 'Wikimedia Commons', id: String(p.pageid), title, artist: strip(md.Artist && md.Artist.value).slice(0, 80) || (hint || ''), date: date.slice(0, 10),
@@ -1552,6 +1552,14 @@ async function searchWikiArtTitle(q) {
 }
 const TITLE_STOP = new Set(['el', 'la', 'los', 'las', 'de', 'del', 'un', 'una', 'the', 'of', 'a', 'an', 'le', 'les', 'des', 'du', 'and', 'y', 'e', 'et']);
 const titleTokens = s => norm(s).split(/[^a-z0-9]+/).filter(x => x && !TITLE_STOP.has(x));
+/* ¿Encaja una obra con lo buscado? Todas las palabras deben estar en el título o en el artista (se puede escribir «noche estrellada
+   van gogh») y al menos una en el título. */
+function titleFits(tok, qn, title, extra) {
+  const t = norm(title);
+  if (!tok.length) return t.includes(qn);
+  const all = t + ' ' + norm(extra || '');
+  return tok.every(x => all.includes(x)) && tok.some(x => t.includes(x));
+}
 const TITLE_SOURCES = ['m:met', 'm:aic', 'm:cma', 'm:rijks', 'm:vam', 'm:smk', 'm:mia', 'm:harvard', 'm:si'];
 /* Busca una obra por su título en Wikidata y en las API de los museos grandes, todo a la vez. onPart(lista) se llama cada vez que una fuente
    responde, así los resultados salen según llegan. Devuelve hasta 20, las que mejor coinciden primero. */
@@ -1573,7 +1581,7 @@ async function searchPaintings(text, ctx, onPart, hint) {
   const add = (list, strict) => {
     (list || []).forEach(w => {
       if (!w || !w.imgs || !w.imgs.length) return;
-      if (strict && !(tok.length ? tok.every(x => norm(w.title).includes(x)) : norm(w.title).includes(qn))) return;
+      if (strict && !titleFits(tok, qn, w.title, w.artist)) return;
       if (/^(sculpture|decorative)$/.test(w.type || '')) return;
       all.push(w);
     });
@@ -1596,14 +1604,14 @@ async function searchPaintings(text, ctx, onPart, hint) {
 /* ───────── reconocer una obra a partir de una foto ─────────
    Se manda la foto (reducida) a un modelo con visión, con la clave del propio usuario: Gemini (hay nivel gratuito) o Claude. Responde con el
    título, artista, año y museo; luego la app busca la obra por su título y el usuario elige. */
-const ID_PROMPT = 'Eres un experto en historia del arte. La imagen es una foto o captura de una obra de arte (por ejemplo una pintura en un museo, en un libro o en una pantalla). Identifica la obra. Responde SOLO con un objeto JSON, sin texto extra: {"title":"título en español","title_en":"título en inglés o en el idioma original","artist":"artista","year":"año o siglo","museum":"museo donde se conserva","wikipedia_en":"título exacto del artículo de la Wikipedia en inglés sobre esta obra (vacío si no lo hay)","wikidata":"identificador Q de Wikidata de la obra si lo sabes con seguridad (vacío si no)","confidence":número de 0 a 1}. Si no reconoces la obra con razonable seguridad, responde {"unknown":true}.';
+const ID_PROMPT = 'Eres un experto en historia del arte. La imagen es una foto o captura de una obra de arte (por ejemplo una pintura en un museo, en un libro o en una pantalla). Identifica la obra. Responde SOLO con un objeto JSON, sin texto extra: {"title":"título en español","title_en":"título en inglés o en el idioma original","artist":"artista","artist_en":"nombre completo del artista como figura en la Wikipedia en inglés","year":"año o siglo","museum":"museo donde se conserva","wikipedia_en":"título exacto del artículo de la Wikipedia en inglés sobre esta obra (vacío si no lo hay)","wikidata":"identificador Q de Wikidata de la obra si lo sabes con seguridad (vacío si no)","confidence":número de 0 a 1}. Si no reconoces la obra con razonable seguridad, responde {"unknown":true}.';
 const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
 function parseIdJSON(text) {
   const m = String(text || '').match(/\{[\s\S]*\}/);
   if (!m) throw new Error('No he entendido la respuesta del reconocimiento');
   let o; try { o = JSON.parse(m[0]); } catch (e) { throw new Error('No he entendido la respuesta del reconocimiento'); }
   if (!o || o.unknown || !(o.title || o.title_en)) return null;
-  return { title: String(o.title || '').trim(), title_en: String(o.title_en || '').trim(), artist: String(o.artist || '').trim(), year: String(o.year || '').trim(), museum: String(o.museum || '').trim(),
+  return { title: String(o.title || '').trim(), title_en: String(o.title_en || '').trim(), artist: String(o.artist || '').trim(), artist_en: String(o.artist_en || '').trim(), year: String(o.year || '').trim(), museum: String(o.museum || '').trim(),
     wikipedia_en: String(o.wikipedia_en || '').trim(), wikidata: /^Q\d+$/.test(String(o.wikidata || '').trim()) ? String(o.wikidata).trim() : '', confidence: +o.confidence || null };
 }
 /* Con lo que reconoció la foto, se va directo a la obra: el artículo de la Wikipedia en inglés (y su ficha de Wikidata) o el identificador
@@ -1611,8 +1619,8 @@ function parseIdJSON(text) {
 async function findIdentified(id, ctx) {
   const out = [], qids = []; let trusted = '';
   const words = t => norm(t).split(/[^a-z0-9]+/).filter(x => x.length > 2 && !TITLE_STOP.has(x));
-  const tw = words(id.title).concat(words(id.title_en)), aw = words(id.artist).pop();
-  const fits = w => { const t = norm(w.title), a = norm(w.artist); return (aw && a.includes(aw)) || tw.filter(x => t.includes(x)).length >= Math.min(2, tw.length); };
+  const tw = words(id.title).concat(words(id.title_en));
+  const fits = w => { const t = norm(w.title); return byArtist(w, id) || tw.filter(x => t.includes(x)).length >= Math.min(2, tw.length); };
   if (id.wikipedia_en) {
     try {
       const j = await getJSON('https://en.wikipedia.org/w/api.php?action=query&format=json&formatversion=2&origin=*&redirects=1&prop=pageimages|description|pageprops&piprop=thumbnail|original&pithumbsize=2000&ppprop=wikibase_item&titles=' + encodeURIComponent(id.wikipedia_en), null, 15000);
@@ -1644,7 +1652,7 @@ async function findIdentified(id, ctx) {
 /* Obras del artista reconocido (Wikidata, con imagen) cuyo título contiene las palabras del título reconocido, las que más encajan primero. */
 async function worksByArtist(id, ctx) {
   const api = 'https://www.wikidata.org/w/api.php?format=json&origin=*&';
-  const j = await getJSON(api + 'action=wbsearchentities&type=item&limit=7&language=en&uselang=en&search=' + encodeURIComponent(id.artist));
+  const j = await getJSON(api + 'action=wbsearchentities&type=item&limit=7&language=en&uselang=en&search=' + encodeURIComponent(id.artist_en || id.artist));
   const hits = j.search || [], who = hits.find(r => /painter|artist|draughts|printmaker|engraver|illustrator|sculptor|pintor|artista/i.test(r.description || '')) || hits[0];
   if (!who) return [];
   const stem = x => (x.length > 4 ? x.replace(/(es|s)$/, '') : x);
@@ -1665,6 +1673,63 @@ async function worksByArtist(id, ctx) {
   const ws = await wdWorks(top, ctx);
   ws.forEach(w => { w.artist = w.artist || id.artist; });
   return ws.sort((x, y) => (best[y.uid.split(':')[1]] || 0) - (best[x.uid.split(':')[1]] || 0));
+}
+/* ¿Es el mismo artista? Los nombres llegan en idiomas y formas distintas: «Rafael» / «Raphael» / «Raffaello Sanzio», «Pieter Bruegel el Viejo» /
+   «Pieter Brueghel the Elder», «Rembrandt van Rijn» / «Rembrandt», «El Bosco» / «Hieronymus Bosch». Se quitan las partículas y los
+   apodos de familia («el Viejo», «the Younger»…) y basta con que el apellido de uno esté en el nombre del otro. */
+const ARTIST_SAME = [[/\bmiguel angel\b|\bmichelangelo buonarroti\b|\bbuonarroti\b/g, 'michelangelo'], [/\b(rafael|raffaello|raffaelo|sanzio|santi)\b/g, 'raphael'],
+  [/\b(tiziano|vecellio|vecelli)\b/g, 'titian'], [/\b(brueghel|breughel|bruegel)\b/g, 'bruegel'], [/\b(bosco|jheronimus|hieronymus|jeroen)\b/g, 'bosch'],
+  [/\b(theotokopoulos|theotocopuli)\b/g, 'greco'], [/\b(durero|duerer)\b/g, 'durer'], [/\bvelasquez\b/g, 'velazquez'], [/\b(giorgio barbarelli|zorzi)\b/g, 'giorgione'],
+  [/\b(espanoleto|spagnoletto)\b/g, 'ribera'], [/\b(paolo caliari|caliari)\b/g, 'veronese'], [/\bjacopo robusti\b|\brobusti\b/g, 'tintoretto']];
+const ARTIST_SKIP = /^(de|da|del|della|delle|dei|di|do|dos|das|van|von|der|den|ten|ter|het|el|la|le|les|lo|il|the|and|y|e|et|und|elder|younger|older|viejo|joven|mozo|ancien|jeune|vecchio|giovane|aine|fils|pere|hijo|padre|son|father|jr|sr|maestro|master|circle|school|escuela|taller|workshop|follower|seguidor|attributed|atribuido|after|copia|copy|style|manner|saint|san|santa|sir|baron|senor|lord)$/;
+function artistTokens(s) {
+  let n = ' ' + norm(cleanName(s)).replace(/[^a-z0-9]+/g, ' ') + ' ';
+  ARTIST_SAME.forEach(([re, to]) => { n = n.replace(re, to); });
+  return n.split(' ').filter(x => x.length > 2 && !ARTIST_SKIP.test(x));
+}
+const artistGen = s => { const n = norm(s); return /\b(elder|older|viejo|ancien|vecchio|aine|senior)\b/.test(n) ? 'e' : /\b(younger|joven|mozo|jeune|giovane|fils|junior)\b/.test(n) ? 'y' : ''; };
+function sameArtist(a, b) {
+  const x = artistTokens(a), y = artistTokens(b);
+  if (!x.length || !y.length) return false;
+  const ga = artistGen(a), gb = artistGen(b); if (ga && gb && ga !== gb) return false; // Bruegel el Viejo no es Brueghel el Joven
+  return y.includes(x[x.length - 1]) || x.includes(y[y.length - 1]);
+}
+const byArtist = (w, id) => sameArtist(w.artist, id.artist) || (!!id.artist_en && sameArtist(w.artist, id.artist_en));
+/* Ordena lo encontrado según lo que reconoció la foto: primero las del mismo artista y con más palabras del título. Si alguna es del artista
+   reconocido, se quitan las de otros artistas (un cuadro de otro con el mismo título es un error); si ninguna lo es (las fuentes escriben el
+   nombre de otra forma o no lo dicen), se dejan las que tienen el título entero en vez de no enseñar nada. */
+function rankFound(list, id, strict) { // strict: ya se encontró la obra exacta, así que nada de otros artistas
+  const words = t => norm(t || '').replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(x => x.length > 2 && !/^(the|del|las|los|una|les|des|and|with|con|por|para|sur|von|van|der|het)$/.test(x));
+  const tw = [words(id.title), words(id.title_en)].filter(x => x.length);
+  const rows = list.map(w => {
+    const t = norm(w.title), byA = !!id.artist && byArtist(w, id);
+    const tit = tw.length ? Math.max.apply(null, tw.map(ws => ws.filter(x => t.includes(x)).length / ws.length)) : 0;
+    const copy = /\b(copy|copia|after|apres|nach|workshop|taller|school|escuela|circle|follower|seguidor)\b/.test(t + ' ' + norm(w.artist)); // copias y talleres, detrás
+    return { w, byA, tit, s: (byA ? 2 : 0) + tit - (copy ? 0.5 : 0) };
+  });
+  let keep = rows.filter(r => r.byA ? r.tit >= 0.3 || tw.length === 0 : !cleanName(r.w.artist) && r.tit >= 1);
+  if (!id.artist) keep = rows.filter(r => r.tit >= 0.5);
+  else if (!strict && !keep.some(r => r.byA)) keep = rows.filter(r => r.tit >= 1);
+  return keep.sort((x, y) => y.s - x.s).map(r => r.w);
+}
+/* Con lo que reconoció la foto, busca la obra: a la vez la ficha directa (findIdentified) y la búsqueda por título (para otras versiones),
+   como mucho `wait` ms. onPart(lista, cuántas son la obra exacta) se llama según llegan. Devuelve { list, exact }. */
+async function searchIdentified(id, ctx, onPart, wait) {
+  let exact = []; const parts = {};
+  const key = w => norm(w.title) + '|' + (artistTokens(w.artist).pop() || '');
+  const merged = () => {
+    const seen = new Set(exact.map(w => w.uid)), keys = new Set(exact.map(key));
+    const rest = [].concat(...Object.values(parts)).filter((w, i, l) => !seen.has(w.uid) && l.findIndex(x => x.uid === w.uid) === i);
+    // una copia (Wikipedia, WikiArt…) de la obra exacta no se repite; otra ficha de Wikidata con el mismo título es otra versión y se deja
+    return exact.concat(rankFound(rest, id, exact.length > 0).filter(w => w.src === 'wiki' || !keys.has(key(w)))).slice(0, 20);
+  };
+  const emit = () => { if (onPart) try { onPart(merged(), exact.length); } catch (e) { /* la pantalla ya no escucha */ } };
+  const hint = id.artist_en || id.artist;
+  const titles = [id.title_en, id.title].filter((t, i, l) => t && t.trim().length > 1 && l.findIndex(x => x && norm(x) === norm(t)) === i);
+  const jobs = [findIdentified(id, ctx).then(l => { exact = l || []; emit(); }, () => {})]
+    .concat(titles.map((t, i) => searchPaintings(t, ctx, l => { parts[i] = l; emit(); }, hint).then(l => { parts[i] = l; emit(); }, () => {})));
+  await Promise.race([Promise.all(jobs), sleep(wait || 25000)]);
+  return { list: merged(), exact: exact.length };
 }
 async function identifyArtwork(b64, mime, keys) {
   keys = keys || {};
@@ -1890,7 +1955,7 @@ async function runSource(src, f, ctx) {
 const api = {
   QUICK_COLLECTIONS, quickFilters, cleanName, WD_SHARDS, wdMuseumQuery, wdSelect, md5, commonsImgs, PX, memoForget, primeWikidataCounts, rand, pick, shuffle, sampleN, norm, parseYear, flipName, classifyType, getJSON, mapLimit,
   ERAS, STYLES, TYPES, KEYWORDS, EXCLUDES, excluded, MUSEUMS, DEFAULT_MUSEUMS, MUSEUM_SOURCES, ARTIST_SUGGESTIONS, ARTIST_GROUPS, TUNING, keywordToQuery,
-  museumCountry, countryCollections, styleIdsOf, searchPaintings, identifyArtwork, findIdentified, countryCollectionName, defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC, museumIdsByTag,
+  museumCountry, countryCollections, styleIdsOf, searchPaintings, identifyArtwork, findIdentified, searchIdentified, rankFound, sameArtist, countryCollectionName, defaultFilters, allowedRanges, makePlan, accept, mk, cleanTitle, cleanDate, SOURCE_LIST, SOURCE_DEFAULTS, runSource, addMuseum, resolveMuseum, MUSEUM_DESC, museumIdsByTag,
   adapters: { momaFetch, ngaFetch, tateFetch, shardFetch, commonsSpecial, wikidataMuseum, wikipediaFetch, commonsFetch, wikiartFetch, metFetch, aicFetch, cmaFetch, smkFetch, vamFetch, miaFetch, rijksFetch, wikiFetch, museumFetch, europeanaFetch, siFetch, harvardFetch }
 };
 if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.ArtCore = api;
