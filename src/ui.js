@@ -635,7 +635,9 @@ async function showFound(w) {
   present(Object.assign({}, item, { url: r.url, url_page: item.url, iw: r.w, ih: r.h })); schedule();
 }
 function renderTres() {
-  $('#c-tres').innerHTML = $('#scanRes').innerHTML = (S.tres || []).map((w, i) => '<button class="tres" data-act="title-show" data-id="' + i + '"><img alt="" loading="lazy" src="' + esc(w.thumb) + '"><span><b>' + esc(w.title) + '</b>' + esc([C.cleanName(w.artist), w.date || w.year, w.museum].filter(Boolean).join(' · ')) + '</span></button>').join('');
+  // rótulos de la búsqueda por foto: otras obras del artista reconocido y, si de él no hay nada con ese título, las de otros artistas
+  const head = (w, i, l) => w.more && !(l[i - 1] || {}).more ? '<p class="hint tsec">Otras obras de ' + esc(w.more) + '</p>' : w.others && !(l[i - 1] || {}).others ? '<p class="hint tsec">' + (i ? 'Con el mismo título, de otros artistas' : 'No encuentro esa obra del artista; con el mismo título, de otros artistas:') + '</p>' : '';
+  $('#c-tres').innerHTML = $('#scanRes').innerHTML = (S.tres || []).map((w, i, l) => head(w, i, l) + '<button class="tres" data-act="title-show" data-id="' + i + '"><img alt="" loading="lazy" src="' + esc(w.thumb) + '"><span><b>' + esc(w.title) + '</b>' + esc([C.cleanName(w.artist), w.date || w.year, w.museum].filter(Boolean).join(' · ')) + '</span></button>').join('');
   updateSums();
 }
 // Los mensajes de la búsqueda salen a la vez en el menú y en la hoja del escáner.
@@ -699,6 +701,7 @@ async function searchByPhoto(file, pre) { // pre: imagen ya preparada { b64, mim
     if (mine !== S.titleQ) return;
     S.tres = r.list; renderTres();
     if (!S.tres.length) { tmsg('Parece ser ' + label + ', pero no encuentro esa obra con imagen.'); retryBtn(id.title || id.title_en); return; }
+    if (S.tres[0].others || S.tres[0].more) { tmsg('Parece ser ' + label + ', pero no encuentro esa obra con imagen. Mira si es alguna de estas:'); return; }
     tmsg(r.exact === 1 ? 'Es ' + label + '. Tócala para verla.' : r.exact ? 'Parece ser ' + label + '. Estas son las obras del artista con ese título: toca la que sea.' : 'Parece ser ' + label + '. Toca una para verla ahora.');
   } catch (e) {
     tmsg(e && e.noKey ? 'Falta la clave para reconocer fotos.' : e && (e.status === 400 || e.status === 401 || e.status === 403) ? 'La clave no es válida o no tiene permiso para reconocer imágenes (' + e.status + ').' : e && (e.status === 503 || e.status === 500 || e.status === 502 || e.status === 504 || e.status === 529) ? 'El servicio de reconocimiento está saturado (' + e.status + '). Espera unos segundos y vuelve a intentarlo.' : e && e.status === 429 ? 'Se acabó la cuota de la clave por ahora; prueba más tarde.' : e && e.timeout ? 'No pude reconocer la foto: ' + e.message + '. Prueba de nuevo; si sigue igual, usa la otra clave o una foto más pequeña.' : 'No pude reconocer la foto: ' + errText(e));
@@ -981,7 +984,8 @@ function collShow(i) {
   showFound(w);
 }
 function showTitleResult(i) {
-  const w = (S.tres || [])[+i]; if (!w) return;
+  let w = (S.tres || [])[+i]; if (!w) return;
+  if (w.more || w.others) { w = Object.assign({}, w); delete w.more; delete w.others; }
   if (scanOpen()) { openFound(w); return; } // desde la cámara: primero la obra, con sus botones
   showWork(w);
 }

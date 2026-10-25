@@ -114,6 +114,9 @@ const PHOTO_CASES = [
   { title: 'La joven de la perla', title_en: 'Girl with a Pearl Earring', artist: 'Johannes Vermeer', year: '1665' },
   { title: 'Las meninas', title_en: 'Las Meninas', artist: 'Diego Velázquez', year: '1656' },
   { title: 'Campo de trigo con cipreses', title_en: 'Wheat Field with Cypresses', artist: 'Vincent van Gogh', year: '1889' },
+  { title: 'El Salvador', title_en: 'The Saviour', artist: 'Luis de Morales', year: 'c. 1560-1570' },
+  { title: 'La Virgen del Pajarito', title_en: 'Virgin and Child with a Bird', artist: 'Luis de Morales', year: '1550' },
+  { title: 'La Piedad', title_en: 'Pietà', artist: 'Annibale Carracci', year: '1600' },
   { title: 'El caminante sobre el mar de nubes', title_en: 'Wanderer above the Sea of Fog', artist: 'Caspar David Friedrich', year: '1818' }
 ];
 for (const id of PHOTO_CASES) {

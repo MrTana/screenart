@@ -76,6 +76,8 @@ publicada en **https://screenart.pages.dev** (Cloudflare Pages, se despliega sol
 - Una imagen rota cuenta como vista en esa vuelta (si no, una colección pequeña como favoritas se quedaba parada).
 - El mando debe aplicar el aspecto de la TV (`applyLook`) al recibir su estado, no solo marcar el selector.
 - Búsqueda por foto: el modelo da el artista en español («Pieter Bruegel el Viejo», «Rafael», «El Bosco») y las fuentes en otra forma; se
-  compara con `sameArtist` (alias y sin partículas) y `searchIdentified` (core.js) busca la ficha y por título a la vez. Si no sale nada, botón
-  «Buscar … por su nombre». La prueba diaria guarda en `health.json` → `photo` qué opciones salen para 10 obras conocidas.
+  compara con `sameArtist` (alias y sin partículas). `searchIdentified` (core.js) busca a la vez la ficha, las obras del artista en Wikidata
+  (`worksByArtist`: título sin acentos con `accRe` y sinónimos `TITLE_SYN`, p. ej. «El Salvador» = «Salvator Mundi») y por título. Orden:
+  obra exacta, del artista con ese título, «Otras obras de …» y solo si no hay nada del artista, las de otros artistas con ese título. Si no sale nada, botón
+  «Buscar … por su nombre». La prueba diaria guarda en `health.json` → `photo` qué opciones salen para 13 obras conocidas.
 - `localStorage` usa el prefijo `galeria-arte-v1:`; en el mando solo se guardan claves concretas (ver `lsSet`).

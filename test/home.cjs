@@ -160,7 +160,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   w.fetch = async u => { u = String(u);
     if (/generativelanguage/.test(u)) return J({ candidates: [{ content: { parts: [{ text: '{"title":"Molinos de viento en los alrededores de Dordrecht","title_en":"Windmills near Dordrecht","artist":"Vincent van Gogh","year":"1881","wikipedia_en":"","wikidata":""}' }] } }] });
     if (/wbsearchentities/.test(u) && /search=Vincent/.test(u)) return J({ search: [{ id: 'Q5582', label: 'Vincent van Gogh', description: 'Dutch painter (1853–1890)' }] });
-    if (/query\.wikidata\.org/.test(u)) { assert.ok(/wd:Q5582/.test(decodeURIComponent(u)) && /windmill/.test(decodeURIComponent(u)), 'consulta por artista: ' + decodeURIComponent(u)); return J({ results: { bindings: [{ w: { value: 'http://www.wikidata.org/entity/Q777' }, l: { value: 'Windmills near Dordrecht', 'xml:lang': 'en' } }, { w: { value: 'http://www.wikidata.org/entity/Q778' }, l: { value: 'Windmill on Montmartre' } }] } }); }
+    if (/query\.wikidata\.org/.test(u)) { const dq = decodeURIComponent(u); if (!/wd:Q5582/.test(dq)) throw new Error('consulta sin el artista: ' + dq); if (/REGEX/.test(dq) && !/w\[i[^\]]*\]\[n/.test(dq)) throw new Error('el título va sin acentos de por medio: ' + dq); return J({ results: { bindings: [{ w: { value: 'http://www.wikidata.org/entity/Q777' }, l: { value: 'Windmills near Dordrecht', 'xml:lang': 'en' } }, { w: { value: 'http://www.wikidata.org/entity/Q778' }, l: { value: 'Windmill on Montmartre' } }] } }); }
     if (/wbsearchentities/.test(u)) return J({ search: [{ id: 'Q500', label: 'Windmills near Dordrecht', description: 'painting by Karl Daubigny' }] });
     if (/wbgetentities/.test(u) && /props=claims/.test(u)) return J({ entities: {
       Q777: { id: 'Q777', labels: { en: { value: 'Windmills near Dordrecht' } }, descriptions: { en: { value: 'drawing by Vincent van Gogh' } }, claims: { P18: [{ mainsnak: { datavalue: { value: 'VG.jpg' } } }], P170: [{ mainsnak: { datavalue: { value: { id: 'Q5582' } } } }] } },
@@ -186,6 +186,30 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   assert.ok(/Toca una/.test(d.getElementById('scanMsg').textContent), d.getElementById('scanMsg').textContent);
   d.querySelector('#scanRes .tres').click(); await wait(80);
   assert.ok(!d.getElementById('scanFound').hidden && /Hunters/.test(d.getElementById('foundT').textContent), 'y se abre la obra con sus botones');
+  d.querySelector('#scanFound [data-act=found-close]').click(); await wait(80);
+  A.onAct('sheet-close');
+  // muchas obras con el mismo título («El Salvador»): primero las del artista reconocido (Luis de Morales), aunque en Wikidata se llame
+  // «Salvator Mundi» y con acentos; las de El Greco y otros con ese título no salen
+  let sq = [];
+  w.fetch = async u => { u = String(u); const du = decodeURIComponent(u);
+    if (/generativelanguage/.test(u)) return J({ candidates: [{ content: { parts: [{ text: '{"title":"El Salvador","title_en":"The Saviour","artist":"Luis de Morales","year":"c. 1560-1570"}' }] } }] });
+    if (/wikiart/.test(u)) return J(/Saviour/.test(du) ? [{ id: 's1', title: 'The Saviour', artistName: 'El Greco', image: 'https://uploads.wikiart.org/g.jpg', year: '1594' }, { id: 's2', title: 'The Saviour', artistName: 'Hans Sebald Beham', image: 'https://uploads.wikiart.org/b.jpg' }] : []);
+    if (/wbsearchentities/.test(u) && /search=Luis/.test(u)) return J({ search: [{ id: 'Q734211', label: 'Luis de Morales', description: 'pintor español' }] });
+    if (/query\.wikidata\.org/.test(u)) { sq.push(du); if (!/wd:Q734211/.test(du)) throw new TypeError('x');
+      return J({ results: { bindings: /REGEX/.test(du) ? [{ w: { value: 'http://www.wikidata.org/entity/Q901' }, l: { value: 'Salvator Mundi' } }] : [{ w: { value: 'http://www.wikidata.org/entity/Q901' } }, { w: { value: 'http://www.wikidata.org/entity/Q902' } }] } }); }
+    if (/wbgetentities/.test(u) && /props=claims/.test(u)) return J({ entities: {
+      Q901: { id: 'Q901', labels: { es: { value: 'Salvator Mundi' } }, descriptions: { es: { value: 'pintura de Luis de Morales' } }, claims: { P18: [{ mainsnak: { datavalue: { value: 'Morales_Salvator.jpg' } } }], P170: [{ mainsnak: { datavalue: { value: { id: 'Q734211' } } } }] } },
+      Q902: { id: 'Q902', labels: { es: { value: 'La Virgen del Pajarito' } }, descriptions: { es: { value: 'pintura de Luis de Morales' } }, claims: { P18: [{ mainsnak: { datavalue: { value: 'Morales_Virgen.jpg' } } }], P170: [{ mainsnak: { datavalue: { value: { id: 'Q734211' } } } }] } } } });
+    if (/wbgetentities/.test(u)) return J({ entities: { Q734211: { labels: { es: { value: 'Luis de Morales' } } } } });
+    throw new TypeError('Failed to fetch'); };
+  inp.dispatchEvent(new w.Event('change', { bubbles: true })); await wait(900);
+  const ms = Array.from(d.querySelectorAll('#scanRes .tres span')).map(b => b.textContent);
+  assert.ok(/Salvator Mundi/.test(ms[0]) && /Luis de Morales/.test(ms[0]), 'primero la del artista: ' + ms + ' · ' + d.getElementById('scanMsg').textContent + ' · ' + sq);
+  assert.ok(!ms.some(x => /El Greco|Beham/.test(x)), 'sin las de otros artistas con el mismo título: ' + ms);
+  assert.ok(/Otras obras de Luis de Morales/.test(d.getElementById('scanRes').textContent) && ms.some(x => /Pajarito/.test(x)), 'y debajo otras obras suyas');
+  assert.ok(sq.some(q => /s\[a[^\]]*\]lv\[a/.test(q) && /s\[a[^\]]*\]v\[i/.test(q)), 'busca el título sin acentos y con sinónimos: ' + sq);
+  d.querySelectorAll('#scanRes .tres')[1].click(); await wait(80);
+  assert.ok(/Pajarito/.test(d.getElementById('foundT').textContent), 'cada rótulo deja bien el número de cada obra');
   d.querySelector('#scanFound [data-act=found-close]').click(); await wait(80);
   A.onAct('sheet-close');
   // reconocida pero sin nada con imagen: un botón la busca por su nombre (ya escrito en «Buscar por nombre»)

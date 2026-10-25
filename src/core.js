@@ -1643,36 +1643,61 @@ async function findIdentified(id, ctx) {
       ws.forEach(w => { if (w.uid === 'wiki:' + trusted || fits(w)) { if (!w.artist) w.artist = id.artist; out.unshift(w); } });
     } catch (e) { /* sin Wikidata: queda lo de Wikipedia */ }
   }
-  // 3) sin ficha directa (obras sin artículo propio, como muchos dibujos): se busca entre las obras de ese artista en Wikidata
-  if (!out.length && id.artist && tw.length) { try { (await worksByArtist(id, ctx)).forEach(w => out.push(w)); } catch (e) { /* Wikidata no contesta */ } }
   // la ficha de Wikidata (imagen de Commons) y la de Wikipedia son la misma obra: se deja una
   const wd = out.filter(w => w.src === 'wiki');
   return (wd.length ? wd : out).slice(0, 3);
 }
-/* Obras del artista reconocido (Wikidata, con imagen) cuyo título contiene las palabras del título reconocido, las que más encajan primero. */
+/* Obras del artista reconocido en Wikidata (con imagen). Primero se busca al artista y luego, entre sus obras, las del título reconocido:
+   así, cuando hay muchas obras con el mismo nombre («El Salvador», «La Piedad»), salen antes las de ese artista. Sin acentos de por medio
+   («Niño» = «nino») y con los sinónimos de los títulos religiosos («El Salvador» = «Salvator Mundi» = «The Saviour»).
+   Devuelve { match: las del título, other: otras obras suyas } o null si no encuentra al artista. */
+const TITLE_SYN = [['salvador', 'saviour', 'savior', 'salvator', 'sauveur', 'salvatore', 'redentor', 'redeemer'], ['virgen', 'virgin', 'madonna', 'vierge', 'vergine', 'maria', 'mary'],
+  ['nino', 'child', 'bambino', 'enfant', 'kind'], ['cristo', 'christ', 'jesus', 'cristo', 'christus'], ['piedad', 'pieta', 'lamentation', 'llanto'],
+  ['anunciacion', 'annunciation', 'annonciation', 'annunciazione'], ['crucifixion', 'crucifixion', 'crucifixione', 'calvario', 'calvary'],
+  ['dolorosa', 'sorrows', 'dolorosa', 'addolorata'], ['magdalena', 'magdalene', 'maddalena', 'madeleine'], ['adoracion', 'adoration', 'adorazione'],
+  ['sagrada', 'holy', 'sacra', 'sainte'], ['familia', 'family', 'famiglia', 'famille'], ['santo', 'saint', 'san', 'santa'], ['retrato', 'portrait', 'ritratto']];
+const synOf = x => (TITLE_SYN.find(g => g.includes(x)) || [x]);
+const ACC = { a: '[aáàâäã]', e: '[eéèêë]', i: '[iíìîï]', o: '[oóòôöõ]', u: '[uúùûü]', n: '[nñ]', c: '[cç]' };
+const accRe = k => k.replace(/[^a-z0-9]/g, '').replace(/[aeioucn]/g, ch => ACC[ch]);
+async function findArtist(id) {
+  const api = 'https://www.wikidata.org/w/api.php?format=json&origin=*&action=wbsearchentities&type=item&limit=7&';
+  const painter = /painter|artist|draughts|printmaker|engraver|illustrator|sculptor|pintor|artista|grabador|dibujante|escultor/i;
+  const tries = [[id.artist_en, 'en'], [id.artist, 'es'], [id.artist, 'en']].filter((t, i, l) => t[0] && l.findIndex(x => x[0] === t[0] && x[1] === t[1]) === i);
+  let first = null;
+  for (const [name, lang] of tries) {
+    const j = await getJSON(api + 'language=' + lang + '&uselang=' + lang + '&search=' + encodeURIComponent(name));
+    const hits = j.search || [], who = hits.find(r => painter.test(r.description || ''));
+    if (who) return who;
+    first = first || hits[0];
+  }
+  return first;
+}
 async function worksByArtist(id, ctx) {
-  const api = 'https://www.wikidata.org/w/api.php?format=json&origin=*&';
-  const j = await getJSON(api + 'action=wbsearchentities&type=item&limit=7&language=en&uselang=en&search=' + encodeURIComponent(id.artist_en || id.artist));
-  const hits = j.search || [], who = hits.find(r => /painter|artist|draughts|printmaker|engraver|illustrator|sculptor|pintor|artista/i.test(r.description || '')) || hits[0];
-  if (!who) return [];
+  if (!id.artist && !id.artist_en) return null;
+  const who = await findArtist(id); if (!who) return null;
   const stem = x => (x.length > 4 ? x.replace(/(es|s)$/, '') : x);
-  const words = t => norm(t).split(/[^a-z0-9]+/).filter(x => x.length > 2 && !TITLE_STOP.has(x) && !/^(near|with|from|des|del|las|los|bei|van|von|the)$/.test(x));
+  const words = t => norm(t).split(/[^a-z0-9]+/).filter(x => x.length > 2 && !TITLE_STOP.has(x) && !/^(near|with|from|des|del|las|los|bei|van|von|the|una|uno|por|con)$/.test(x));
   const sets = [words(id.title_en), words(id.title)].filter(x => x.length);
   const keys = Array.from(new Set([].concat(...sets).map(stem))).sort((x, y) => y.length - x.length).slice(0, 4);
-  if (!keys.length) return [];
-  const rows = await sparql('SELECT ?w ?l WHERE { ?w wdt:P170 wd:' + who.id + '; wdt:P18 ?img; rdfs:label ?l. FILTER(LANG(?l) IN ("en","es","fr","nl","de","it")) ' +
-    'FILTER(' + keys.map(k => 'CONTAINS(LCASE(?l), "' + k.replace(/[^a-z0-9]/g, '') + '")').join(' || ') + ') } LIMIT 300');
+  const pats = Array.from(new Set([].concat(...keys.map(k => synOf(k).map(stem))))).slice(0, 16);
+  const base = '?w wdt:P170 wd:' + who.id + '; wdt:P18 ?img. ';
+  const [rows, any] = await Promise.all([
+    pats.length ? sparql('SELECT ?w ?l WHERE { ' + base + '?w rdfs:label ?l. FILTER(LANG(?l) IN ("en","es","fr","nl","de","it","pt")) FILTER(REGEX(LCASE(?l), "' + pats.map(accRe).join('|') + '")) } LIMIT 400').catch(() => []) : [],
+    sparql('SELECT DISTINCT ?w WHERE { ' + base + '} LIMIT 12').catch(() => [])
+  ]);
+  const hit = (l, x) => synOf(x).some(y => l.includes(stem(y)));
   const best = {};
   rows.forEach(r => {
     const q = String(r.w.value).split('/').pop(), l = norm(r.l.value);
-    const sc = Math.max.apply(null, sets.map(ws => ws.filter(x => l.includes(stem(x))).length / ws.length));
+    const sc = Math.max.apply(null, sets.map(ws => ws.filter(x => hit(l, x)).length / ws.length));
     if (sc > (best[q] || 0)) best[q] = sc;
   });
-  const top = Object.keys(best).filter(q => best[q] >= 0.5).sort((x, y) => best[y] - best[x]).slice(0, 6);
-  if (!top.length) return [];
-  const ws = await wdWorks(top, ctx);
-  ws.forEach(w => { w.artist = w.artist || id.artist; });
-  return ws.sort((x, y) => (best[y.uid.split(':')[1]] || 0) - (best[x.uid.split(':')[1]] || 0));
+  const top = Object.keys(best).filter(q => best[q] >= 0.5).sort((x, y) => best[y] - best[x]).slice(0, 8);
+  const rest = any.map(r => String(r.w.value).split('/').pop()).filter(q => !top.includes(q)).slice(0, 8);
+  const fill = ws => { ws.forEach(w => { w.artist = w.artist || id.artist; }); return ws; };
+  const match = top.length ? fill(await wdWorks(top, ctx)).sort((x, y) => (best[y.uid.split(':')[1]] || 0) - (best[x.uid.split(':')[1]] || 0)) : [];
+  let other = []; try { other = rest.length ? fill(await wdWorks(rest, ctx)) : []; } catch (e) { /* sin más obras */ }
+  return { who: who.label || id.artist, match, other };
 }
 /* ¿Es el mismo artista? Los nombres llegan en idiomas y formas distintas: «Rafael» / «Raphael» / «Raffaello Sanzio», «Pieter Bruegel el Viejo» /
    «Pieter Brueghel the Elder», «Rembrandt van Rijn» / «Rembrandt», «El Bosco» / «Hieronymus Bosch». Se quitan las partículas y los
@@ -1712,21 +1737,31 @@ function rankFound(list, id, strict) { // strict: ya se encontró la obra exacta
   else if (!strict && !keep.some(r => r.byA)) keep = rows.filter(r => r.tit >= 1);
   return keep.sort((x, y) => y.s - x.s).map(r => r.w);
 }
-/* Con lo que reconoció la foto, busca la obra: a la vez la ficha directa (findIdentified) y la búsqueda por título (para otras versiones),
-   como mucho `wait` ms. onPart(lista, cuántas son la obra exacta) se llama según llegan. Devuelve { list, exact }. */
+/* Con lo que reconoció la foto, busca la obra. A la vez: la ficha directa (findIdentified), las obras de ese artista (worksByArtist) y la
+   búsqueda por título (para otras versiones), como mucho `wait` ms. Orden: la obra exacta, las del artista con ese título, sus otras obras
+   y, solo si del artista no sale nada con ese título, las de otros artistas con el título entero. Las otras obras del artista llevan
+   `more: nombre` y las de otros artistas `others: true` (la pantalla les pone un rótulo). onPart(lista, cuántas son la obra exacta). */
 async function searchIdentified(id, ctx, onPart, wait) {
-  let exact = []; const parts = {};
+  let exact = [], art = null; const parts = {};
   const key = w => norm(w.title) + '|' + (artistTokens(w.artist).pop() || '');
   const merged = () => {
-    const seen = new Set(exact.map(w => w.uid)), keys = new Set(exact.map(key));
-    const rest = [].concat(...Object.values(parts)).filter((w, i, l) => !seen.has(w.uid) && l.findIndex(x => x.uid === w.uid) === i);
-    // una copia (Wikipedia, WikiArt…) de la obra exacta no se repite; otra ficha de Wikidata con el mismo título es otra versión y se deja
-    return exact.concat(rankFound(rest, id, exact.length > 0).filter(w => w.src === 'wiki' || !keys.has(key(w)))).slice(0, 20);
+    const uids = new Set(), keys = new Set(), out = [];
+    const put = (w, tag) => { if (!w || uids.has(w.uid) || (w.src !== 'wiki' && keys.has(key(w)))) return; uids.add(w.uid); keys.add(key(w)); out.push(Object.assign({}, w, tag)); };
+    exact.forEach(w => put(w));
+    (art ? art.match : []).forEach(w => put(w));
+    const rest = [].concat(...Object.values(parts));
+    const strict = out.length > 0;
+    const ranked = rankFound(rest, id, strict), mine = ranked.filter(w => byArtist(w, id)), others = ranked.filter(w => !byArtist(w, id));
+    mine.forEach(w => put(w));
+    const found = out.length;
+    (art ? art.other : []).forEach(w => put(w, { more: art.who || id.artist }));
+    if (!found) others.forEach(w => put(w, { others: true }));
+    return out.slice(0, 24);
   };
   const emit = () => { if (onPart) try { onPart(merged(), exact.length); } catch (e) { /* la pantalla ya no escucha */ } };
   const hint = id.artist_en || id.artist;
   const titles = [id.title_en, id.title].filter((t, i, l) => t && t.trim().length > 1 && l.findIndex(x => x && norm(x) === norm(t)) === i);
-  const jobs = [findIdentified(id, ctx).then(l => { exact = l || []; emit(); }, () => {})]
+  const jobs = [findIdentified(id, ctx).then(l => { exact = l || []; emit(); }, () => {}), worksByArtist(id, ctx).then(a => { art = a; emit(); }, () => {})]
     .concat(titles.map((t, i) => searchPaintings(t, ctx, l => { parts[i] = l; emit(); }, hint).then(l => { parts[i] = l; emit(); }, () => {})));
   await Promise.race([Promise.all(jobs), sleep(wait || 25000)]);
   return { list: merged(), exact: exact.length };
