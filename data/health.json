@@ -1,88 +1,88 @@
 {
- "at": "2026-10-24 09:49 UTC",
+ "at": "2026-10-25 00:58 UTC",
  "ok": 19,
  "total": 20,
  "results": {
   "The Met": {
    "ok": true,
-   "n": 24,
-   "sample": "The Toilet of Bathsheba",
-   "ms": 1862
+   "n": 23,
+   "sample": "Tiger Drinking from a Stream",
+   "ms": 1703
   },
   "Art Institute of Chicago": {
    "ok": true,
-   "n": 24,
+   "n": 9,
    "err": "imagen no comprobable desde GitHub (protección contra robots)",
-   "sample": "Inventions of the Monsters",
-   "ms": 422
+   "sample": "English Harbor, the Pier at Brighton",
+   "ms": 743
   },
   "Cleveland Museum of Art": {
    "ok": true,
    "n": 24,
-   "sample": "Prajnaparamita ﬂanked by two female ﬁgures, folio 1 (verso),",
-   "ms": 1325
+   "sample": "Sophie Crouzet",
+   "ms": 1606
   },
   "Rijksmuseum": {
    "ok": true,
    "n": 8,
-   "sample": "The Seven Works of Mercy",
-   "ms": 3035
+   "sample": "The Bend in the Herengracht, Amsterdam",
+   "ms": 3555
   },
   "Victoria and Albert": {
    "ok": true,
    "n": 24,
-   "sample": "Painting",
-   "ms": 1230
+   "sample": "Photograph",
+   "ms": 1813
   },
   "SMK": {
    "ok": false,
-   "n": 4,
+   "n": 13,
    "err": "imagen: tiempo agotado",
-   "sample": "Tre store træer på en bakke",
-   "ms": 60705
+   "sample": "Ved en dødsseng",
+   "ms": 61084
   },
   "Minneapolis": {
    "ok": true,
-   "n": 15,
-   "sample": "Red Ink Cake",
-   "ms": 731
+   "n": 18,
+   "sample": "Granary Door",
+   "ms": 1353
   },
   "Smithsonian": {
    "ok": true,
    "n": 24,
-   "sample": "Boats at Peel--Isle of Man",
-   "ms": 1571
+   "sample": "Untitled (Victorian Collage)",
+   "ms": 1934
   },
   "Europeana": {
    "ok": true,
    "n": 24,
-   "sample": "Måltavla",
-   "ms": 1756
+   "sample": "Målning",
+   "ms": 2209
   },
   "Wikidata (museo)": {
    "ok": true,
-   "n": 26,
-   "sample": "Portrait of a Woman with a Basket of Spindles",
-   "ms": 1451,
+   "n": 4,
+   "sample": "Triptych",
+   "ms": 1744,
    "timing": {
     "app": {
-     "ms": 14,
+     "ms": 63,
      "status": 200,
      "n": "841"
     },
     "conPista": {
-     "ms": 1484,
+     "ms": 280,
      "status": 200,
      "n": "841"
     },
     "selApp": {
-     "ms": 65004,
+     "ms": 65066,
      "status": 504,
      "rows": 0,
      "head": "upstream request timeout"
     },
     "selSub": {
-     "ms": 267,
+     "ms": 394,
      "status": 200,
      "rows": 3
     }
@@ -90,63 +90,183 @@
   },
   "Wikidata (general)": {
    "ok": true,
-   "n": 39,
-   "sample": "Haystacks, end of Summer",
-   "ms": 620
+   "n": 52,
+   "sample": "Poplars on the Epte",
+   "ms": 1170
   },
   "Commons": {
    "ok": true,
-   "n": 37,
-   "sample": "The Baptism of Christ in the River Jordan",
-   "ms": 2888
+   "n": 40,
+   "sample": "Tall Clock, movement by Simon Willard, Roxbury (Boston), Mas",
+   "ms": 4596
   },
   "Google Art Project": {
    "ok": true,
    "n": 39,
-   "sample": "River View by Moonlight",
-   "ms": 3474
+   "sample": "Esta es la vida",
+   "ms": 7214
   },
   "Wikipedia": {
    "ok": true,
    "n": 16,
-   "sample": "List of most expensive paintings",
-   "ms": 571
+   "sample": "Women in the Garden",
+   "ms": 678
   },
   "WikiArt": {
    "ok": true,
    "n": 60,
-   "sample": "The fisherman",
-   "ms": 1691
+   "sample": "Coal Dockers",
+   "ms": 1959
   },
   "MoMA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Vertical and Diagonal Planes",
-   "ms": 660
+   "sample": "Orange Car Crash Fourteen Times",
+   "ms": 867
   },
   "NGA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Weary Wayfarers",
-   "ms": 511
+   "sample": "Still Life with a Hanging Bunch of Grapes, Two Medlars, and ",
+   "ms": 1111
   },
   "Tate (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Amy Robsart",
-   "ms": 820
+   "sample": "The Mark of the Beast",
+   "ms": 1541
   },
   "Louvre (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Les deux amies.",
-   "ms": 212
+   "sample": "Corbeille de fleurs avec papillon",
+   "ms": 465
   },
   "Prado (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Salón de Porcelana del Palacio Real de Madrid",
-   "ms": 202
+   "sample": "El puente de Molins de Rey",
+   "ms": 352
+  }
+ },
+ "photo": {
+  "La noche estrellada": {
+   "n": 5,
+   "exact": 1,
+   "firstMs": 563,
+   "ms": 20026,
+   "top": [
+    "La noche estrellada · Vincent van Gogh · wiki",
+    "The Starry Night · Vincent van Gogh · wpen",
+    "Starry Night Over the Rhône · Vincent van Gogh · wpen",
+    "Starry Night Over the Rhone by Vincent van Gogh, 'lightballs · Vincent van Gogh · commons"
+   ]
+  },
+  "Cazadores en la nieve": {
+   "n": 5,
+   "exact": 0,
+   "firstMs": 754,
+   "ms": 30028,
+   "top": [
+    "Hunters in the Snow · Pieter Bruegel the Elder · wikiart",
+    "monthly cycle, scene: The Hunters in the Snow (January) · Pieter Brueghel the Elder · comm",
+    "monthly cycle, scene: The Hunters in the Snow (winter) · Pieter Brueghel the Elder · commo",
+    "The Hunters in the Snow · Pieter Brueghel the Elder · commons"
+   ]
+  },
+  "La escuela de Atenas": {
+   "n": 9,
+   "exact": 0,
+   "firstMs": 364,
+   "ms": 30024,
+   "top": [
+    "The School of Athens · Raphael · wpen",
+    "The School of Athens · Rafael Sanzio · wiki",
+    "The School of Athens (detail) · Raphael · wikiart",
+    "The School of Athens (after Raphael) · Anton Raphael Mengs · wikiart"
+   ]
+  },
+  "El jardín de las delicias": {
+   "n": 14,
+   "exact": 0,
+   "firstMs": 591,
+   "ms": 30026,
+   "top": [
+    "The Garden of Earthly Delights · Hieronymus Bosch · commons",
+    "The Garden of Earthly Delights by Bosch High Resolutioncrop · El Bosco · commons",
+    "Bosch, Hieronymus - The Garden of Earthly Delights, right panel - Detail Inside the Tree M",
+    "Bosch, Hieronymus - The Garden of Earthly Delights, left panel - Detail Amphibia and fish "
+   ]
+  },
+  "La ronda de noche": {
+   "n": 4,
+   "exact": 0,
+   "firstMs": 372,
+   "ms": 30026,
+   "top": [
+    "The Night Watch · Rembrandt · wpen",
+    "The Nightwatch · Rembrandt · wikiart",
+    "The Company of Frans Banning Cocq and Willem van Ruytenburch, known as the ‘Night Watch’, ",
+    "La ronda de noche · Rembrandt · wiki"
+   ]
+  },
+  "Venus de Urbino": {
+   "n": 3,
+   "exact": 0,
+   "firstMs": 390,
+   "ms": 30028,
+   "top": [
+    "Venus of Urbino · Titian · wpen",
+    "Urbinói Venus · Tiziano · wphu",
+    "Venus de Urbino · Tiziano · wiki"
+   ]
+  },
+  "La joven de la perla": {
+   "n": 5,
+   "exact": 0,
+   "firstMs": 384,
+   "ms": 30030,
+   "top": [
+    "Girl with a Pearl Earring · Johannes Vermeer · wpen",
+    "Het meisje met de parel (Girl with a Pearl Earring) · Johannes Vermeer · commons",
+    "Johannes Vermeer - Girl with a Pearl Earring (1660s) - negative · Johannes Vermeer · commo",
+    "The Girl with a Pearl Earring · Johannes Vermeer · wikiart"
+   ]
+  },
+  "Las meninas": {
+   "n": 6,
+   "exact": 0,
+   "firstMs": 599,
+   "ms": 30013,
+   "top": [
+    "Las Meninas · Diego Velázquez · wpen",
+    "Las Meninas (detail) · Diego Velázquez · commons",
+    "Las Meninas (The Maids of Honor) · Diego Velázquez · commons",
+    "Las Meninas (1656), by Velazquez · Diego Velázquez · commons"
+   ]
+  },
+  "Campo de trigo con cipreses": {
+   "n": 3,
+   "exact": 0,
+   "firstMs": 383,
+   "ms": 30025,
+   "top": [
+    "Wheat Field with Cypresses · Vincent van Gogh · wpen",
+    "Wheat Field with Cypresses at the Haude Galline near Eygalieres · Vincent van Gogh · wikia",
+    "Campo de trigo con cipreses · Vincent van Gogh · wiki"
+   ]
+  },
+  "El caminante sobre el mar de nubes": {
+   "n": 4,
+   "exact": 0,
+   "firstMs": 316,
+   "ms": 30033,
+   "top": [
+    "Wanderer Above the Sea of Fog · Caspar David Friedrich · wpen",
+    "The Wanderer Above the Sea of Fog · Caspar David Friedrich · wikiart",
+    "El caminante sobre el mar de nubes · Caspar David Friedrich · wiki",
+    "El caminante sobre el mar de nubes · Caspar David Friedrich · wpes"
+   ]
   }
  }
 }
