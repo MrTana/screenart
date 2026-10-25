@@ -1000,15 +1000,16 @@ function countryCollections() {
    cuando el 429 no trae cabeceras CORS), todas las consultas esperan unos segundos. */
 const TUNING = Object.assign({ sparqlPause: 6000 }, typeof globalThis !== 'undefined' && typeof globalThis.__ART_TUNING === 'object' ? globalThis.__ART_TUNING : {});
 let sparqlActive = 0; const sparqlQueue = []; let sparqlPauseUntil = 0;
-const sparqlSlot = async () => { await new Promise(res => { if (sparqlActive < 2) { sparqlActive++; res(); } else sparqlQueue.push(res); }); const w = sparqlPauseUntil - Date.now(); if (w > 0) await new Promise(r => setTimeout(r, w)); };
+// prio: la consulta se cuela delante (la búsqueda por foto no espera detrás de los conteos de los museos)
+const sparqlSlot = async prio => { await new Promise(res => { if (sparqlActive < (prio ? 3 : 2)) { sparqlActive++; res(); } else if (prio) sparqlQueue.unshift(res); else sparqlQueue.push(res); }); const w = sparqlPauseUntil - Date.now(); if (w > 0) await new Promise(r => setTimeout(r, w)); };
 const sparqlDone = () => { const n = sparqlQueue.shift(); if (n) n(); else sparqlActive--; };
 const sparqlEsc = s => String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-async function sparql(q, post) {
+async function sparql(q, post, prio) {
   const url = 'https://query.wikidata.org/sparql?format=json' + (post ? '' : '&query=' + encodeURIComponent(q));
   // Las consultas largas (varias a la vez) van por POST: por GET la dirección sería demasiado larga.
   const init = post ? { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'query=' + encodeURIComponent(q) } : {};
   const go = async () => (await getJSON(url, init, post ? 55000 : 40000)).results.bindings;
-  await sparqlSlot();
+  await sparqlSlot(prio);
   try {
     try { return await go(); }
     catch (e) {
@@ -1682,8 +1683,8 @@ async function worksByArtist(id, ctx) {
   const pats = Array.from(new Set([].concat(...keys.map(k => synOf(k).map(stem))))).slice(0, 16);
   const base = '?w wdt:P170 wd:' + who.id + '; wdt:P18 ?img. ';
   const [rows, any] = await Promise.all([
-    pats.length ? sparql('SELECT ?w ?l WHERE { ' + base + '?w rdfs:label ?l. FILTER(LANG(?l) IN ("en","es","fr","nl","de","it","pt")) FILTER(REGEX(LCASE(?l), "' + pats.map(accRe).join('|') + '")) } LIMIT 400').catch(() => []) : [],
-    sparql('SELECT DISTINCT ?w WHERE { ' + base + '} LIMIT 12').catch(() => [])
+    pats.length ? sparql('SELECT ?w ?l WHERE { ' + base + '?w rdfs:label ?l. FILTER(LANG(?l) IN ("en","es","fr","nl","de","it","pt")) FILTER(REGEX(LCASE(?l), "' + pats.map(accRe).join('|') + '")) } LIMIT 400', false, true).catch(() => []) : [],
+    sparql('SELECT DISTINCT ?w WHERE { ' + base + '} LIMIT 12', false, true).catch(() => [])
   ]);
   const hit = (l, x) => synOf(x).some(y => l.includes(stem(y)));
   const best = {};

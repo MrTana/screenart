@@ -614,7 +614,7 @@ details.adv label{display:block;margin:12px 0 4px;font:400 14px/20px var(--sans)
     <button class="acch" data-act="acc" data-id="skin" aria-expanded="false"><span class="at">Skin</span><span class="as" data-sum="skin"></span><span class="ac">›</span></button>
     <div class="accb"><label class="fld"><span>Aspecto de la interfaz</span><select id="c-skin"></select></label><p class="hint">Material Design 3 y Material 3 Expressive, en claro y oscuro. Solo cambia el menú, el mando y los avisos; la obra y su ficha no cambian.</p></div>
   </section>
-  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión a6d119097f · 2026-10-25 13:31 CET</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
+  <div class="foot"><span class="keys">Teclas: flechas para cambiar de obra, espacio para pausar, Intro o M para el menú, F pantalla completa, I ficha, L favorita.<br></span>Las imágenes se cargan desde los servidores de cada museo; la app no las guarda. Cada obra enlaza a su ficha original. Pensada para uso personal.<br><br><span class="ver">Versión 91fea294e2 · 2026-10-25 13:39 CET</span><br><button class="btn out" data-act="update">Buscar actualización</button> <button class="btn pri" id="installBtn" data-act="install" hidden>Instalar la app</button> <button class="btn out" data-act="diag">Probar fuentes</button> <button class="btn out" data-act="reset">Restablecer filtros</button></div>
   <div id="rcfoot" hidden><button class="btn pri" data-act="rc-update">Buscar actualización</button><p id="rcver"></p></div>
 <div id="tvConnect"><button class="btn pri" data-act="tv-connect">Conectar a la TV</button><div class="row" id="tvRow" hidden><input type="text" id="tvCode" placeholder="Código de la TV (ej. abcd-efgh-jkmn)" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn pri" data-act="tv-go">Abrir mando</button></div><p class="hint" id="tvMsg">El código sale bajo el QR en la pantalla de la TV.</p></div>
 </aside>
@@ -1625,15 +1625,16 @@ function countryCollections() {
    cuando el 429 no trae cabeceras CORS), todas las consultas esperan unos segundos. */
 const TUNING = Object.assign({ sparqlPause: 6000 }, typeof globalThis !== 'undefined' && typeof globalThis.__ART_TUNING === 'object' ? globalThis.__ART_TUNING : {});
 let sparqlActive = 0; const sparqlQueue = []; let sparqlPauseUntil = 0;
-const sparqlSlot = async () => { await new Promise(res => { if (sparqlActive < 2) { sparqlActive++; res(); } else sparqlQueue.push(res); }); const w = sparqlPauseUntil - Date.now(); if (w > 0) await new Promise(r => setTimeout(r, w)); };
+// prio: la consulta se cuela delante (la búsqueda por foto no espera detrás de los conteos de los museos)
+const sparqlSlot = async prio => { await new Promise(res => { if (sparqlActive < (prio ? 3 : 2)) { sparqlActive++; res(); } else if (prio) sparqlQueue.unshift(res); else sparqlQueue.push(res); }); const w = sparqlPauseUntil - Date.now(); if (w > 0) await new Promise(r => setTimeout(r, w)); };
 const sparqlDone = () => { const n = sparqlQueue.shift(); if (n) n(); else sparqlActive--; };
 const sparqlEsc = s => String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-async function sparql(q, post) {
+async function sparql(q, post, prio) {
   const url = 'https://query.wikidata.org/sparql?format=json' + (post ? '' : '&query=' + encodeURIComponent(q));
   // Las consultas largas (varias a la vez) van por POST: por GET la dirección sería demasiado larga.
   const init = post ? { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'query=' + encodeURIComponent(q) } : {};
   const go = async () => (await getJSON(url, init, post ? 55000 : 40000)).results.bindings;
-  await sparqlSlot();
+  await sparqlSlot(prio);
   try {
     try { return await go(); }
     catch (e) {
@@ -2307,8 +2308,8 @@ async function worksByArtist(id, ctx) {
   const pats = Array.from(new Set([].concat(...keys.map(k => synOf(k).map(stem))))).slice(0, 16);
   const base = '?w wdt:P170 wd:' + who.id + '; wdt:P18 ?img. ';
   const [rows, any] = await Promise.all([
-    pats.length ? sparql('SELECT ?w ?l WHERE { ' + base + '?w rdfs:label ?l. FILTER(LANG(?l) IN ("en","es","fr","nl","de","it","pt")) FILTER(REGEX(LCASE(?l), "' + pats.map(accRe).join('|') + '")) } LIMIT 400').catch(() => []) : [],
-    sparql('SELECT DISTINCT ?w WHERE { ' + base + '} LIMIT 12').catch(() => [])
+    pats.length ? sparql('SELECT ?w ?l WHERE { ' + base + '?w rdfs:label ?l. FILTER(LANG(?l) IN ("en","es","fr","nl","de","it","pt")) FILTER(REGEX(LCASE(?l), "' + pats.map(accRe).join('|') + '")) } LIMIT 400', false, true).catch(() => []) : [],
+    sparql('SELECT DISTINCT ?w WHERE { ' + base + '} LIMIT 12', false, true).catch(() => [])
   ]);
   const hit = (l, x) => synOf(x).some(y => l.includes(stem(y)));
   const best = {};

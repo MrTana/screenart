@@ -129,4 +129,5 @@ for (const id of PHOTO_CASES) {
 }
 const out = { at: new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC', ok: Object.values(results).filter(r => r.ok).length, total: Object.keys(results).length, results, photo };
 fs.writeFileSync(path.join(here, '..', 'data', 'health.json'), JSON.stringify(out, null, 1));
-if (out.ok < out.total) process.exit(1);
+// alguna petición sin respuesta puede dejar el proceso abierto: se sale ya
+process.exit(out.ok < out.total ? 1 : 0);
