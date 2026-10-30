@@ -1,87 +1,87 @@
 {
- "at": "2026-10-29 11:48 UTC",
- "ok": 19,
+ "at": "2026-10-30 11:40 UTC",
+ "ok": 20,
  "total": 20,
  "results": {
   "The Met": {
    "ok": true,
-   "n": 14,
-   "sample": "George Sand's Garden at Nohant",
-   "ms": 1364
+   "n": 16,
+   "sample": "The Feast of Acheloüs",
+   "ms": 1908
   },
   "Art Institute of Chicago": {
    "ok": true,
    "n": 24,
    "err": "imagen no comprobable desde GitHub (protección contra robots)",
-   "sample": "Tight-Rope Walker",
-   "ms": 619
+   "sample": "Small Town by Day (Badische Kleinstadt bei Tage)",
+   "ms": 849
   },
   "Cleveland Museum of Art": {
    "ok": true,
    "n": 24,
-   "sample": "Landscape, The Palace of the Clouds",
-   "ms": 2622
+   "sample": "Text, Folio 13 (verso), from a Kalpa-sutra",
+   "ms": 1511
   },
   "Rijksmuseum": {
    "ok": true,
    "n": 8,
-   "sample": "Portrait of a Woman",
-   "ms": 3888
+   "sample": "Sibylla Erythrea",
+   "ms": 4324
   },
   "Victoria and Albert": {
    "ok": true,
    "n": 24,
-   "sample": "Drawing",
-   "ms": 1447
+   "sample": "Watercolour drawing",
+   "ms": 1899
   },
   "SMK": {
    "ok": true,
-   "n": 4,
-   "sample": "piece No. 32. Blad 1/2",
-   "ms": 1418
+   "n": 6,
+   "sample": "Bakkus' triumf",
+   "ms": 2160
   },
   "Minneapolis": {
    "ok": true,
-   "n": 2,
-   "sample": "Sailboats in Harbor",
-   "ms": 1109
+   "n": 4,
+   "sample": "Forest with Hurricane Sky",
+   "ms": 2010
   },
   "Smithsonian": {
    "ok": true,
    "n": 24,
-   "sample": "Buffalo Chase in Winter, Indians on Snowshoes",
-   "ms": 1933
+   "sample": "In the Luxembourg Gardens",
+   "ms": 1398
   },
   "Europeana": {
    "ok": true,
    "n": 24,
-   "sample": "målning, oljemålning, oil painting, painting",
-   "ms": 2219
+   "sample": "Painting",
+   "ms": 2215
   },
   "Wikidata (museo)": {
    "ok": true,
-   "n": 3,
-   "sample": "Apollino",
-   "ms": 3807,
+   "n": 2,
+   "sample": "A Unicorn Attacks a Deer; a Lynx kills a Hare",
+   "ms": 16303,
    "timing": {
     "app": {
-     "ms": 53,
+     "ms": 59,
      "status": 200,
      "n": "841"
     },
     "conPista": {
-     "ms": 478,
+     "ms": 460,
      "status": 200,
      "n": "841"
     },
     "selApp": {
-     "ms": 13182,
-     "status": 429,
+     "ms": 68983,
+     "status": 504,
      "rows": 0,
-     "head": "<html>\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\"/>\n<title>Error 429 Too Many Requests - Please retry in 120 seconds.</title>\n</he"
+     "head": "upstream request timeout"
     },
     "selSub": {
-     "ms": 439,
+     "ms": 900,
      "status": 200,
      "rows": 3
     }
@@ -89,63 +89,63 @@
   },
   "Wikidata (general)": {
    "ok": true,
-   "n": 40,
-   "sample": "Still Life with Pheasant",
-   "ms": 3141
+   "n": 50,
+   "sample": "Spring by the Seine",
+   "ms": 4289
   },
   "Commons": {
    "ok": true,
-   "n": 33,
-   "sample": "Hl. Ägidius und die Hindin, Detail",
-   "ms": 9139
+   "n": 34,
+   "sample": "Stilleben mit Kirschen und Pfirsichen",
+   "ms": 7728
   },
   "Google Art Project": {
-   "ok": false,
-   "n": 0,
-   "err": "sin obras",
-   "ms": 2050
+   "ok": true,
+   "n": 39,
+   "sample": "Folio from a Qur'an (8th-9th century) b",
+   "ms": 9909
   },
   "Wikipedia": {
    "ok": true,
-   "n": 21,
-   "sample": "Impression, Sunrise",
-   "ms": 1105
+   "n": 14,
+   "sample": "List of most expensive paintings",
+   "ms": 967
   },
   "WikiArt": {
    "ok": true,
    "n": 60,
-   "sample": "Artilleryman Saddling His Horse",
-   "ms": 1931
+   "sample": "Portrait of Claude Antoine Charles Favre",
+   "ms": 1985
   },
   "MoMA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Circle",
-   "ms": 561
+   "sample": "Taillade",
+   "ms": 1396
   },
   "NGA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Family Group",
-   "ms": 807
+   "sample": "The Flag of Truce",
+   "ms": 1411
   },
   "Tate (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Naked Portrait",
-   "ms": 1728
+   "sample": "Lady Sarah Bunbury or Lady Beauchamp",
+   "ms": 1843
   },
   "Louvre (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "L'Ancien Fort portugais des trois rois mages auprès du rio G",
-   "ms": 372
+   "sample": "Acis et Galathée",
+   "ms": 702
   },
   "Prado (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Retrato de mi mujer",
-   "ms": 1758
+   "sample": "Santo Domingo de Guzmán",
+   "ms": 822
   }
  },
  "photo": {
@@ -162,8 +162,8 @@
      12
     ]
    },
-   "firstMs": 545,
-   "ms": 11401,
+   "firstMs": 1975,
+   "ms": 4672,
    "top": [
     "Virgen de la leche · Luis de Morales · wiki",
     "Ecce Homo · Luis de Morales · wiki",
@@ -184,8 +184,8 @@
      12
     ]
    },
-   "firstMs": 865,
-   "ms": 8781,
+   "firstMs": 842,
+   "ms": 2648,
    "top": [
     "Virgin with the Little Bird · Luis de Morales · wiki",
     "Madonna and Child · Luis de Morales · wiki",
@@ -206,13 +206,13 @@
      12
     ]
    },
-   "firstMs": 313,
-   "ms": 2013,
+   "firstMs": 329,
+   "ms": 3402,
    "top": [
     "La noche estrellada · Vincent van Gogh · wiki",
     "Noche estrellada sobre el rodano · Vincent van Gogh · wiki",
     "The Starry Night · Vincent van Gogh · wiki",
-    "Terraza de café por la noche · Vincent van Gogh · wiki"
+    "El café de noche · Vincent van Gogh · wiki"
    ]
   },
   "Cazadores en la nieve": {
@@ -228,20 +228,20 @@
      12
     ]
    },
-   "firstMs": 818,
-   "ms": 1524,
+   "firstMs": 1123,
+   "ms": 9790,
    "top": [
     "Los cazadores en la nieve · Pieter Brueghel el Viejo · wiki",
     "Adoración de los Magos en la nieve · Pieter Brueghel el Viejo · wiki",
     "The Rabbit Hunters · Pieter Brueghel el Viejo · wiki",
-    "Hunters in the Snow · Pieter Bruegel the Elder · wikiart"
+    "Hunters in the Snow · Pieter Brueghel the Elder · commons"
    ]
   },
   "La escuela de Atenas": {
-   "n": 18,
+   "n": 20,
    "exact": 0,
    "artist": {
-    "who": "Raphael",
+    "who": "Rafael Sanzio",
     "qid": "Q5597",
     "match": 8,
     "other": 8,
@@ -250,13 +250,13 @@
      12
     ]
    },
-   "firstMs": 284,
-   "ms": 1346,
+   "firstMs": 430,
+   "ms": 3220,
    "top": [
-    "The School of Athens · Rafael Sanzio · wiki",
-    "La escuela de Atenas · Rafael Sanzio · wiki",
     "Cartoon of The School of Athens · Rafael Sanzio · wiki",
-    "School of Athens · Rafael Sanzio · wiki"
+    "The School of Athens · Rafael Sanzio · wiki",
+    "School of Athens · Rafael Sanzio · wiki",
+    "The School of Athens · Rafael Sanzio · wiki"
    ]
   },
   "El jardín de las delicias": {
@@ -272,8 +272,8 @@
      12
     ]
    },
-   "firstMs": 626,
-   "ms": 3842,
+   "firstMs": 525,
+   "ms": 3376,
    "top": [
     "El jardín de las Delicias · Jerónimo Bosch · wiki",
     "The Garden of Earthly Delights · Jerónimo Bosch · wiki",
@@ -282,40 +282,42 @@
    ]
   },
   "La ronda de noche": {
-   "n": 20,
+   "n": 4,
    "exact": 0,
-   "artist": {
-    "who": "Rembrandt",
-    "qid": "Q5598",
-    "match": 8,
-    "other": 8,
-    "q": [
-     11,
-     12
-    ]
-   },
-   "firstMs": 276,
-   "ms": 2580,
+   "artist": "HTTP 429",
+   "firstMs": 418,
+   "ms": 3117,
    "top": [
-    "La ronda de noche · Rembrandt · wiki",
-    "The Night Watch · Rembrandt · wiki",
-    "The holy family at night · Rembrandt · wiki",
-    "The Adoration of the Shepherds: a Night Piece · Rembrandt · wiki"
+    "The Night Watch · Rembrandt · wpen",
+    "The Night Watch Militia Company of District II under the Command of Captain Frans Banninck",
+    "The Nightwatch · Rembrandt · wikiart",
+    "The Night Watch (detail) · Timothy Cole; after Rembrandt van Rijn · mia"
    ]
   },
   "Venus de Urbino": {
-   "n": 2,
+   "n": 18,
    "exact": 0,
-   "artist": "HTTP 429",
-   "firstMs": 337,
-   "ms": 2191,
+   "artist": {
+    "who": "Tiziano",
+    "qid": "Q47551",
+    "match": 8,
+    "other": 8,
+    "q": [
+     94,
+     12
+    ]
+   },
+   "firstMs": 458,
+   "ms": 3341,
    "top": [
-    "Venus of Urbino · Titian · wikiart",
-    "Urbinói Venus · Tiziano · wphu"
+    "Venus de Urbino · Tiziano · wiki",
+    "The Rokeby Venus and Adonis · Tiziano · wiki",
+    "Venus and Adonis · Tiziano · wiki",
+    "Venus and Adonis · Tiziano · wiki"
    ]
   },
   "La joven de la perla": {
-   "n": 15,
+   "n": 17,
    "exact": 0,
    "artist": {
     "who": "Johannes Vermeer",
@@ -327,13 +329,13 @@
      12
     ]
    },
-   "firstMs": 533,
-   "ms": 2279,
+   "firstMs": 839,
+   "ms": 6231,
    "top": [
     "La joven de la perla · Johannes Vermeer · wiki",
     "La muchacha del collar de perlas · Johannes Vermeer · wiki",
-    "Mujer joven sentada ante el virginal · Johannes Vermeer · wiki",
-    "Retrato de una mujer joven · Johannes Vermeer · wiki"
+    "Retrato de una mujer joven · Johannes Vermeer · wiki",
+    "La tasadora de perlas · Johannes Vermeer · wiki"
    ]
   },
   "Las meninas": {
@@ -349,8 +351,8 @@
      12
     ]
    },
-   "firstMs": 224,
-   "ms": 9138,
+   "firstMs": 260,
+   "ms": 3333,
    "top": [
     "Las Meninas · Diego Velázquez · wiki",
     "Las Meninas (detail) · Diego Velázquez · commons",
@@ -371,13 +373,13 @@
      12
     ]
    },
-   "firstMs": 461,
-   "ms": 3184,
+   "firstMs": 517,
+   "ms": 3136,
    "top": [
-    "A Wheatfield, with Cypresses · Vincent van Gogh · wiki",
     "Trigal verde con ciprés · Vincent van Gogh · wiki",
-    "Wheatfield with Cypresses · Vincent van Gogh · wiki",
-    "Campo de trigo con cipreses · Vincent van Gogh · wiki"
+    "Campo de trigo con cipreses · Vincent van Gogh · wiki",
+    "A Wheatfield, with Cypresses · Vincent van Gogh · wiki",
+    "Wheatfield with Cypresses · Vincent van Gogh · wiki"
    ]
   },
   "La Piedad": {
@@ -393,13 +395,13 @@
      12
     ]
    },
-   "firstMs": 283,
-   "ms": 3945,
+   "firstMs": 423,
+   "ms": 4111,
    "top": [
     "Pietà · Annibale Carracci · wiki",
-    "Lamentation over the Dead Christ · Annibale Carracci · wiki",
+    "Portable Altarpiece with Pietà and Saints · Annibale Carracci · wiki",
     "Pietà · Annibale Carracci · wiki",
-    "The Dead Christ Mourned ('The Three Maries') · Annibale Carracci · wiki"
+    "Pietà (the \"Christ of Caprarola\") · Annibale Carracci · wiki"
    ]
   },
   "El caminante sobre el mar de nubes": {
@@ -415,13 +417,13 @@
      12
     ]
    },
-   "firstMs": 482,
-   "ms": 20692,
+   "firstMs": 480,
+   "ms": 2927,
    "top": [
     "El caminante sobre el mar de nubes · Caspar David Friedrich · wiki",
     "Wanderer Above the Sea of Fog · Caspar David Friedrich · wpen",
     "The Wanderer Above the Sea of Fog · Caspar David Friedrich · wikiart",
-    "El mar de hielo · Caspar David Friedrich · wiki"
+    "Doorway in Meissen · Caspar David Friedrich · wiki"
    ]
   }
  }
