@@ -1,87 +1,87 @@
 {
- "at": "2026-11-04 13:19 UTC",
- "ok": 20,
+ "at": "2026-11-05 13:32 UTC",
+ "ok": 19,
  "total": 20,
  "results": {
   "The Met": {
-   "ok": true,
-   "n": 18,
-   "sample": "Rubens, Helena Fourment (1614–1673), and Their Son Frans (16",
-   "ms": 1804
+   "ok": false,
+   "n": 0,
+   "err": "sin obras",
+   "ms": 1145
   },
   "Art Institute of Chicago": {
    "ok": true,
    "n": 24,
    "err": "imagen no comprobable desde GitHub (protección contra robots)",
-   "sample": "Nude under a Pine Tree",
-   "ms": 863
+   "sample": "The Movings",
+   "ms": 655
   },
   "Cleveland Museum of Art": {
    "ok": true,
    "n": 24,
-   "sample": "Madam Han Neefang",
-   "ms": 1581
+   "sample": "The infant son of the king of Isfahan responds to music, fro",
+   "ms": 1522
   },
   "Rijksmuseum": {
    "ok": true,
    "n": 8,
-   "sample": "Willem IV (1711-1751), prince of Orange-Nassau",
-   "ms": 4827
+   "sample": "The View from the Batavian Embassy in Paris",
+   "ms": 3518
   },
   "Victoria and Albert": {
    "ok": true,
    "n": 24,
-   "sample": "Emile Littler Archive",
-   "ms": 1702
+   "sample": "Aurangzeb",
+   "ms": 1590
   },
   "SMK": {
    "ok": true,
-   "n": 20,
-   "sample": "A String of Horses Outside an Inn",
-   "ms": 2348
+   "n": 7,
+   "sample": "To husbåde",
+   "ms": 2448
   },
   "Minneapolis": {
    "ok": true,
-   "n": 11,
-   "sample": "Netsuke [tree section]",
-   "ms": 1176
+   "n": 2,
+   "sample": "Mooring a Boat on the River",
+   "ms": 1461
   },
   "Smithsonian": {
    "ok": true,
    "n": 24,
-   "sample": "Untitled, from the portfolio The Forest: Adirondack Woods",
-   "ms": 1210
+   "sample": "On the Shattagee",
+   "ms": 1615
   },
   "Europeana": {
    "ok": true,
    "n": 24,
    "sample": "Painting",
-   "ms": 2617
+   "ms": 2565
   },
   "Wikidata (museo)": {
    "ok": true,
-   "n": 6,
-   "sample": "The young Mary in prayer",
-   "ms": 1308,
+   "n": 2,
+   "sample": "Sin título",
+   "ms": 1146,
    "timing": {
     "app": {
-     "ms": 57,
+     "ms": 56,
      "status": 200,
-     "n": "842"
+     "n": "843"
     },
     "conPista": {
-     "ms": 194,
+     "ms": 784,
      "status": 200,
-     "n": "842"
+     "n": "843"
     },
     "selApp": {
-     "ms": 65065,
+     "ms": 65023,
      "status": 504,
      "rows": 0,
      "head": "upstream request timeout"
     },
     "selSub": {
-     "ms": 1364,
+     "ms": 745,
      "status": 200,
      "rows": 3
     }
@@ -89,63 +89,63 @@
   },
   "Wikidata (general)": {
    "ok": true,
-   "n": 47,
-   "sample": "Rouen Cathedral, Portal and Tower d'Albane, Midday",
-   "ms": 827
+   "n": 51,
+   "sample": "Stack of Wheat",
+   "ms": 2307
   },
   "Commons": {
    "ok": true,
-   "n": 33,
-   "sample": "Nude",
-   "ms": 4322
+   "n": 34,
+   "sample": "Saint Ambrose barring Theodosius I from Milan Cathedral",
+   "ms": 6326
   },
   "Google Art Project": {
    "ok": true,
-   "n": 36,
-   "sample": "The Red Cross",
-   "ms": 7312
+   "n": 38,
+   "sample": "The Rape of Proserpine",
+   "ms": 5902
   },
   "Wikipedia": {
    "ok": true,
-   "n": 20,
-   "sample": "En plein air",
-   "ms": 754
+   "n": 12,
+   "sample": "Dogs Playing Poker",
+   "ms": 602
   },
   "WikiArt": {
    "ok": true,
    "n": 60,
-   "sample": "The Beach at Trouville",
-   "ms": 1473
+   "sample": "Jockeys before the Start with Flagpoll",
+   "ms": 1783
   },
   "MoMA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Portrait of a Woman",
-   "ms": 695
+   "sample": "Joë Bousquet in Bed",
+   "ms": 771
   },
   "NGA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Colonel Augustus James Pleasonton",
-   "ms": 841
+   "sample": "Madame Kisling",
+   "ms": 750
   },
   "Tate (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Folded Strata",
-   "ms": 1384
+   "sample": "The Cobbler’s Home",
+   "ms": 1057
   },
   "Louvre (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "L'Entrée du port de Marseille",
-   "ms": 554
+   "sample": "Charles Quint jeune",
+   "ms": 1043
   },
   "Prado (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "La Virgen con el Niño Jesús y varios santos",
-   "ms": 439
+   "sample": "El doctor Joaquín Decref y Ruiz",
+   "ms": 348
   }
  },
  "photo": {
@@ -162,8 +162,8 @@
      12
     ]
    },
-   "firstMs": 730,
-   "ms": 3513,
+   "firstMs": 513,
+   "ms": 3125,
    "top": [
     "Virgen de la leche · Luis de Morales · wiki",
     "Ecce Homo · Luis de Morales · wiki",
@@ -184,8 +184,8 @@
      12
     ]
    },
-   "firstMs": 1031,
-   "ms": 1635,
+   "firstMs": 696,
+   "ms": 2227,
    "top": [
     "Virgin with the Little Bird · Luis de Morales · wiki",
     "Madonna and Child · Luis de Morales · wiki",
@@ -194,25 +194,16 @@
    ]
   },
   "La noche estrellada": {
-   "n": 19,
+   "n": 5,
    "exact": 1,
-   "artist": {
-    "who": "Vincent van Gogh",
-    "qid": "Q5582",
-    "match": 8,
-    "other": 8,
-    "q": [
-     14,
-     12
-    ]
-   },
-   "firstMs": 392,
-   "ms": 3309,
+   "artist": null,
+   "firstMs": 312,
+   "ms": 30017,
    "top": [
     "La noche estrellada · Vincent van Gogh · wiki",
-    "Noche estrellada sobre el rodano · Vincent van Gogh · wiki",
-    "The Starry Night · Vincent van Gogh · wiki",
-    "El café de noche · Vincent van Gogh · wiki"
+    "The Starry Night · Vincent van Gogh · wpen",
+    "Starry Night Over the Rhône · Vincent van Gogh · wpen",
+    "Starry Night Over the Rhone by Vincent van Gogh, 'lightballs · Vincent van Gogh · commons"
    ]
   },
   "Cazadores en la nieve": {
@@ -228,12 +219,12 @@
      12
     ]
    },
-   "firstMs": 945,
-   "ms": 3356,
+   "firstMs": 583,
+   "ms": 3189,
    "top": [
     "Los cazadores en la nieve · Pieter Brueghel el Viejo · wiki",
-    "The Rabbit Hunters · Pieter Brueghel el Viejo · wiki",
     "Adoración de los Magos en la nieve · Pieter Brueghel el Viejo · wiki",
+    "The Rabbit Hunters · Pieter Brueghel el Viejo · wiki",
     "Hunters in the Snow · Pieter Brueghel the Elder · commons"
    ]
   },
@@ -250,13 +241,13 @@
      12
     ]
    },
-   "firstMs": 377,
-   "ms": 3476,
+   "firstMs": 275,
+   "ms": 3530,
    "top": [
     "The School of Athens · Rafael Sanzio · wiki",
-    "La escuela de Atenas · Rafael Sanzio · wiki",
     "School of Athens · Rafael Sanzio · wiki",
-    "The School of Athens · Rafael Sanzio · wiki"
+    "The School of Athens · Rafael Sanzio · wiki",
+    "La escuela de Atenas · Rafael Sanzio · wiki"
    ]
   },
   "El jardín de las delicias": {
@@ -272,36 +263,57 @@
      12
     ]
    },
-   "firstMs": 705,
-   "ms": 2238,
+   "firstMs": 472,
+   "ms": 1796,
    "top": [
-    "El jardín de las delicias · Jerónimo Bosch · wiki",
     "El jardín de las Delicias · Jerónimo Bosch · wiki",
     "The Garden of Earthly Delights · Jerónimo Bosch · wiki",
+    "El jardín de las delicias · Jerónimo Bosch · wiki",
     "The Garden of Earthly Delights by Bosch High Resolutioncrop · El Bosco · commons"
    ]
   },
   "La ronda de noche": {
-   "n": 4,
+   "n": 20,
    "exact": 0,
-   "artist": "HTTP 429",
-   "firstMs": 336,
-   "ms": 2964,
+   "artist": {
+    "who": "Rembrandt",
+    "qid": "Q5598",
+    "match": 8,
+    "other": 8,
+    "q": [
+     11,
+     12
+    ]
+   },
+   "firstMs": 304,
+   "ms": 2950,
    "top": [
-    "The Night Watch · Rembrandt · wpen",
-    "The Night Watch Militia Company of District II under the Command of Captain Frans Banninck",
-    "The Nightwatch · Rembrandt · wikiart",
-    "The Night Watch (detail) · Timothy Cole; after Rembrandt van Rijn · mia"
+    "La ronda de noche · Rembrandt · wiki",
+    "The Night Watch · Rembrandt · wiki",
+    "The holy family at night · Rembrandt · wiki",
+    "The Adoration of the Shepherds: a Night Piece · Rembrandt · wiki"
    ]
   },
   "Venus de Urbino": {
-   "n": 1,
+   "n": 18,
    "exact": 0,
-   "artist": "HTTP 429",
-   "firstMs": 1609,
-   "ms": 3558,
+   "artist": {
+    "who": "Tiziano",
+    "qid": "Q47551",
+    "match": 8,
+    "other": 8,
+    "q": [
+     94,
+     12
+    ]
+   },
+   "firstMs": 305,
+   "ms": 3289,
    "top": [
-    "Venus of Urbino · Titian · wikiart"
+    "Venus de Urbino · Tiziano · wiki",
+    "Venus with the Organ Player · Tiziano · wiki",
+    "Portrait of Guidobaldo II della Rovere, Duke of Urbino (1514–1574), and his son, Francesco",
+    "Venus with a Mirror · Tiziano · wiki"
    ]
   },
   "La joven de la perla": {
@@ -317,8 +329,8 @@
      12
     ]
    },
-   "firstMs": 393,
-   "ms": 1600,
+   "firstMs": 331,
+   "ms": 2222,
    "top": [
     "La joven de la perla · Johannes Vermeer · wiki",
     "La muchacha del collar de perlas · Johannes Vermeer · wiki",
@@ -339,8 +351,8 @@
      12
     ]
    },
-   "firstMs": 421,
-   "ms": 3399,
+   "firstMs": 254,
+   "ms": 3335,
    "top": [
     "Las Meninas · Diego Velázquez · wiki",
     "Las Meninas (detail) · Diego Velázquez · commons",
@@ -361,13 +373,13 @@
      12
     ]
    },
-   "firstMs": 403,
-   "ms": 1876,
+   "firstMs": 301,
+   "ms": 2224,
    "top": [
+    "A Wheatfield, with Cypresses · Vincent van Gogh · wiki",
+    "Wheatfield with Cypresses · Vincent van Gogh · wiki",
     "Campo de trigo con cipreses · Vincent van Gogh · wiki",
-    "Campo de trigo con cipreses · Vincent van Gogh · wiki",
-    "Trigal verde con ciprés · Vincent van Gogh · wiki",
-    "Wheatfield with Cypresses · Vincent van Gogh · wiki"
+    "Campo de trigo con cipreses · Vincent van Gogh · wiki"
    ]
   },
   "La Piedad": {
@@ -383,8 +395,8 @@
      12
     ]
    },
-   "firstMs": 341,
-   "ms": 3910,
+   "firstMs": 270,
+   "ms": 4224,
    "top": [
     "Pietà · Annibale Carracci · wiki",
     "Pietà · Annibale Carracci · wiki",
@@ -405,13 +417,13 @@
      12
     ]
    },
-   "firstMs": 462,
-   "ms": 1979,
+   "firstMs": 265,
+   "ms": 1577,
    "top": [
     "El caminante sobre el mar de nubes · Caspar David Friedrich · wiki",
-    "Wanderer above the Sea of Fog · Caspar David Friedrich · commons",
+    "Wanderer Above the Sea of Fog · Caspar David Friedrich · wpen",
     "The Wanderer Above the Sea of Fog · Caspar David Friedrich · wikiart",
-    "El mar de hielo · Caspar David Friedrich · wiki"
+    "Doorway in Meissen · Caspar David Friedrich · wiki"
    ]
   }
  }
