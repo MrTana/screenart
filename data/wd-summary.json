@@ -1,33 +1,33 @@
 {
- "at": "2026-11-02",
+ "at": "2026-11-09",
  "museums": {
   "louvre": {
-   "painting": 4885,
+   "painting": 4886,
    "drawing": 187,
    "print": 10,
    "q": "Q19675",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "orsay": {
-   "painting": 1799,
+   "painting": 1801,
    "drawing": 43,
    "print": 2,
    "q": "Q23402",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "prado": {
    "painting": 3973,
    "drawing": 9,
    "print": 0,
    "q": "Q160112",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "versailles": {
    "painting": 1249,
    "drawing": 3,
    "print": 1,
    "q": "Q2946",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "orangerie": {
    "error": "no encuentro el museo en Wikidata"
@@ -37,367 +37,367 @@
    "drawing": 4,
    "print": 0,
    "q": "Q1327886",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "petitpalais": {
-   "painting": 1838,
+   "painting": 1839,
    "drawing": 3,
    "print": 12,
    "q": "Q59546080",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "lyon": {
    "painting": 342,
    "drawing": 18,
    "print": 0,
    "q": "Q511",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "lille": {
-   "painting": 626,
+   "painting": 628,
    "drawing": 14,
    "print": 0,
    "q": "Q2628596",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "rouen": {
    "painting": 208,
    "drawing": 0,
    "print": 0,
    "q": "Q3086934",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "fabre": {
    "painting": 519,
    "drawing": 6,
    "print": 0,
    "q": "Q1519002",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "jacquemart": {
    "painting": 42,
    "drawing": 0,
    "print": 0,
    "q": "Q1165526",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "conde": {
    "painting": 684,
    "drawing": 20,
    "print": 0,
    "q": "Q1236032",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "thyssen": {
-   "painting": 612,
+   "painting": 611,
    "drawing": 10,
    "print": 0,
    "q": "Q176251",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "bilbao": {
    "painting": 113,
    "drawing": 0,
    "print": 0,
    "q": "Q127064",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "uffizi": {
-   "painting": 796,
+   "painting": 798,
    "drawing": 40,
    "print": 0,
    "q": "Q51252",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "pitti": {
    "painting": 224,
    "drawing": 0,
    "print": 0,
    "q": "Q866498",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "brera": {
    "painting": 217,
    "drawing": 1,
    "print": 0,
    "q": "Q150066",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "borghese": {
    "painting": 146,
    "drawing": 0,
    "print": 0,
    "q": "Q841506",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "accademia": {
    "painting": 359,
    "drawing": 19,
    "print": 0,
    "q": "Q338330",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "capodimonte": {
    "painting": 253,
    "drawing": 1,
    "print": 0,
    "q": "Q290549",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "barberini": {
    "painting": 155,
    "drawing": 0,
    "print": 0,
    "q": "Q2266081",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "carrara": {
    "painting": 102,
    "drawing": 0,
    "print": 0,
    "q": "Q338367",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "vaticanos": {
    "painting": 171,
    "drawing": 0,
    "print": 0,
    "q": "Q182955",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "hermitage": {
-   "painting": 3452,
+   "painting": 3451,
    "drawing": 59,
    "print": 2,
    "q": "Q132783",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "rusomuseum": {
    "painting": 788,
    "drawing": 42,
    "print": 2,
    "q": "Q211043",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "tretyakov": {
-   "painting": 1009,
+   "painting": 1012,
    "drawing": 56,
    "print": 0,
    "q": "Q183334",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "pushkin": {
    "painting": 402,
    "drawing": 15,
    "print": 0,
    "q": "Q4872",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "nationalgallery": {
    "painting": 3980,
    "drawing": 4,
    "print": 0,
    "q": "Q180788",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "npglondon": {
    "painting": 2463,
    "drawing": 7,
    "print": 4,
    "q": "Q238587",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "courtauld": {
    "painting": 383,
    "drawing": 5,
    "print": 0,
    "q": "Q12110695",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "wallace": {
    "painting": 652,
    "drawing": 0,
    "print": 0,
    "q": "Q1327919",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "scotland": {
    "painting": 110,
    "drawing": 5,
    "print": 0,
    "q": "Q942713",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "irelandng": {
-   "painting": 1846,
+   "painting": 1844,
    "drawing": 0,
    "print": 0,
    "q": "Q2018379",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "vangogh": {
    "painting": 611,
    "drawing": 91,
    "print": 3,
    "q": "Q224124",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "mauritshuis": {
    "painting": 906,
    "drawing": 0,
    "print": 0,
    "q": "Q221092",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "kroller": {
    "painting": 284,
    "drawing": 27,
    "print": 0,
    "q": "Q1051928",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "kmskb": {
    "painting": 903,
    "drawing": 20,
    "print": 7,
    "q": "Q377500",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "kunsthistorisches": {
    "painting": 3229,
    "drawing": 0,
    "print": 0,
    "q": "Q95569",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "belvedere": {
-   "painting": 2729,
+   "painting": 2730,
    "drawing": 2,
    "print": 0,
    "q": "Q303139",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "altepinakothek": {
    "painting": 154,
    "drawing": 0,
    "print": 0,
    "q": "Q154568",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "dresden": {
    "painting": 103,
    "drawing": 0,
    "print": 0,
    "q": "Q1501219",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "gemaelde": {
-   "painting": 2063,
+   "painting": 2066,
    "drawing": 0,
    "print": 0,
    "q": "Q165631",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "altenational": {
-   "painting": 701,
+   "painting": 702,
    "drawing": 0,
    "print": 0,
    "q": "Q162111",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "wallraf": {
    "painting": 781,
    "drawing": 4,
    "print": 2,
    "q": "Q700959",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "staedel": {
    "painting": 1074,
    "drawing": 24,
    "print": 20,
    "q": "Q163804",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "zurich": {
    "painting": 1101,
    "drawing": 3,
    "print": 1,
    "q": "Q685038",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "basel": {
    "painting": 452,
    "drawing": 26,
    "print": 8,
    "q": "Q194626",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "nationalmuseum": {
-   "painting": 1906,
+   "painting": 1908,
    "drawing": 6353,
    "print": 3,
    "q": "Q842858",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "ateneum": {
    "error": "no encuentro el museo en Wikidata"
   },
   "budapest": {
-   "painting": 675,
+   "painting": 676,
    "drawing": 10,
    "print": 2,
    "q": "Q840886",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "varsovia": {
-   "painting": 6288,
-   "drawing": 706,
+   "painting": 6289,
+   "drawing": 719,
    "print": 7,
    "q": "Q153306",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "mfa": {
    "painting": 2536,
    "drawing": 58,
    "print": 10,
    "q": "Q49133",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "frick": {
    "painting": 142,
    "drawing": 1,
    "print": 2,
    "q": "Q682827",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "barnes": {
    "painting": 509,
    "drawing": 10,
    "print": 0,
    "q": "Q808462",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "phillips": {
    "painting": 291,
    "drawing": 5,
    "print": 0,
    "q": "Q578485",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "gardner": {
    "painting": 338,
    "drawing": 4,
    "print": 0,
    "q": "Q49135",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "nelson": {
    "painting": 163,
    "drawing": 5,
    "print": 3,
    "q": "Q1976985",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   },
   "neuegalerie": {
    "error": "no encuentro el museo en Wikidata"
@@ -407,7 +407,7 @@
    "drawing": 3,
    "print": 3,
    "q": "Q1362629",
-   "at": "2026-11-02"
+   "at": "2026-11-09"
   }
  }
 }
