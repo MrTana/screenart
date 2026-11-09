@@ -1,87 +1,87 @@
 {
- "at": "2026-11-08 12:14 UTC",
+ "at": "2026-11-09 14:22 UTC",
  "ok": 20,
  "total": 20,
  "results": {
   "The Met": {
    "ok": true,
-   "n": 8,
-   "sample": "Putti Musicians in a Medallion, Surrounded by Musical Attrib",
-   "ms": 1375
+   "n": 17,
+   "sample": "Butterflies” (Kochō), from the Tale of Genji",
+   "ms": 675
   },
   "Art Institute of Chicago": {
    "ok": true,
-   "n": 12,
+   "n": 24,
    "err": "imagen no comprobable desde GitHub (protección contra robots)",
-   "sample": "The Beach of Les Grands Sables at Le Pouldu",
-   "ms": 828
+   "sample": "Tight-Rope Walker",
+   "ms": 430
   },
   "Cleveland Museum of Art": {
    "ok": true,
    "n": 24,
-   "sample": "Self-Portrait",
-   "ms": 2855
+   "sample": "Text, Folio 45 (verso), from a Manuscript of the Perfection ",
+   "ms": 1639
   },
   "Rijksmuseum": {
    "ok": true,
    "n": 8,
-   "sample": "Stilleven met kan van steengoed",
-   "ms": 4857
+   "sample": "Landscape with Two Oaks",
+   "ms": 3549
   },
   "Victoria and Albert": {
    "ok": true,
    "n": 24,
-   "sample": "Painting",
-   "ms": 1953
+   "sample": "Gunny weaver",
+   "ms": 1284
   },
   "SMK": {
    "ok": true,
-   "n": 10,
-   "sample": "Prästkragar II",
-   "ms": 4294
+   "n": 15,
+   "sample": "Faun and Nymph",
+   "ms": 2151
   },
   "Minneapolis": {
    "ok": true,
-   "n": 17,
-   "sample": "Quiet Setting of a Mountain Creek",
-   "ms": 919
+   "n": 14,
+   "sample": "Vacationers on the Beach at Trouville",
+   "ms": 682
   },
   "Smithsonian": {
    "ok": true,
    "n": 24,
-   "sample": "The Ranch Native Village, Sitka, 1884",
-   "ms": 1354
+   "sample": "Flight of President Davis",
+   "ms": 1742
   },
   "Europeana": {
    "ok": true,
    "n": 24,
-   "sample": "Målning",
-   "ms": 11967
+   "sample": "[Pintura]",
+   "ms": 1957
   },
   "Wikidata (museo)": {
    "ok": true,
-   "n": 1,
-   "sample": "Arrotino",
-   "ms": 2501,
+   "n": 12,
+   "sample": "Crucifixion of Christ with saints",
+   "ms": 1441,
    "timing": {
     "app": {
-     "ms": 78,
+     "ms": 19,
      "status": 200,
      "n": "843"
     },
     "conPista": {
-     "ms": 415,
+     "ms": 806,
      "status": 200,
      "n": "843"
     },
     "selApp": {
-     "ms": 65062,
-     "status": 504,
+     "ms": 53328,
+     "status": 502,
      "rows": 0,
-     "head": "upstream request timeout"
+     "head": "<html>\r\n<head><title>502 Bad Gateway</title></head>\r\n<body>\r\n<center><h1>502 Bad Gateway</h1></center>\r\n<hr><center>nginx/1.22.1</center>\r\n</body>\r\n</html>\r\n"
     },
     "selSub": {
-     "ms": 592,
+     "ms": 561,
      "status": 200,
      "rows": 3
     }
@@ -89,63 +89,63 @@
   },
   "Wikidata (general)": {
    "ok": true,
-   "n": 41,
-   "sample": "Woman with a Parasol, facing left",
-   "ms": 1255
+   "n": 45,
+   "sample": "Autorretrato",
+   "ms": 1313
   },
   "Commons": {
    "ok": true,
    "n": 34,
-   "sample": "Confluence de la Seine et de l'Oise",
-   "ms": 6281
+   "sample": "Porträt des Miniaturmalers K. Bruni",
+   "ms": 2160
   },
   "Google Art Project": {
    "ok": true,
-   "n": 37,
-   "sample": "Christ cleansing the Temple",
-   "ms": 7475
+   "n": 39,
+   "sample": "The Plains of Heaven",
+   "ms": 1679
   },
   "Wikipedia": {
    "ok": true,
-   "n": 18,
-   "sample": "Women in the Garden",
-   "ms": 734
+   "n": 22,
+   "sample": "En plein air",
+   "ms": 536
   },
   "WikiArt": {
    "ok": true,
    "n": 60,
-   "sample": "Among the Vines near Louveciennes",
-   "ms": 2079
+   "sample": "Bouquet of Flowers",
+   "ms": 1504
   },
   "MoMA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "A-Hunting He Would Go",
-   "ms": 425
+   "sample": "S&H Green Stamps",
+   "ms": 528
   },
   "NGA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "A View of the Mountain Pass Called the Notch of the White Mo",
-   "ms": 1184
+   "sample": "Still Life with Apples and Peaches",
+   "ms": 543
   },
   "Tate (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "The Harbour of Brest: The Quayside and Château",
-   "ms": 878
+   "sample": "Come into the Garden, Maud",
+   "ms": 539
   },
   "Louvre (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Saint Christophe",
-   "ms": 479
+   "sample": "La Vierge allaitant l'Enfant",
+   "ms": 273
   },
   "Prado (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Emigrantes",
-   "ms": 434
+   "sample": "La visión de la Porciúncula",
+   "ms": 238
   }
  },
  "photo": {
@@ -162,8 +162,8 @@
      12
     ]
    },
-   "firstMs": 614,
-   "ms": 3195,
+   "firstMs": 683,
+   "ms": 4111,
    "top": [
     "Virgen de la leche · Luis de Morales · wiki",
     "Ecce Homo · Luis de Morales · wiki",
@@ -184,8 +184,8 @@
      12
     ]
    },
-   "firstMs": 809,
-   "ms": 2106,
+   "firstMs": 681,
+   "ms": 2348,
    "top": [
     "Virgin with the Little Bird · Luis de Morales · wiki",
     "Madonna and Child · Luis de Morales · wiki",
@@ -206,17 +206,17 @@
      12
     ]
    },
-   "firstMs": 333,
-   "ms": 3370,
+   "firstMs": 232,
+   "ms": 3566,
    "top": [
     "La noche estrellada · Vincent van Gogh · wiki",
     "Noche estrellada sobre el rodano · Vincent van Gogh · wiki",
     "The Starry Night · Vincent van Gogh · wiki",
-    "El café de noche · Vincent van Gogh · wiki"
+    "Terraza de café por la noche · Vincent van Gogh · wiki"
    ]
   },
   "Cazadores en la nieve": {
-   "n": 16,
+   "n": 17,
    "exact": 0,
    "artist": {
     "who": "Pieter Brueghel el Viejo",
@@ -228,8 +228,8 @@
      12
     ]
    },
-   "firstMs": 982,
-   "ms": 3311,
+   "firstMs": 1069,
+   "ms": 3608,
    "top": [
     "Los cazadores en la nieve · Pieter Brueghel el Viejo · wiki",
     "Adoración de los Magos en la nieve · Pieter Brueghel el Viejo · wiki",
@@ -250,17 +250,17 @@
      12
     ]
    },
-   "firstMs": 393,
-   "ms": 3594,
+   "firstMs": 270,
+   "ms": 3290,
    "top": [
     "The School of Athens · Rafael Sanzio · wiki",
+    "La escuela de Atenas · Rafael Sanzio · wiki",
     "Cartoon of The School of Athens · Rafael Sanzio · wiki",
-    "School of Athens · Rafael Sanzio · wiki",
-    "The School of Athens · Rafael Sanzio · wiki"
+    "School of Athens · Rafael Sanzio · wiki"
    ]
   },
   "El jardín de las delicias": {
-   "n": 22,
+   "n": 21,
    "exact": 0,
    "artist": {
     "who": "Jerónimo Bosch",
@@ -272,12 +272,12 @@
      12
     ]
    },
-   "firstMs": 561,
-   "ms": 1783,
+   "firstMs": 463,
+   "ms": 1331,
    "top": [
-    "El jardín de las delicias · Jerónimo Bosch · wiki",
     "El jardín de las Delicias · Jerónimo Bosch · wiki",
     "The Garden of Earthly Delights · Jerónimo Bosch · wiki",
+    "El jardín de las delicias · Jerónimo Bosch · wiki",
     "The Garden of Earthly Delights by Bosch High Resolutioncrop · El Bosco · commons"
    ]
   },
@@ -294,8 +294,8 @@
      12
     ]
    },
-   "firstMs": 374,
-   "ms": 2900,
+   "firstMs": 286,
+   "ms": 2972,
    "top": [
     "La ronda de noche · Rembrandt · wiki",
     "The Night Watch · Rembrandt · wiki",
@@ -316,21 +316,21 @@
      12
     ]
    },
-   "firstMs": 397,
-   "ms": 3295,
+   "firstMs": 428,
+   "ms": 3533,
    "top": [
     "Venus de Urbino · Tiziano · wiki",
     "Venus with the Organ Player · Tiziano · wiki",
-    "Venus and the Lute Player · Tiziano · wiki",
-    "Venus del Pardo · Tiziano · wiki"
+    "Venus with Cupid · Tiziano · wiki",
+    "Venus with Musician · Tiziano · wiki"
    ]
   },
   "La joven de la perla": {
    "n": 1,
    "exact": 0,
    "artist": "HTTP 429",
-   "firstMs": 883,
-   "ms": 1002,
+   "firstMs": 899,
+   "ms": 916,
    "top": [
     "The Girl with a Pearl Earring · Johannes Vermeer · wikiart"
    ]
@@ -339,8 +339,8 @@
    "n": 1,
    "exact": 0,
    "artist": "HTTP 429",
-   "firstMs": 242,
-   "ms": 3309,
+   "firstMs": 193,
+   "ms": 3512,
    "top": [
     "Las Meninas · Diego Velazquez · wikiart"
    ]
@@ -349,33 +349,33 @@
    "n": 2,
    "exact": 0,
    "artist": "HTTP 429",
-   "firstMs": 479,
-   "ms": 957,
+   "firstMs": 926,
+   "ms": 3365,
    "top": [
-    "Wheat Field with Cypresses · Vincent van Gogh · met",
+    "Wheat Field with Cypresses · Vincent van Gogh · wikiart",
     "Wheat Field with Cypresses at the Haude Galline near Eygalieres · Vincent van Gogh · wikia"
    ]
   },
   "La Piedad": {
-   "n": 15,
+   "n": 16,
    "exact": 0,
    "artist": {
     "who": "Annibale Carracci",
     "qid": "Q7824",
     "match": 8,
-    "other": 7,
+    "other": 8,
     "q": [
      28,
      12
     ]
    },
-   "firstMs": 329,
-   "ms": 3910,
+   "firstMs": 267,
+   "ms": 4011,
    "top": [
-    "Pietà · Annibale Carracci · wiki",
     "Lamentation over the Dead Christ · Annibale Carracci · wiki",
     "Pietà · Annibale Carracci · wiki",
-    "The Dead Christ Mourned ('The Three Maries') · Annibale Carracci · wiki"
+    "The Dead Christ Mourned ('The Three Maries') · Annibale Carracci · wiki",
+    "Pietà with Sts. Francis and Mary Magdalen · Annibale Carracci · wiki"
    ]
   },
   "El caminante sobre el mar de nubes": {
@@ -391,13 +391,13 @@
      12
     ]
    },
-   "firstMs": 377,
-   "ms": 3960,
+   "firstMs": 352,
+   "ms": 2901,
    "top": [
     "El caminante sobre el mar de nubes · Caspar David Friedrich · wiki",
     "Wanderer Above the Sea of Fog · Caspar David Friedrich · wpen",
     "The Wanderer Above the Sea of Fog · Caspar David Friedrich · wikiart",
-    "Two men by the sea · Caspar David Friedrich · wiki"
+    "Doorway in Meissen · Caspar David Friedrich · wiki"
    ]
   }
  }
