@@ -1,87 +1,87 @@
 {
- "at": "2026-11-09 14:22 UTC",
- "ok": 20,
+ "at": "2026-11-10 13:48 UTC",
+ "ok": 18,
  "total": 20,
  "results": {
   "The Met": {
-   "ok": true,
-   "n": 17,
-   "sample": "Butterflies” (Kochō), from the Tale of Genji",
-   "ms": 675
+   "ok": false,
+   "n": 0,
+   "err": "sin obras",
+   "ms": 3703
   },
   "Art Institute of Chicago": {
    "ok": true,
    "n": 24,
    "err": "imagen no comprobable desde GitHub (protección contra robots)",
-   "sample": "Tight-Rope Walker",
-   "ms": 430
+   "sample": "Landscape at Cagnes",
+   "ms": 564
   },
   "Cleveland Museum of Art": {
    "ok": true,
    "n": 24,
-   "sample": "Text, Folio 45 (verso), from a Manuscript of the Perfection ",
-   "ms": 1639
+   "sample": "Portrait of the Courtier Mirza Muizz",
+   "ms": 1134
   },
   "Rijksmuseum": {
    "ok": true,
    "n": 8,
-   "sample": "Landscape with Two Oaks",
-   "ms": 3549
+   "sample": "Peonies and Irises on a Rock",
+   "ms": 3424
   },
   "Victoria and Albert": {
    "ok": true,
    "n": 24,
-   "sample": "Gunny weaver",
-   "ms": 1284
+   "sample": "The Old Elephant and Castle Inn, Newington",
+   "ms": 1670
   },
   "SMK": {
    "ok": true,
-   "n": 15,
-   "sample": "Faun and Nymph",
-   "ms": 2151
+   "n": 16,
+   "sample": "Les fantômes",
+   "ms": 1288
   },
   "Minneapolis": {
-   "ok": true,
-   "n": 14,
-   "sample": "Vacationers on the Beach at Trouville",
-   "ms": 682
+   "ok": false,
+   "n": 0,
+   "err": "sin obras",
+   "ms": 473
   },
   "Smithsonian": {
    "ok": true,
    "n": 24,
-   "sample": "Flight of President Davis",
-   "ms": 1742
+   "sample": "Eadweard Muybridge",
+   "ms": 1524
   },
   "Europeana": {
    "ok": true,
    "n": 24,
-   "sample": "[Pintura]",
-   "ms": 1957
+   "sample": "painting",
+   "ms": 1353
   },
   "Wikidata (museo)": {
    "ok": true,
-   "n": 12,
-   "sample": "Crucifixion of Christ with saints",
-   "ms": 1441,
+   "n": 9,
+   "sample": "Supper with a Lute Player",
+   "ms": 2668,
    "timing": {
     "app": {
-     "ms": 19,
+     "ms": 56,
      "status": 200,
      "n": "843"
     },
     "conPista": {
-     "ms": 806,
+     "ms": 561,
      "status": 200,
      "n": "843"
     },
     "selApp": {
-     "ms": 53328,
-     "status": 502,
+     "ms": 65024,
+     "status": 504,
      "rows": 0,
-     "head": "<html>\r\n<head><title>502 Bad Gateway</title></head>\r\n<body>\r\n<center><h1>502 Bad Gateway</h1></center>\r\n<hr><center>nginx/1.22.1</center>\r\n</body>\r\n</html>\r\n"
+     "head": "upstream request timeout"
     },
     "selSub": {
-     "ms": 561,
+     "ms": 1209,
      "status": 200,
      "rows": 3
     }
@@ -89,63 +89,63 @@
   },
   "Wikidata (general)": {
    "ok": true,
-   "n": 45,
-   "sample": "Autorretrato",
-   "ms": 1313
+   "n": 54,
+   "sample": "Fisherman's Cottage on the Cliffs at Varengeville",
+   "ms": 415
   },
   "Commons": {
    "ok": true,
-   "n": 34,
-   "sample": "Porträt des Miniaturmalers K. Bruni",
-   "ms": 2160
+   "n": 30,
+   "sample": "Tod der Hl. Klara",
+   "ms": 7537
   },
   "Google Art Project": {
    "ok": true,
-   "n": 39,
-   "sample": "The Plains of Heaven",
-   "ms": 1679
+   "n": 40,
+   "sample": "Louis I the Fair",
+   "ms": 7202
   },
   "Wikipedia": {
    "ok": true,
-   "n": 22,
+   "n": 21,
    "sample": "En plein air",
-   "ms": 536
+   "ms": 509
   },
   "WikiArt": {
    "ok": true,
    "n": 60,
-   "sample": "Bouquet of Flowers",
-   "ms": 1504
+   "sample": "Zaandam, The Dike, Evening",
+   "ms": 1690
   },
   "MoMA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "S&H Green Stamps",
-   "ms": 528
+   "sample": "View from the Dunes with Beach and Piers, Domburg",
+   "ms": 733
   },
   "NGA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Still Life with Apples and Peaches",
-   "ms": 543
+   "sample": "Study for \"La Grande Jatte",
+   "ms": 673
   },
   "Tate (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Come into the Garden, Maud",
-   "ms": 539
+   "sample": "Mrs Guthrie",
+   "ms": 1305
   },
   "Louvre (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "La Vierge allaitant l'Enfant",
-   "ms": 273
+   "sample": "Christ jardinier",
+   "ms": 642
   },
   "Prado (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "La visión de la Porciúncula",
-   "ms": 238
+   "sample": "Alejandro Malaspina",
+   "ms": 420
   }
  },
  "photo": {
@@ -162,8 +162,8 @@
      12
     ]
    },
-   "firstMs": 683,
-   "ms": 4111,
+   "firstMs": 587,
+   "ms": 3551,
    "top": [
     "Virgen de la leche · Luis de Morales · wiki",
     "Ecce Homo · Luis de Morales · wiki",
@@ -184,8 +184,8 @@
      12
     ]
    },
-   "firstMs": 681,
-   "ms": 2348,
+   "firstMs": 811,
+   "ms": 5532,
    "top": [
     "Virgin with the Little Bird · Luis de Morales · wiki",
     "Madonna and Child · Luis de Morales · wiki",
@@ -206,12 +206,12 @@
      12
     ]
    },
-   "firstMs": 232,
-   "ms": 3566,
+   "firstMs": 252,
+   "ms": 3453,
    "top": [
     "La noche estrellada · Vincent van Gogh · wiki",
-    "Noche estrellada sobre el rodano · Vincent van Gogh · wiki",
     "The Starry Night · Vincent van Gogh · wiki",
+    "Noche estrellada sobre el rodano · Vincent van Gogh · wiki",
     "Terraza de café por la noche · Vincent van Gogh · wiki"
    ]
   },
@@ -228,8 +228,8 @@
      12
     ]
    },
-   "firstMs": 1069,
-   "ms": 3608,
+   "firstMs": 599,
+   "ms": 3846,
    "top": [
     "Los cazadores en la nieve · Pieter Brueghel el Viejo · wiki",
     "Adoración de los Magos en la nieve · Pieter Brueghel el Viejo · wiki",
@@ -250,13 +250,13 @@
      12
     ]
    },
-   "firstMs": 270,
-   "ms": 3290,
+   "firstMs": 359,
+   "ms": 3907,
    "top": [
-    "The School of Athens · Rafael Sanzio · wiki",
-    "La escuela de Atenas · Rafael Sanzio · wiki",
     "Cartoon of The School of Athens · Rafael Sanzio · wiki",
-    "School of Athens · Rafael Sanzio · wiki"
+    "La escuela de Atenas · Rafael Sanzio · wiki",
+    "School of Athens · Rafael Sanzio · wiki",
+    "The School of Athens · Rafael Sanzio · wiki"
    ]
   },
   "El jardín de las delicias": {
@@ -272,8 +272,8 @@
      12
     ]
    },
-   "firstMs": 463,
-   "ms": 1331,
+   "firstMs": 412,
+   "ms": 1630,
    "top": [
     "El jardín de las Delicias · Jerónimo Bosch · wiki",
     "The Garden of Earthly Delights · Jerónimo Bosch · wiki",
@@ -282,100 +282,114 @@
    ]
   },
   "La ronda de noche": {
-   "n": 20,
+   "n": 4,
    "exact": 0,
-   "artist": {
-    "who": "Rembrandt",
-    "qid": "Q5598",
-    "match": 8,
-    "other": 8,
-    "q": [
-     11,
-     12
-    ]
-   },
-   "firstMs": 286,
-   "ms": 2972,
+   "artist": "HTTP 429",
+   "firstMs": 298,
+   "ms": 3287,
    "top": [
-    "La ronda de noche · Rembrandt · wiki",
-    "The Night Watch · Rembrandt · wiki",
-    "The holy family at night · Rembrandt · wiki",
-    "The Adoration of the Shepherds: a Night Piece · Rembrandt · wiki"
+    "The Night Watch · Rembrandt · wpen",
+    "The Night Watch Militia Company of District II under the Command of Captain Frans Banninck",
+    "The Nightwatch · Rembrandt · wikiart",
+    "The Night Watch (detail) · Timothy Cole; after Rembrandt van Rijn · mia"
    ]
   },
   "Venus de Urbino": {
-   "n": 18,
+   "n": 1,
    "exact": 0,
-   "artist": {
-    "who": "Tiziano",
-    "qid": "Q47551",
-    "match": 8,
-    "other": 8,
-    "q": [
-     94,
-     12
-    ]
-   },
-   "firstMs": 428,
-   "ms": 3533,
+   "artist": "HTTP 429",
+   "firstMs": 2078,
+   "ms": 3881,
    "top": [
-    "Venus de Urbino · Tiziano · wiki",
-    "Venus with the Organ Player · Tiziano · wiki",
-    "Venus with Cupid · Tiziano · wiki",
-    "Venus with Musician · Tiziano · wiki"
+    "Venus of Urbino · Titian · wikiart"
    ]
   },
   "La joven de la perla": {
-   "n": 1,
+   "n": 17,
    "exact": 0,
-   "artist": "HTTP 429",
-   "firstMs": 899,
-   "ms": 916,
+   "artist": {
+    "who": "Johannes Vermeer",
+    "qid": "Q41264",
+    "match": 5,
+    "other": 8,
+    "q": [
+     8,
+     12
+    ]
+   },
+   "firstMs": 354,
+   "ms": 1562,
    "top": [
-    "The Girl with a Pearl Earring · Johannes Vermeer · wikiart"
+    "La joven de la perla · Johannes Vermeer · wiki",
+    "La muchacha del collar de perlas · Johannes Vermeer · wiki",
+    "Retrato de una mujer joven · Johannes Vermeer · wiki",
+    "La tasadora de perlas · Johannes Vermeer · wiki"
    ]
   },
   "Las meninas": {
-   "n": 1,
+   "n": 14,
    "exact": 0,
-   "artist": "HTTP 429",
-   "firstMs": 193,
-   "ms": 3512,
+   "artist": {
+    "who": "Diego Velázquez",
+    "qid": "Q297",
+    "match": 1,
+    "other": 8,
+    "q": [
+     6,
+     12
+    ]
+   },
+   "firstMs": 267,
+   "ms": 3454,
    "top": [
-    "Las Meninas · Diego Velazquez · wikiart"
+    "Las Meninas · Diego Velázquez · wiki",
+    "Las Meninas (detail) · Diego Velázquez · commons",
+    "Las Meninas (The Maids of Honor) · Diego Velázquez · commons",
+    "Las Meninas (1656), by Velazquez · Diego Velázquez · commons"
    ]
   },
   "Campo de trigo con cipreses": {
-   "n": 2,
+   "n": 18,
    "exact": 0,
-   "artist": "HTTP 429",
-   "firstMs": 926,
-   "ms": 3365,
+   "artist": {
+    "who": "Vincent van Gogh",
+    "qid": "Q5582",
+    "match": 8,
+    "other": 8,
+    "q": [
+     103,
+     12
+    ]
+   },
+   "firstMs": 306,
+   "ms": 1873,
    "top": [
-    "Wheat Field with Cypresses · Vincent van Gogh · wikiart",
-    "Wheat Field with Cypresses at the Haude Galline near Eygalieres · Vincent van Gogh · wikia"
+    "Wheatfield with Cypresses · Vincent van Gogh · wiki",
+    "A Wheatfield, with Cypresses · Vincent van Gogh · wiki",
+    "Wheatfield with Cypresses · Vincent van Gogh · wiki",
+    "Trigal verde con ciprés · Vincent van Gogh · wiki"
    ]
   },
   "La Piedad": {
-   "n": 16,
+   "n": 15,
    "exact": 0,
    "artist": {
     "who": "Annibale Carracci",
     "qid": "Q7824",
-    "match": 8,
+    "match": 7,
     "other": 8,
     "q": [
      28,
      12
     ]
    },
-   "firstMs": 267,
-   "ms": 4011,
+   "firstMs": 280,
+   "ms": 4102,
    "top": [
-    "Lamentation over the Dead Christ · Annibale Carracci · wiki",
     "Pietà · Annibale Carracci · wiki",
-    "The Dead Christ Mourned ('The Three Maries') · Annibale Carracci · wiki",
-    "Pietà with Sts. Francis and Mary Magdalen · Annibale Carracci · wiki"
+    "Portable Altarpiece with Pietà and Saints · Annibale Carracci · wiki",
+    "Pietà · Annibale Carracci · wiki",
+    "Lamentation over the Dead Christ · Annibale Carracci · wiki"
    ]
   },
   "El caminante sobre el mar de nubes": {
@@ -391,13 +405,13 @@
      12
     ]
    },
-   "firstMs": 352,
-   "ms": 2901,
+   "firstMs": 305,
+   "ms": 1334,
    "top": [
     "El caminante sobre el mar de nubes · Caspar David Friedrich · wiki",
     "Wanderer Above the Sea of Fog · Caspar David Friedrich · wpen",
     "The Wanderer Above the Sea of Fog · Caspar David Friedrich · wikiart",
-    "Doorway in Meissen · Caspar David Friedrich · wiki"
+    "Two men by the sea · Caspar David Friedrich · wiki"
    ]
   }
  }
