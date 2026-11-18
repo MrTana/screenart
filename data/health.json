@@ -1,88 +1,87 @@
 {
- "at": "2026-11-17 14:56 UTC",
- "ok": 19,
+ "at": "2026-11-18 14:35 UTC",
+ "ok": 20,
  "total": 20,
  "results": {
   "The Met": {
    "ok": true,
-   "n": 21,
-   "sample": "Chrysanthemums by a rock",
-   "ms": 1671
+   "n": 15,
+   "sample": "Takebun,” from the Musical Drama “The New Piece” (Shinkyoku)",
+   "ms": 1188
   },
   "Art Institute of Chicago": {
    "ok": true,
-   "n": 12,
+   "n": 24,
    "err": "imagen no comprobable desde GitHub (protección contra robots)",
-   "sample": "Landscape with Cottages",
-   "ms": 679
+   "sample": "The Seine at Vernonnet",
+   "ms": 693
   },
   "Cleveland Museum of Art": {
    "ok": true,
    "n": 24,
-   "sample": "Swallow and Lotus",
-   "ms": 1369
+   "sample": "The Lone Sentinel",
+   "ms": 1676
   },
   "Rijksmuseum": {
    "ok": true,
-   "n": 8,
-   "sample": "Portrait of the Artist's Parents, Douwe Martens Teenstra and",
-   "ms": 4005
+   "n": 3,
+   "sample": "Catharina van Hemessen (1527/28–after 1567), Antwerp, 1548, ",
+   "ms": 3497
   },
   "Victoria and Albert": {
    "ok": true,
    "n": 24,
    "sample": "Drury Lane Design Collection",
-   "ms": 1782
+   "ms": 1882
   },
   "SMK": {
    "ok": true,
-   "n": 4,
-   "sample": "En krigers bøjede, blottede hoved mellem rustninger og heste",
-   "ms": 3410
+   "n": 20,
+   "sample": "A String of Horses Outside an Inn",
+   "ms": 2635
   },
   "Minneapolis": {
-   "ok": false,
-   "n": 14,
-   "err": "HTTP 403 application/xml",
-   "sample": "Locked in the Ice--Waiting it Out",
-   "ms": 881
+   "ok": true,
+   "n": 7,
+   "sample": "Woman Pounding Clothes in the Moonlight",
+   "ms": 1193
   },
   "Smithsonian": {
    "ok": true,
    "n": 24,
-   "sample": "Neil McNeill",
-   "ms": 1723
+   "sample": "Harbor Scene",
+   "ms": 1499
   },
   "Europeana": {
    "ok": true,
    "n": 24,
-   "sample": "Painting",
-   "ms": 2510
+   "sample": "Gemälde",
+   "ms": 2127
   },
   "Wikidata (museo)": {
    "ok": true,
-   "n": 1,
+   "n": 2,
    "sample": "Venus and Amore",
-   "ms": 1767,
+   "ms": 1034,
    "timing": {
     "app": {
-     "ms": 85,
+     "ms": 80,
      "status": 200,
      "n": "843"
     },
     "conPista": {
-     "ms": 498,
+     "ms": 295,
      "status": 200,
      "n": "843"
     },
     "selApp": {
-     "ms": 65065,
+     "ms": 65068,
      "status": 504,
      "rows": 0,
      "head": "upstream request timeout"
     },
     "selSub": {
-     "ms": 1292,
+     "ms": 627,
      "status": 200,
      "rows": 3
     }
@@ -90,63 +89,63 @@
   },
   "Wikidata (general)": {
    "ok": true,
-   "n": 44,
-   "sample": "The Parc Monceau",
-   "ms": 1082
+   "n": 48,
+   "sample": "The Cliff Walk at Pourville",
+   "ms": 915
   },
   "Commons": {
    "ok": true,
-   "n": 39,
-   "sample": "Three Fishing Boats",
-   "ms": 8614
+   "n": 33,
+   "sample": "The Travelers",
+   "ms": 11443
   },
   "Google Art Project": {
    "ok": true,
-   "n": 40,
-   "sample": "[Sir W. Mansfield, K.C.B.]",
-   "ms": 12898
+   "n": 39,
+   "sample": "Die Darbringung Christi im Tempel",
+   "ms": 12222
   },
   "Wikipedia": {
    "ok": true,
    "n": 23,
    "sample": "En plein air",
-   "ms": 755
+   "ms": 906
   },
   "WikiArt": {
    "ok": true,
    "n": 60,
-   "sample": "Le Pont des Arts",
-   "ms": 1853
+   "sample": "Sand on the Quayside, Port Marly",
+   "ms": 2082
   },
   "MoMA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Slims",
-   "ms": 568
+   "sample": "Basket of Fruit in a Cupboard",
+   "ms": 1046
   },
   "NGA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Lieutenant-General Sir Thomas Picton",
-   "ms": 857
+   "sample": "Andrew Jackson",
+   "ms": 3449
   },
   "Tate (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "The Moscow Piece",
-   "ms": 1348
+   "sample": "Sans Souci",
+   "ms": 1425
   },
   "Louvre (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "La Charité céleste",
-   "ms": 705
+   "sample": "Le Banquet d'Hérode",
+   "ms": 610
   },
   "Prado (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Los hijos de Antonio Pérez ante Rodrigo Vázquez",
-   "ms": 557
+   "sample": "Santa Mónica",
+   "ms": 513
   }
  },
  "photo": {
@@ -163,8 +162,8 @@
      12
     ]
    },
-   "firstMs": 529,
-   "ms": 3050,
+   "firstMs": 730,
+   "ms": 3665,
    "top": [
     "Virgen de la leche · Luis de Morales · wiki",
     "Ecce Homo · Luis de Morales · wiki",
@@ -185,8 +184,8 @@
      12
     ]
    },
-   "firstMs": 955,
-   "ms": 1602,
+   "firstMs": 817,
+   "ms": 2740,
    "top": [
     "Virgin with the Little Bird · Luis de Morales · wiki",
     "Madonna and Child · Luis de Morales · wiki",
@@ -207,8 +206,8 @@
      12
     ]
    },
-   "firstMs": 358,
-   "ms": 3672,
+   "firstMs": 409,
+   "ms": 3458,
    "top": [
     "La noche estrellada · Vincent van Gogh · wiki",
     "Noche estrellada sobre el rodano · Vincent van Gogh · wiki",
@@ -217,7 +216,7 @@
    ]
   },
   "Cazadores en la nieve": {
-   "n": 17,
+   "n": 16,
    "exact": 0,
    "artist": {
     "who": "Pieter Brueghel el Viejo",
@@ -229,8 +228,8 @@
      12
     ]
    },
-   "firstMs": 1033,
-   "ms": 3435,
+   "firstMs": 624,
+   "ms": 3683,
    "top": [
     "Los cazadores en la nieve · Pieter Brueghel el Viejo · wiki",
     "Adoración de los Magos en la nieve · Pieter Brueghel el Viejo · wiki",
@@ -251,8 +250,8 @@
      12
     ]
    },
-   "firstMs": 371,
-   "ms": 3327,
+   "firstMs": 442,
+   "ms": 3663,
    "top": [
     "The School of Athens · Rafael Sanzio · wiki",
     "La escuela de Atenas · Rafael Sanzio · wiki",
@@ -273,8 +272,8 @@
      12
     ]
    },
-   "firstMs": 416,
-   "ms": 2362,
+   "firstMs": 418,
+   "ms": 2730,
    "top": [
     "El jardín de las Delicias · Jerónimo Bosch · wiki",
     "The Garden of Earthly Delights · Jerónimo Bosch · wiki",
@@ -283,16 +282,25 @@
    ]
   },
   "La ronda de noche": {
-   "n": 5,
+   "n": 20,
    "exact": 0,
-   "artist": "HTTP 429",
-   "firstMs": 301,
-   "ms": 3119,
+   "artist": {
+    "who": "Rembrandt",
+    "qid": "Q5598",
+    "match": 8,
+    "other": 8,
+    "q": [
+     11,
+     12
+    ]
+   },
+   "firstMs": 378,
+   "ms": 3408,
    "top": [
-    "The Night Watch · Rembrandt · wpen",
-    "The Night Watch Militia Company of District II under the Command of Captain Frans Banninck",
-    "The Company of Frans Banning Cocq and Willem van Ruytenburch, known as the ‘Night Watch’, ",
-    "The Nightwatch · Rembrandt · wikiart"
+    "La ronda de noche · Rembrandt · wiki",
+    "The Night Watch · Rembrandt · wiki",
+    "The holy family at night · Rembrandt · wiki",
+    "The Star of the Kings: a Night Piece · Rembrandt · wiki"
    ]
   },
   "Venus de Urbino": {
@@ -304,12 +312,12 @@
     "match": 8,
     "other": 8,
     "q": [
-     94,
+     95,
      12
     ]
    },
-   "firstMs": 424,
-   "ms": 3764,
+   "firstMs": 386,
+   "ms": 3813,
    "top": [
     "Venus de Urbino · Tiziano · wiki",
     "Venus with the Organ Player · Tiziano · wiki",
@@ -330,13 +338,13 @@
      12
     ]
    },
-   "firstMs": 427,
-   "ms": 2407,
+   "firstMs": 406,
+   "ms": 1875,
    "top": [
     "La joven de la perla · Johannes Vermeer · wiki",
     "La muchacha del collar de perlas · Johannes Vermeer · wiki",
-    "Retrato de una mujer joven · Johannes Vermeer · wiki",
-    "La tasadora de perlas · Johannes Vermeer · wiki"
+    "Mujer joven sentada ante el virginal · Johannes Vermeer · wiki",
+    "Retrato de una mujer joven · Johannes Vermeer · wiki"
    ]
   },
   "Las meninas": {
@@ -352,8 +360,8 @@
      12
     ]
    },
-   "firstMs": 290,
-   "ms": 3265,
+   "firstMs": 434,
+   "ms": 3538,
    "top": [
     "Las Meninas · Diego Velázquez · wiki",
     "Las Meninas (detail) · Diego Velázquez · commons",
@@ -374,57 +382,33 @@
      12
     ]
    },
-   "firstMs": 400,
-   "ms": 2135,
+   "firstMs": 385,
+   "ms": 1997,
    "top": [
     "Campo de trigo con cipreses · Vincent van Gogh · wiki",
+    "Trigal verde con ciprés · Vincent van Gogh · wiki",
     "Campo de trigo con cipreses · Vincent van Gogh · wiki",
-    "A Wheatfield, with Cypresses · Vincent van Gogh · wiki",
-    "Trigal verde con ciprés · Vincent van Gogh · wiki"
+    "Wheatfield with Cypresses · Vincent van Gogh · wiki"
    ]
   },
   "La Piedad": {
-   "n": 15,
+   "n": 1,
    "exact": 0,
-   "artist": {
-    "who": "Annibale Carracci",
-    "qid": "Q7824",
-    "match": 7,
-    "other": 8,
-    "q": [
-     28,
-     12
-    ]
-   },
-   "firstMs": 340,
-   "ms": 8127,
+   "artist": "HTTP 429",
+   "firstMs": 379,
+   "ms": 4052,
    "top": [
-    "Portable Altarpiece with Pietà and Saints · Annibale Carracci · wiki",
-    "Pietà · Annibale Carracci · wiki",
-    "Pietà · Annibale Carracci · wiki",
-    "Pietà · Annibale Carracci · wiki"
+    "Pietà · Annibale Carracci · wpen"
    ]
   },
   "El caminante sobre el mar de nubes": {
-   "n": 11,
+   "n": 1,
    "exact": 0,
-   "artist": {
-    "who": "Caspar David Friedrich",
-    "qid": "Q104884",
-    "match": 1,
-    "other": 8,
-    "q": [
-     7,
-     12
-    ]
-   },
-   "firstMs": 398,
-   "ms": 1548,
+   "artist": "HTTP 429",
+   "firstMs": 911,
+   "ms": 1110,
    "top": [
-    "El caminante sobre el mar de nubes · Caspar David Friedrich · wiki",
-    "Wanderer Above the Sea of Fog · Caspar David Friedrich · wpen",
-    "The Wanderer Above the Sea of Fog · Caspar David Friedrich · wikiart",
-    "El mar de hielo · Caspar David Friedrich · wiki"
+    "The Wanderer Above the Sea of Fog · Caspar David Friedrich · wikiart"
    ]
   }
  }
