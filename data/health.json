@@ -1,87 +1,87 @@
 {
- "at": "2026-11-21 13:44 UTC",
+ "at": "2026-11-22 13:39 UTC",
  "ok": 20,
  "total": 20,
  "results": {
   "The Met": {
    "ok": true,
-   "n": 21,
-   "sample": "Spring Blossoms, Montclair, New Jersey",
-   "ms": 822
+   "n": 17,
+   "sample": "Admiral Jacob Binkes (born about 1640, died 1677)",
+   "ms": 9714
   },
   "Art Institute of Chicago": {
    "ok": true,
    "n": 24,
    "err": "imagen no comprobable desde GitHub (protección contra robots)",
-   "sample": "Yang Pu Moving His Family",
-   "ms": 291
+   "sample": "Portrait after a Costume Ball (Portrait of Madame Dietz-Monn",
+   "ms": 486
   },
   "Cleveland Museum of Art": {
    "ok": true,
    "n": 24,
-   "sample": "Still Life with Fruit",
-   "ms": 900
+   "sample": "Dr. James Stuart; Mary Campbell Stuart",
+   "ms": 1608
   },
   "Rijksmuseum": {
    "ok": true,
    "n": 8,
-   "sample": "Rich Children, Poor Parents",
-   "ms": 2355
+   "sample": "Justina Johanna Ramskrammer (1702-98), Wife of Isaac Parker",
+   "ms": 3844
   },
   "Victoria and Albert": {
    "ok": true,
    "n": 24,
-   "sample": "Painting",
-   "ms": 1103
+   "sample": "The Flag of Quartermasters in the Eight Banners",
+   "ms": 1331
   },
   "SMK": {
    "ok": true,
-   "n": 16,
-   "sample": "Firenze med floden Arno i forgrunden",
-   "ms": 971
+   "n": 5,
+   "sample": "Kirken i Maarsseveen",
+   "ms": 1586
   },
   "Minneapolis": {
    "ok": true,
-   "n": 11,
-   "sample": "Clipper Ship Thermopylae - Departure at Dawn",
-   "ms": 365
+   "n": 41,
+   "sample": "Portrait of John Woodyeare",
+   "ms": 843
   },
   "Smithsonian": {
    "ok": true,
    "n": 24,
-   "sample": "Possibly Henry Hall or Sutton Hall",
-   "ms": 1662
+   "sample": "Three Figures, from Cave 224",
+   "ms": 1725
   },
   "Europeana": {
    "ok": true,
    "n": 24,
-   "sample": "painting",
-   "ms": 1626
+   "sample": "Painting",
+   "ms": 21546
   },
   "Wikidata (museo)": {
    "ok": true,
-   "n": 3,
-   "sample": "Sin título",
-   "ms": 1655,
+   "n": 1,
+   "sample": "Britannicus in toga",
+   "ms": 2944,
    "timing": {
     "app": {
-     "ms": 9,
+     "ms": 26,
      "status": 200,
      "n": "843"
     },
     "conPista": {
-     "ms": 158,
+     "ms": 398,
      "status": 200,
      "n": "843"
     },
     "selApp": {
-     "ms": 65006,
+     "ms": 65011,
      "status": 504,
      "rows": 0,
      "head": "upstream request timeout"
     },
     "selSub": {
-     "ms": 2048,
+     "ms": 1341,
      "status": 200,
      "rows": 3
     }
@@ -89,63 +89,63 @@
   },
   "Wikidata (general)": {
    "ok": true,
-   "n": 48,
-   "sample": "Tulips in Holland",
-   "ms": 659
+   "n": 47,
+   "sample": "The clouds",
+   "ms": 1357
   },
   "Commons": {
    "ok": true,
-   "n": 23,
-   "sample": "Portrait of Mrs. Thomas Graham (1757-1792)",
-   "ms": 3438
+   "n": 34,
+   "sample": "Concierto de angeles",
+   "ms": 7463
   },
   "Google Art Project": {
    "ok": true,
-   "n": 39,
-   "sample": "Malharro002",
-   "ms": 5788
+   "n": 38,
+   "sample": "Portrait of Ferdinand Freiligrath",
+   "ms": 1200
   },
   "Wikipedia": {
    "ok": true,
-   "n": 14,
-   "sample": "List of most expensive paintings",
-   "ms": 422
+   "n": 16,
+   "sample": "Dogs Playing Poker",
+   "ms": 432
   },
   "WikiArt": {
    "ok": true,
    "n": 60,
-   "sample": "A Street in Louveciennes",
-   "ms": 1531
+   "sample": "Langland Bay",
+   "ms": 1757
   },
   "MoMA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Proposition Number 1",
-   "ms": 536
+   "sample": "Still Life with Three Puppies",
+   "ms": 695
   },
   "NGA (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Rotterdam Ferry-Boat",
-   "ms": 390
+   "sample": "Giant Magnolias on a Blue Velvet Cloth",
+   "ms": 659
   },
   "Tate (lista)": {
    "ok": true,
    "n": 40,
-   "sample": "Philip Westlake",
-   "ms": 358
+   "sample": "Tivoli",
+   "ms": 867
   },
   "Louvre (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Le Christ bénissant",
-   "ms": 214
+   "sample": "La Loi descend sur la terre ; Elle y établit son empire et y",
+   "ms": 230
   },
   "Prado (lista precargada)": {
    "ok": true,
    "n": 40,
-   "sample": "Manuel García Barzanallana I marqués de Barzanallana",
-   "ms": 200
+   "sample": "La Anunciación",
+   "ms": 242
   }
  },
  "photo": {
@@ -162,8 +162,8 @@
      12
     ]
    },
-   "firstMs": 216,
-   "ms": 2217,
+   "firstMs": 608,
+   "ms": 2838,
    "top": [
     "Virgen de la leche · Luis de Morales · wiki",
     "Ecce Homo · Luis de Morales · wiki",
@@ -184,8 +184,8 @@
      12
     ]
    },
-   "firstMs": 828,
-   "ms": 2172,
+   "firstMs": 820,
+   "ms": 4021,
    "top": [
     "Virgin with the Little Bird · Luis de Morales · wiki",
     "Madonna and Child · Luis de Morales · wiki",
@@ -206,13 +206,13 @@
      12
     ]
    },
-   "firstMs": 249,
-   "ms": 3783,
+   "firstMs": 255,
+   "ms": 3542,
    "top": [
     "La noche estrellada · Vincent van Gogh · wiki",
     "Noche estrellada sobre el rodano · Vincent van Gogh · wiki",
     "The Starry Night · Vincent van Gogh · wiki",
-    "El café de noche · Vincent van Gogh · wiki"
+    "Terraza de café por la noche · Vincent van Gogh · wiki"
    ]
   },
   "Cazadores en la nieve": {
@@ -228,8 +228,8 @@
      12
     ]
    },
-   "firstMs": 611,
-   "ms": 3889,
+   "firstMs": 619,
+   "ms": 3418,
    "top": [
     "Los cazadores en la nieve · Pieter Brueghel el Viejo · wiki",
     "Adoración de los Magos en la nieve · Pieter Brueghel el Viejo · wiki",
@@ -250,17 +250,17 @@
      12
     ]
    },
-   "firstMs": 260,
-   "ms": 3186,
+   "firstMs": 277,
+   "ms": 3498,
    "top": [
-    "The School of Athens · Rafael Sanzio · wiki",
     "La escuela de Atenas · Rafael Sanzio · wiki",
     "Cartoon of The School of Athens · Rafael Sanzio · wiki",
+    "The School of Athens · Rafael Sanzio · wiki",
     "School of Athens · Rafael Sanzio · wiki"
    ]
   },
   "El jardín de las delicias": {
-   "n": 21,
+   "n": 22,
    "exact": 0,
    "artist": {
     "who": "Jerónimo Bosch",
@@ -272,8 +272,8 @@
      12
     ]
    },
-   "firstMs": 339,
-   "ms": 840,
+   "firstMs": 359,
+   "ms": 1639,
    "top": [
     "El jardín de las Delicias · Jerónimo Bosch · wiki",
     "The Garden of Earthly Delights · Jerónimo Bosch · wiki",
@@ -282,16 +282,25 @@
    ]
   },
   "La ronda de noche": {
-   "n": 5,
+   "n": 20,
    "exact": 0,
-   "artist": "HTTP 429",
-   "firstMs": 167,
-   "ms": 3244,
+   "artist": {
+    "who": "Rembrandt",
+    "qid": "Q5598",
+    "match": 8,
+    "other": 8,
+    "q": [
+     11,
+     12
+    ]
+   },
+   "firstMs": 229,
+   "ms": 4902,
    "top": [
-    "The Night Watch · Rembrandt · commons",
-    "The Night Watch Militia Company of District II under the Command of Captain Frans Banninck",
-    "The Company of Frans Banning Cocq and Willem van Ruytenburch, known as the ‘Night Watch’, ",
-    "The Nightwatch · Rembrandt · wikiart"
+    "La ronda de noche · Rembrandt · wiki",
+    "The Night Watch · Rembrandt · wiki",
+    "The holy family at night · Rembrandt · wiki",
+    "The Adoration of the Shepherds: a Night Piece · Rembrandt · wiki"
    ]
   },
   "Venus de Urbino": {
@@ -307,57 +316,33 @@
      12
     ]
    },
-   "firstMs": 347,
-   "ms": 4568,
+   "firstMs": 317,
+   "ms": 8683,
    "top": [
     "Venus de Urbino · Tiziano · wiki",
     "Venus with the Organ Player · Tiziano · wiki",
-    "Venus with Cupid · Tiziano · wiki",
-    "Venus with Musician · Tiziano · wiki"
+    "Venus dormida · Giorgione · wiki",
+    "Venus y Adonis · Tiziano · wiki"
    ]
   },
   "La joven de la perla": {
-   "n": 17,
+   "n": 1,
    "exact": 0,
-   "artist": {
-    "who": "Johannes Vermeer",
-    "qid": "Q41264",
-    "match": 5,
-    "other": 8,
-    "q": [
-     8,
-     12
-    ]
-   },
-   "firstMs": 404,
-   "ms": 2284,
+   "artist": "HTTP 429",
+   "firstMs": 817,
+   "ms": 1341,
    "top": [
-    "La joven de la perla · Johannes Vermeer · wiki",
-    "La muchacha del collar de perlas · Johannes Vermeer · wiki",
-    "Retrato de una mujer joven · Johannes Vermeer · wiki",
-    "La tasadora de perlas · Johannes Vermeer · wiki"
+    "The Girl with a Pearl Earring · Johannes Vermeer · wikiart"
    ]
   },
   "Las meninas": {
-   "n": 14,
+   "n": 1,
    "exact": 0,
-   "artist": {
-    "who": "Diego Velázquez",
-    "qid": "Q297",
-    "match": 1,
-    "other": 8,
-    "q": [
-     6,
-     12
-    ]
-   },
-   "firstMs": 181,
-   "ms": 3666,
+   "artist": "HTTP 429",
+   "firstMs": 203,
+   "ms": 3291,
    "top": [
-    "Las Meninas · Diego Velázquez · wiki",
-    "Las Meninas (detail) · Diego Velázquez · commons",
-    "Las Meninas (The Maids of Honor) · Diego Velázquez · commons",
-    "Las Meninas (1656), by Velazquez · Diego Velázquez · commons"
+    "Las Meninas · Diego Velazquez · wikiart"
    ]
   },
   "Campo de trigo con cipreses": {
@@ -373,12 +358,12 @@
      12
     ]
    },
-   "firstMs": 420,
-   "ms": 1229,
+   "firstMs": 443,
+   "ms": 8617,
    "top": [
     "Campo de trigo con cipreses · Vincent van Gogh · wiki",
+    "Trigal verde con ciprés · Vincent van Gogh · wiki",
     "Campo de trigo con cipreses · Vincent van Gogh · wiki",
-    "Wheatfield with Cypresses · Vincent van Gogh · wiki",
     "A Wheatfield, with Cypresses · Vincent van Gogh · wiki"
    ]
   },
@@ -395,13 +380,13 @@
      12
     ]
    },
-   "firstMs": 225,
-   "ms": 4283,
+   "firstMs": 254,
+   "ms": 4590,
    "top": [
     "Pietà · Annibale Carracci · wiki",
-    "Portable Altarpiece with Pietà and Saints · Annibale Carracci · wiki",
     "Pietà (the \"Christ of Caprarola\") · Annibale Carracci · wiki",
-    "Pieta (the \"Christ of Caprarola\") · Annibale Carracci · wiki"
+    "Pieta (the \"Christ of Caprarola\") · Annibale Carracci · wiki",
+    "Portable Altarpiece with Pietà and Saints · Annibale Carracci · wiki"
    ]
   },
   "El caminante sobre el mar de nubes": {
@@ -417,13 +402,13 @@
      12
     ]
    },
-   "firstMs": 268,
-   "ms": 1575,
+   "firstMs": 363,
+   "ms": 4479,
    "top": [
     "El caminante sobre el mar de nubes · Caspar David Friedrich · wiki",
     "Wanderer Above the Sea of Fog · Caspar David Friedrich · wpen",
     "The Wanderer Above the Sea of Fog · Caspar David Friedrich · wikiart",
-    "Cementerio bajo la nieve · Caspar David Friedrich · wiki"
+    "El mar de hielo · Caspar David Friedrich · wiki"
    ]
   }
  }
